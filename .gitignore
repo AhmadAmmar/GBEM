@@ -1,0 +1,23 @@
+# Ignore data and outputs
+data/
+*.tif
+*.csv
+*.dbf
+*.shp
+*.shx
+*.prj
+*.zip
+*.bak
+
+# Ignore Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Ignore folders
+
+osm
+scraping
+uk-lidar-program
+
+# Ignore system files
+.DS_Store
+Thumbs.db   
