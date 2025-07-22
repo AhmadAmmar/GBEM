@@ -12,6 +12,7 @@ All project scripts are located under the `scripts/` directory:
 - `scripts/utils` – small helper utilities
   - Includes `inspect_dataset.py` for reporting row counts, column names, and
     metadata for arbitrary dataset files.
+- All scripts follow snake_case file names for clarity.
   - Legacy row-count scripts such as `rows.py` remain available for reference.
 
 Each folder contains the Python scripts previously located in the project root.
