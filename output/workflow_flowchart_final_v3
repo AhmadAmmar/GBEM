@@ -1,0 +1,50 @@
+digraph "Building Energy Efficiency Methodology" {
+	center=true dpi=300 rankdir=TB size="10,8"
+	subgraph cluster_A {
+		color=black label="Data Acquisition" style=rounded
+		rank=same
+		A1 [label="Remote Sensing Data" shape=rectangle]
+		A2 [label="Aerial & Street-view" shape=rectangle]
+		A3 [label="EPC Data" shape=rectangle]
+		A4 [label="Building Geometries" shape=rectangle]
+		A5 [label="Socioeconomic Data" shape=rectangle]
+		A6 [label="Climatic Data" shape=rectangle]
+		A1 -> A2 [dir=none]
+		A2 -> A3 [dir=none]
+		A3 -> A4 [dir=none]
+		A4 -> A5 [dir=none]
+		A5 -> A6 [dir=none]
+	}
+	subgraph cluster_B {
+		color=black label="Data Preprocessing" style=rounded
+		rank=same
+		B1 [label="Geospatial Alignment" shape=rectangle]
+		B2 [label="Noise Reduction" shape=rectangle]
+		B3 [label="Data Cleaning" shape=rectangle]
+		B4 [label="Raster to Vector Mapping" shape=rectangle]
+		B1 -> B2 [dir=none]
+		B2 -> B3 [dir=none]
+		B3 -> B4 [dir=none]
+	}
+	subgraph cluster_C {
+		color=black label="Feature Engineering" style=rounded
+		rank=same
+		C1 [label="Urban Indices" shape=rectangle]
+		C2 [label="SAR Features" shape=rectangle]
+		C3 [label="LiDAR Features" shape=rectangle]
+		C1 -> C2 [dir=none]
+		C2 -> C3 [dir=none]
+	}
+	subgraph cluster_D {
+		color=black label="Model Development & Analysis" style=rounded
+		rank=same
+		D1 [label="ML Models" shape=rectangle]
+		D2 [label="DL Models" shape=rectangle]
+		D3 [label=Validation shape=rectangle]
+		D1 -> D2 [dir=none]
+		D2 -> D3 [dir=none]
+	}
+	A3 -> B2 [arrowhead=normal penwidth=2]
+	B3 -> C2 [arrowhead=normal penwidth=2]
+	C2 -> D2 [arrowhead=normal penwidth=2]
+}

@@ -1,0 +1,60 @@
+digraph "Technical Methodology Workflow" {
+	dpi=600 rankdir=TB size=15
+	A1 [label="Data Acquisition" shape=parallelogram]
+	A2 [label="Remote Sensing Data (Sentinel-2 MSI, Sentinel-1 SAR, Landsat-8 LST)" shape=parallelogram]
+	A3 [label="LiDAR, Aerial, Street-view Imagery" shape=parallelogram]
+	A4 [label="Socioeconomic & Demographic Data" shape=parallelogram]
+	B1 [label="Data Preprocessing" shape=rectangle]
+	B2 [label="Georeferencing & Normalization" shape=rectangle]
+	B3 [label="Cloud Removal & Data Cleaning" shape=rectangle]
+	B4 [label="EPC Data Harmonization" shape=rectangle]
+	C1 [label="Feature Extraction" shape=diamond]
+	C2 [label="Urban Indices (NDVI, NDBI, SAR Backscatter)" shape=diamond]
+	C3 [label="LiDAR-derived Metrics (Heights, Shadowing)" shape=diamond]
+	C4 [label="Socioeconomic Proxies for Energy Use" shape=diamond]
+	D1 [label="Model Development" shape=rectangle]
+	D2 [label="ML Models (Random Forest, XGBoost)" shape=rectangle]
+	D3 [label="DL Architectures (CNNs, Transformers)" shape=rectangle]
+	D4 [label="Hyperparameter Tuning" shape=rectangle]
+	E1 [label="Model Evaluation & Refinement" shape=rectangle]
+	E2 [label="Feature Importance Analysis" shape=rectangle]
+	E3 [label="Model Validation with Energy Audits" shape=rectangle]
+	E4 [label="Explainable AI (XAI)" shape=rectangle]
+	F1 [label="Scalability & Integration" shape=parallelogram]
+	F2 [label="Automated Geospatial Pipelines" shape=parallelogram]
+	F3 [label="Integration with BIM/BEM Frameworks" shape=parallelogram]
+	F4 [label="Continuous Monitoring (Temporal/Spatial)" shape=parallelogram]
+	G1 [label="Results & Policy Applications" shape=rectangle]
+	G2 [label="Policy Impact Analysis" shape=rectangle]
+	G3 [label="Development of Dashboards/Visualization Tools" shape=rectangle]
+	G4 [label="Publication & Dissemination" shape=rectangle]
+	A1 -> A2
+	A1 -> A3
+	A1 -> A4
+	A2 -> B1
+	A3 -> B1
+	A4 -> B1
+	B1 -> B2
+	B1 -> B3
+	B1 -> B4
+	B4 -> C1
+	C1 -> C2
+	C1 -> C3
+	C1 -> C4
+	C4 -> D1
+	D1 -> D2
+	D1 -> D3
+	D1 -> D4
+	D4 -> E1
+	E1 -> E2
+	E1 -> E3
+	E1 -> E4
+	E4 -> F1
+	F1 -> F2
+	F1 -> F3
+	F1 -> F4
+	F4 -> G1
+	G1 -> G2
+	G1 -> G3
+	G1 -> G4
+}

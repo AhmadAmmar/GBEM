@@ -1,0 +1,151 @@
+
+
+MAIN INFORMATION ABOUT DATA
+
+ Timespan                              2010 : 2025 
+ Sources (Journals, Books, etc)        48 
+ Documents                             80 
+ Annual Growth Rate %                  7.6 
+ Document Average Age                  4.78 
+ Average citations per doc             35.31 
+ Average citations per year per doc    5.514 
+ References                            1 
+ 
+DOCUMENT TYPES                     
+ article               41 
+ book chapter          3 
+ conference paper      21 
+ data paper            1 
+ review                14 
+ 
+DOCUMENT CONTENTS
+ Keywords Plus (ID)                    686 
+ Author's Keywords (DE)                284 
+ 
+AUTHORS
+ Authors                               283 
+ Author Appearances                    315 
+ Authors of single-authored docs       4 
+ 
+AUTHORS COLLABORATION
+ Single-authored docs                  4 
+ Documents per Author                  0.283 
+ Co-Authors per Doc                    3.94 
+ International co-authorships %        22.5 
+ 
+
+Annual Scientific Production
+
+ Year    Articles
+    2010        1
+    2011        2
+    2012        2
+    2014        1
+    2016        4
+    2017        6
+    2018        6
+    2019        3
+    2020        9
+    2021       11
+    2022       13
+    2023       11
+    2024        8
+    2025        3
+
+Annual Percentage Growth Rate 7.6 
+
+
+Most Productive Authors
+
+   Authors        Articles Authors        Articles Fractionalized
+1   BALARAS CA           3  FUMO N                          1.000
+2   EVANGELISTI L        3  KAMEL E                         1.000
+3   FISCHER M            3  KLOPFER F                       1.000
+4   GUATTARI C           3  MORGANTI M                      1.000
+5   MAYER K              3  FISCHER M                       0.833
+6   O'DONNELL J          3  MAYER K                         0.833
+7   ALI U                2  BALARAS CA                      0.783
+8   BATTISTA G           2  EVANGELISTI L                   0.700
+9   BOHACEK M            2  GUATTARI C                      0.700
+10  CAUSONE F            2  DE VRIES B                      0.533
+
+
+Top manuscripts per citations
+
+                                     Paper                                        DOI  TC TCperYear  NTC
+1  FUMO N, 2014, RENEWABLE SUSTAINABLE ENERGY REV   10.1016/j.rser.2013.11.040        350      29.2 1.00
+2  FERRANDO M, 2020, SUSTAINABLE CITIES SOC         10.1016/j.scs.2020.102408         222      37.0 2.08
+3  FATHI S, 2020, RENEWABLE SUSTAINABLE ENERGY REV  10.1016/j.rser.2020.110287        191      31.8 1.79
+4  CHEN Y, 2011, LANDSC URBAN PLANN                 10.1016/j.landurbplan.2011.03.007 173      11.5 1.99
+5  JOHARI F, 2020, RENEWABLE SUSTAINABLE ENERGY REV 10.1016/j.rser.2020.109902        166      27.7 1.55
+6  WANG H, 2016, ENERGY BUILD                       10.1016/j.enbuild.2016.06.080     141      14.1 2.88
+7  PAN Y, 2020, APPL ENERGY                         10.1016/j.apenergy.2020.114965    119      19.8 1.11
+8  ALI U, 2020, APPL ENERGY                         10.1016/j.apenergy.2020.115834    112      18.7 1.05
+9  FABBRI K, 2012, ENERGY BUILD                     10.1016/j.enbuild.2012.01.018      98       7.0 1.00
+10 ZHOU Y, 2012, ISPRS J PHOTOGRAMM REMOTE SENS     10.1016/j.isprsjprs.2011.10.007    98       7.0 1.00
+
+
+Corresponding Author's Countries
+
+          Country Articles   Freq SCP MCP MCP_Ratio
+1  ITALY                17 0.2615  15   2     0.118
+2  USA                   8 0.1231   5   3     0.375
+3  CHINA                 7 0.1077   5   2     0.286
+4  UNITED KINGDOM        6 0.0923   6   0     0.000
+5  SWEDEN                4 0.0615   4   0     0.000
+6  GERMANY               3 0.0462   1   2     0.667
+7  AUSTRALIA             2 0.0308   1   1     0.500
+8  IRELAND               2 0.0308   1   1     0.500
+9  NETHERLANDS           2 0.0308   1   1     0.500
+10 NORWAY                2 0.0308   2   0     0.000
+
+
+SCP: Single Country Publications
+
+MCP: Multiple Country Publications
+
+
+Total Citations per Country
+
+     Country      Total Citations Average Article Citations
+1  USA                        843                    105.38
+2  ITALY                      521                     30.65
+3  CHINA                      322                     46.00
+4  SWEDEN                     213                     53.25
+5  IRELAND                    144                     72.00
+6  SINGAPORE                  119                    119.00
+7  GERMANY                     68                     22.67
+8  MALAYSIA                    54                     54.00
+9  UNITED KINGDOM              52                      8.67
+10 IRAN                        51                     51.00
+
+
+Most Relevant Sources
+
+                               Sources        Articles
+1  ENERGY AND BUILDINGS                              7
+2  APPLIED ENERGY                                    5
+3  SUSTAINABLE CITIES AND SOCIETY                    5
+4  RENEWABLE AND SUSTAINABLE ENERGY REVIEWS          4
+5  ENERGIES                                          3
+6  JOURNAL OF BUILDING ENGINEERING                   3
+7  BUILDING AND ENVIRONMENT                          2
+8  BUILDING SIMULATION CONFERENCE PROCEEDINGS        2
+9  BUILDINGS                                         2
+10 CLIMATE                                           2
+
+
+Most Relevant Keywords
+
+        Author Keywords (DE)      Articles      Keywords-Plus (ID)     Articles
+1  REMOTE SENSING                        8 ENERGY EFFICIENCY                 51
+2  ENERGY CONSUMPTION                    7 BUILDINGS                         28
+3  ENERGY EFFICIENCY                     7 ENERGY UTILIZATION                22
+4  URBAN HEAT ISLAND                     7 REMOTE SENSING                    15
+5  GIS                                   6 BUILDING ENERGY PERFORMANCE       13
+6  URBAN BUILDING ENERGY MODELING        6 ENERGY MANAGEMENT                 13
+7  MACHINE LEARNING                      5 URBAN PLANNING                    12
+8  URBAN FORM                            5 ATMOSPHERIC TEMPERATURE           11
+9  BUILDING ENERGY EFFICIENCY            4 DEEP LEARNING                     11
+10 BUILDING ENERGY PERFORMANCE           4 ENERGY PERFORMANCE                11
+

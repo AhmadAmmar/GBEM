@@ -1,0 +1,98 @@
+digraph "Building Energy Efficiency Methodology" {
+	center=true dpi=600 rankdir=TB size=15
+	subgraph cluster_A {
+		color=lightblue fontsize=20 label="Data Acquisition" penwidth=2 style=filled
+		rank=same
+		A1 [label="Remote Sensing Data
+(Sentinel-1, Sentinel-2, LiDaR)" shape=parallelogram]
+		A2 [label="Aerial & Street-view
+(Google Maps API)" shape=parallelogram]
+		A3 [label="EPC Data
+(Energy Performance Certificates)" shape=parallelogram]
+		A4 [label="Building Geometries
+(OSM, OS, Verisk)" shape=parallelogram]
+		A5 [label="Socioeconomic & Demographic Data" shape=parallelogram]
+		A6 [label="Climatic Data
+(ERA5, Met Office)" shape=parallelogram]
+		A1 -> A2 [dir=none]
+		A2 -> A3 [dir=none]
+		A3 -> A4 [dir=none]
+		A4 -> A5 [dir=none]
+		A5 -> A6 [dir=none]
+	}
+	subgraph cluster_B {
+		color=lightyellow fontsize=20 label="Data Preprocessing" penwidth=2 style=filled
+		rank=same
+		B1 [label="Geospatial Alignment
+(CRS, Resampling)" shape=parallelogram]
+		B2 [label="Noise Reduction
+(Cloud Masking, SAR Filtering)" shape=parallelogram]
+		B3 [label="EPC Data Cleaning" shape=parallelogram]
+		B4 [label="Raster to Vector Mapping" shape=parallelogram]
+		B1 -> B2 [dir=none]
+		B2 -> B3 [dir=none]
+		B3 -> B4 [dir=none]
+	}
+	subgraph cluster_C {
+		color=lightgreen fontsize=20 label="Feature Engineering" penwidth=2 style=filled
+		rank=same
+		C1 [label="Urban Indices
+(NDVI, NDBI, UI)" shape=parallelogram]
+		C2 [label="SAR Features
+(VV/VH Ratio, Texture)" shape=parallelogram]
+		C3 [label="LiDAR Features
+(Height, Shadows)" shape=parallelogram]
+		C1 -> C2 [dir=none]
+		C2 -> C3 [dir=none]
+	}
+	subgraph cluster_D {
+		color=lightcoral fontsize=20 label="Model Development" penwidth=2 style=filled
+		rank=same
+		D1 [label="ML Models
+(Random Forest, XGBoost)" shape=parallelogram]
+		D2 [label="DL Models
+(CNNs, Transformers)" shape=parallelogram]
+		D3 [label="Statistical/Physics-based Models" shape=parallelogram]
+		D1 -> D2 [dir=none]
+		D2 -> D3 [dir=none]
+	}
+	subgraph cluster_E {
+		color=khaki fontsize=20 label="Model Refinement" penwidth=2 style=filled
+		rank=same
+		E1 [label="Hyperparameter Tuning" shape=parallelogram]
+		E2 [label="Feature Importance Analysis" shape=parallelogram]
+		E1 -> E2 [dir=none]
+	}
+	subgraph cluster_F {
+		color=lavender fontsize=20 label="Validation & Analysis" penwidth=2 style=filled
+		rank=same
+		F1 [label="Cross-validation
+(Accuracy, RMSE)" shape=parallelogram]
+		F2 [label="Spatial Clustering
+(DBSCAN, K-means)" shape=parallelogram]
+		F3 [label="Ground Validation" shape=parallelogram]
+		F1 -> F2 [dir=none]
+		F2 -> F3 [dir=none]
+	}
+	subgraph cluster_G {
+		color=orange fontsize=20 label="Automation & Scalability" penwidth=2 style=filled
+		rank=same
+		G1 [label="Automated Geospatial Pipeline" shape=parallelogram]
+		G2 [label="Temporal Monitoring" shape=parallelogram]
+		G3 [label="Dashboards & Visualization" shape=parallelogram]
+		G4 [label="BIM/BEM Integration" shape=parallelogram]
+		G5 [label="Policy Integration" shape=parallelogram]
+		G6 [label="Publication & Dissemination" shape=parallelogram]
+		G1 -> G2 [dir=none]
+		G2 -> G3 [dir=none]
+		G3 -> G4 [dir=none]
+		G4 -> G5 [dir=none]
+		G5 -> G6 [dir=none]
+	}
+	A3 -> B2 [constraint=true]
+	B3 -> C2 [constraint=true]
+	C2 -> D2 [constraint=true]
+	D2 -> E1 [constraint=true]
+	E2 -> F2 [constraint=true]
+	F2 -> G3 [constraint=true]
+}

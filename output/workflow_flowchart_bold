@@ -1,0 +1,63 @@
+digraph Workflow {
+	node [shape=box style=rounded]
+	dpi=600 fontcolor=black fontsize=20 label="Proposed Workflow" labelloc=t nodesep=0.3 rankdir=TB ranksep=0.3 size=15
+	A [label=<
+    <B>Data Acquisition:</B><BR/>
+    &#45; Remote Sensing Data: Sentinel&#45;1 SAR, Sentinel&#45;2 MSI, Thermal Imagery, LiDaR<BR/>
+    &#45; Aerial &amp; Street-view (Google Maps API)<BR/>
+    &#45; EPC Data<BR/>
+    &#45; Building Geometries: OSM, OS, Verisk<BR/>
+    &#45; Socioeconomic &amp; Demographic Data: Density, Consumption, Usage Patterns<BR/>
+    &#45; Climatic Data: ERA5, Met Office
+> color=lightblue fontsize=12 style=filled]
+	B [label=<
+    <B>Preprocessing:</B><BR/>
+    &#45; CRS Standardization, Resampling, Normalization, Patching<BR/>
+    &#45; Noise Reduction: Cloud Masking, SAR Filtering<BR/>
+    &#45; EPC Data Cleaning &amp; Harmonization<BR/>
+    &#45; Raster to Vector Mapping: Building Footprints Overlay
+> color=lightyellow fontsize=12 style=filled]
+	C [label=<
+    <B>Feature Engineering:</B><BR/>
+    &#45; Urban Indices: NDVI, NDBI, UI, IBI<BR/>
+    &#45; SAR Features: VV/VH Ratio, Texture Metrics<BR/>
+    &#45; LiDAR Features: Heights, Shadow Analysis
+> color=palegreen fontsize=12 style=filled]
+	D [label=<
+    <B>Model Development:</B><BR/>
+    &#45; ML Models: Random Forest, XGBoost, Ensemble<BR/>
+    &#45; DL Models: CNNs, Transformers<BR/>
+    &#45; Explainable AI (XAI): Model Interpretability<BR/>
+    &#45; Statistical, Linear, and Physics-based Modelling
+> color=lightcoral fontsize=12 style=filled]
+	E [label=<
+    <B>Refinement:</B><BR/>
+    &#45; Hyperparameter Tuning<BR/>
+    &#45; Feature Importance Analysis
+> color=lightsalmon fontsize=12 style=filled]
+	F [label=<
+    <B>Validation:</B><BR/>
+    &#45; Cross-validation: Accuracy, RMSE, F1-score<BR/>
+    &#45; Real-world &amp; Ground Validation
+> color=thistle fontsize=12 style=filled]
+	G [label=<
+    <B>Analysis:</B><BR/>
+    &#45; Spatial Clustering: DBSCAN, K-means<BR/>
+    &#45; Planning Retrofitting Interventions
+> color=khaki fontsize=12 style=filled]
+	H [label=<
+    <B>Automation &amp; Scalability:</B><BR/>
+    &#45; Automated Pipeline: Spatiotemporal Assessments to Monitor Decarbonization Efforts<BR/>
+    &#45; Development of Dashboards/Visualization Tools<BR/>
+    &#45; BIM/BEM Integration<BR/>
+    &#45; Policy Integration &amp; Urban Planning Recommendations<BR/>
+    &#45; Publications &amp; Dissemination
+> color=orange fontsize=12 style=filled]
+	A -> B
+	B -> C
+	C -> D
+	D -> E [dir=both]
+	E -> F [dir=both]
+	F -> G
+	G -> H
+}

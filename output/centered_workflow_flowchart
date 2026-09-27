@@ -1,0 +1,70 @@
+digraph "Building Energy Efficiency Methodology" {
+	dpi=600 rankdir=TB size=10 splines=ortho
+	subgraph cluster_A {
+		color=lightblue fontsize=20 label="Data Acquisition" style="rounded,filled"
+		rank=same
+		A1 [label="Remote Sensing Data" shape=parallelogram]
+		A2 [label="Aerial & Street-view" shape=parallelogram]
+		A3 [label="EPC Data" shape=parallelogram]
+		A4 [label="Building Geometries" shape=parallelogram]
+		A5 [label="Socioeconomic Data" shape=parallelogram]
+		A6 [label="Climatic Data" shape=parallelogram]
+		A1 -> A2 [arrowhead=none]
+		A2 -> A3 [arrowhead=none]
+		A3 -> A4 [arrowhead=none]
+		A4 -> A5 [arrowhead=none]
+		A5 -> A6 [arrowhead=none]
+	}
+	subgraph cluster_B {
+		color=lightyellow fontsize=20 label="Data Preprocessing" style="rounded,filled"
+		rank=same
+		B1 [label="Geospatial Alignment" shape=parallelogram]
+		B2 [label="Noise Reduction" shape=parallelogram]
+		B3 [label="EPC Data Cleaning" shape=parallelogram]
+		B4 [label="Raster to Vector Mapping" shape=parallelogram]
+		B1 -> B2 [arrowhead=none]
+		B2 -> B3 [arrowhead=none]
+		B3 -> B4 [arrowhead=none]
+	}
+	subgraph cluster_C {
+		color=lightgreen fontsize=20 label="Feature Engineering" style="rounded,filled"
+		rank=same
+		C1 [label="Urban Indices" shape=parallelogram]
+		C2 [label="SAR Features" shape=parallelogram]
+		C3 [label="LiDAR Features" shape=parallelogram]
+		C1 -> C2 [arrowhead=none]
+		C2 -> C3 [arrowhead=none]
+	}
+	subgraph cluster_D {
+		color=lightcoral fontsize=20 label="Model Development" style="rounded,filled"
+		rank=same
+		D1 [label="ML Models" shape=parallelogram]
+		D2 [label="DL Models" shape=parallelogram]
+		D3 [label="Physics-based Modeling" shape=parallelogram]
+		D1 -> D2 [arrowhead=none]
+		D2 -> D3 [arrowhead=none]
+	}
+	subgraph cluster_E {
+		color=lavender fontsize=20 label="Validation & Analysis" style="rounded,filled"
+		rank=same
+		E1 [label="Cross-validation" shape=parallelogram]
+		E2 [label="Spatial Clustering" shape=parallelogram]
+		E3 [label="Ground Validation" shape=parallelogram]
+		E1 -> E2 [arrowhead=none]
+		E2 -> E3 [arrowhead=none]
+	}
+	subgraph cluster_F {
+		color=orange fontsize=20 label="Automation & Scalability" style="rounded,filled"
+		rank=same
+		F1 [label="Automated Pipeline" shape=parallelogram]
+		F2 [label="Temporal Monitoring" shape=parallelogram]
+		F3 [label="Policy Integration" shape=parallelogram]
+		F1 -> F2 [arrowhead=none]
+		F2 -> F3 [arrowhead=none]
+	}
+	A3 -> B2 [constraint=true]
+	B2 -> C2 [constraint=true]
+	C2 -> D2 [constraint=true]
+	D2 -> E2 [constraint=true]
+	E2 -> F2 [constraint=true]
+}

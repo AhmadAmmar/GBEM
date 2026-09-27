@@ -1,0 +1,41 @@
+digraph "Proposed Methodology" {
+	dpi=600 rankdir=TB size=15
+	Start [label=Start shape=circle]
+	DA [label="Data Acquisition
+(Sentinel, LiDAR, EPC, etc.)" shape=box]
+	DP [label="Data Preprocessing
+(Cleaning, Alignment, Feature Extraction)" shape=box]
+	FE [label="Feature Engineering
+(Spectral Indices, Urban Morphology, Socioeconomic Data)" shape=box]
+	ML [label="Initial ML Modeling
+(Random Forest, XGBoost)" shape=diamond]
+	VAL [label="Validation
+(Accuracy, Feature Importance)" shape=parallelogram]
+	ADV [label="Advanced Modeling
+(Deep Learning, Ensemble Methods)" shape=diamond]
+	EXP [label="Expand Dataset
+(High-res Imagery, Climatic, Socioeconomic Data)" shape=box]
+	FUS [label="Data Fusion
+(Multisource Integration)" shape=box]
+	BIMBEM [label="Integration with BIM/BEM Models" shape=box]
+	XAI [label="Explainable AI
+(Model Interpretability)" shape=box]
+	POL [label="Policy Applications
+(Retrofit Planning, Urban Policy)" shape=box]
+	PUB [label="Publications & Dissemination
+(Papers, Conferences)" shape=parallelogram]
+	END [label=End shape=circle]
+	Start -> DA
+	DA -> DP
+	DP -> FE
+	FE -> ML
+	ML -> VAL
+	VAL -> ADV
+	ADV -> EXP
+	ADV -> FUS
+	FUS -> BIMBEM
+	BIMBEM -> XAI
+	XAI -> POL
+	POL -> PUB
+	PUB -> END
+}

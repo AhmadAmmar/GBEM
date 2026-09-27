@@ -1,0 +1,19 @@
+{
+  "bbox": {
+    "south": 23.0,
+    "west": 60.0,
+    "north": 37.8,
+    "east": 80.5
+  },
+  "created_by": "iwt_fetch_assets.py",
+  "include_canals": false,
+  "ne_filtered_rivers": "d:\\OneDrive - Ulster University\\PhD\\code\\scripts\\data_processing\\data_iwt_assets\\ne_filtered\\ne_iwt_rivers.geojson",
+  "ne_admin0_bbox": "d:\\OneDrive - Ulster University\\PhD\\code\\scripts\\data_processing\\data_iwt_assets\\ne_filtered\\ne_admin0_bbox.geojson",
+  "osm_dams_points": "d:\\OneDrive - Ulster University\\PhD\\code\\scripts\\data_processing\\data_iwt_assets\\osm\\dams_weirs_barrages_points.geojson",
+  "osm_dams_lines": "d:\\OneDrive - Ulster University\\PhD\\code\\scripts\\data_processing\\data_iwt_assets\\osm\\dams_weirs_barrages_lines.geojson",
+  "osm_dams_raw": "d:\\OneDrive - Ulster University\\PhD\\code\\scripts\\data_processing\\data_iwt_assets\\osm\\dams_weirs_barrages_raw.json",
+  "osm_reservoirs_lines": "d:\\OneDrive - Ulster University\\PhD\\code\\scripts\\data_processing\\data_iwt_assets\\osm\\reservoirs_lines.geojson",
+  "osm_reservoirs_raw": "d:\\OneDrive - Ulster University\\PhD\\code\\scripts\\data_processing\\data_iwt_assets\\osm\\reservoirs_raw.json",
+  "osm_kabul_lines": "d:\\OneDrive - Ulster University\\PhD\\code\\scripts\\data_processing\\data_iwt_assets\\osm\\kabul_fallback_lines.geojson",
+  "osm_kabul_raw": "d:\\OneDrive - Ulster University\\PhD\\code\\scripts\\data_processing\\data_iwt_assets\\osm\\kabul_fallback_raw.json"
+}

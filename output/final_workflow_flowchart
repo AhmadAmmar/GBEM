@@ -1,0 +1,103 @@
+digraph "Building Energy Efficiency Methodology" {
+	dpi=600 rankdir=TB size=8 splines=ortho
+	subgraph cluster_A {
+		color=black fontsize=16 label="Data Acquisition" style=rounded
+		rank=same
+		A1 [label="Remote Sensing Data
+(Sentinel-1 SAR, Sentinel-2 MSI, Thermal Imagery, LiDaR)" shape=parallelogram]
+		A2 [label="Aerial & Street-view
+(Google Maps API)" shape=parallelogram]
+		A3 [label="EPC Data
+(Energy Performance Certificates)" shape=parallelogram]
+		A4 [label="Building Geometries
+(OSM, OS, Verisk)" shape=parallelogram]
+		A5 [label="Socioeconomic & Demographic Data
+(Density, Consumption, Usage Patterns)" shape=parallelogram]
+		A6 [label="Climatic Data
+(ERA5, Met Office)" shape=parallelogram]
+		A1 -> A2 [arrowhead=none]
+		A2 -> A3 [arrowhead=none]
+		A3 -> A4 [arrowhead=none]
+		A4 -> A5 [arrowhead=none]
+		A5 -> A6 [arrowhead=none]
+	}
+	subgraph cluster_B {
+		color=black fontsize=16 label="Data Preprocessing" style=rounded
+		rank=same
+		B1 [label="Geospatial Alignment
+(CRS Standardization, Resampling, Normalization, Patching)" shape=parallelogram]
+		B2 [label="Noise Reduction
+(Cloud Masking, SAR Filtering)" shape=parallelogram]
+		B3 [label="EPC Data Cleaning & Harmonization" shape=parallelogram]
+		B4 [label="Raster to Vector Mapping
+(Building Footprints Overlay)" shape=parallelogram]
+		B1 -> B2 [arrowhead=none]
+		B2 -> B3 [arrowhead=none]
+		B3 -> B4 [arrowhead=none]
+	}
+	subgraph cluster_C {
+		color=black label="Feature Engineering" style=rounded
+		rank=same
+		C1 [label="Urban Indices
+(NDVI, NDBI, UI, IBI)" shape=parallelogram]
+		C2 [label="SAR Features
+(VV/VH Ratio, Texture Metrics)" shape=parallelogram]
+		C3 [label="LiDAR Features
+(Height, Shadow Analysis)" shape=parallelogram]
+		C1 -> C2 [arrowhead=none]
+		C2 -> C3 [arrowhead=none]
+	}
+	subgraph cluster_D {
+		color=black label="Model Development" style=rounded
+		rank=same
+		D1 [label="ML Models
+(Random Forest, XGBoost, Ensemble)" shape=parallelogram]
+		D2 [label="DL Models (CNNs, Transformers)
+Explainable AI (XAI - Model Interpretability)" shape=parallelogram]
+		D3 [label="Statistical, Linear and Physics-based Modelling" shape=parallelogram]
+		D1 -> D2 [arrowhead=none]
+		D2 -> D3 [arrowhead=none]
+	}
+	subgraph cluster_E {
+		color=black label="Model Refinement" style=rounded
+		rank=same
+		E1 [label="Hyperparameter Tuning" shape=parallelogram]
+		E2 [label="Feature Importance Analysis" shape=parallelogram]
+		E1 -> E2 [arrowhead=none]
+	}
+	subgraph cluster_F {
+		color=black label="Validation & Analysis" style=rounded
+		rank=same
+		F1 [label="Cross-validation
+(Accuracy, RMSE, F1-score)" shape=parallelogram]
+		F2 [label="Spatial Clustering
+(DBSCAN, K-means)" shape=parallelogram]
+		F3 [label="Real-world & Ground Validation" shape=parallelogram]
+		F1 -> F2 [arrowhead=none]
+		F2 -> F3 [arrowhead=none]
+	}
+	subgraph cluster_G {
+		color=black label="Automation & Scalability" style=rounded
+		rank=same
+		G1 [label="Automated Geospatial Pipeline
+(Scalable Assessments)" shape=parallelogram]
+		G2 [label="Temporal Monitoring
+(Monitor Decarbonization Efforts)" shape=parallelogram]
+		G3 [label="Development of Dashboards/Visualization Tools" shape=parallelogram]
+		G4 [label="BIM/BEM Integration" shape=parallelogram]
+		G5 [label="Policy Integration
+(Urban Planning Recommendations)" shape=parallelogram]
+		G6 [label="Publication & Dissemination" shape=parallelogram]
+		G1 -> G2 [arrowhead=none]
+		G2 -> G3 [arrowhead=none]
+		G3 -> G4 [arrowhead=none]
+		G4 -> G5 [arrowhead=none]
+		G5 -> G6 [arrowhead=none]
+	}
+	A3 -> B2 [constraint=true]
+	B2 -> C2 [constraint=true]
+	C2 -> D2 [constraint=true]
+	D2 -> E1 [constraint=true]
+	E2 -> F2 [constraint=true]
+	F2 -> G3 [constraint=true]
+}

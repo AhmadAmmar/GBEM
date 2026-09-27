@@ -1,0 +1,97 @@
+digraph "Building Energy Efficiency Methodology" {
+	dpi=600 rankdir=TB size=15
+	node [fillcolor=white shape=parallelogram style=filled]
+	subgraph cluster_A {
+		color=lightblue label="Data Acquisition" labeljust=center style=filled
+		A1 [label="Remote Sensing Data
+(Sentinel-1 SAR, Sentinel-2 MSI, Thermal Imagery, LiDAR)"]
+		A2 [label="Aerial & Street-view
+(Google Maps API)"]
+		A3 [label="EPC Data
+(Energy Performance Certificates)"]
+		A4 [label="Building Geometries
+(OSM, OS, Verisk)"]
+		A5 [label="Socioeconomic & Demographic Data
+(Density, Consumption, Usage Patterns)"]
+		A6 [label="Climatic Data
+(ERA5, Met Office)"]
+		A1 -> A2
+		A2 -> A3
+		A3 -> A4
+		A4 -> A5
+		A5 -> A6
+	}
+	subgraph cluster_B {
+		color=lightyellow label="Data Preprocessing" labeljust=center style=filled
+		B1 [label="Geospatial Alignment
+(CRS Standardization, Resampling, Normalization, Patching)"]
+		B2 [label="Noise Reduction
+(Cloud Masking, SAR Filtering)"]
+		B3 [label="EPC Data Cleaning & Harmonization"]
+		B4 [label="Raster to Vector Mapping
+(Building Footprints Overlay)"]
+		B1 -> B2
+		B2 -> B3
+		B3 -> B4
+	}
+	subgraph cluster_C {
+		color=lightgreen label="Feature Engineering" labeljust=center style=filled
+		C1 [label="Urban Indices
+(NDVI, NDBI, UI, IBI)"]
+		C2 [label="SAR Features
+(VV/VH Ratio, Texture Metrics)"]
+		C3 [label="LiDAR Features
+(Height, Shadow Analysis)"]
+		C1 -> C2
+		C2 -> C3
+	}
+	subgraph cluster_D {
+		color=lightcoral label="Model Development" labeljust=center style=filled
+		D1 [label="ML Models
+(Random Forest, XGBoost, Ensemble)"]
+		D2 [label="DL Models (CNNs, Transformers)
+Explainable AI (XAI - Model Interpretability)"]
+		D3 [label="Statistical, Linear and Physics-based Modelling"]
+		D1 -> D2
+		D2 -> D3
+	}
+	subgraph cluster_E {
+		color=lightgray label="Model Refinement" labeljust=center style=filled
+		E1 [label="Hyperparameter Tuning"]
+		E2 [label="Feature Importance Analysis"]
+		E1 -> E2
+	}
+	subgraph cluster_F {
+		color=lavender label="Validation & Analysis" labeljust=center style=filled
+		F1 [label="Cross-validation
+(Accuracy, RMSE, F1-score)"]
+		F2 [label="Spatial Clustering
+(DBSCAN, K-means)"]
+		F3 [label="Real-world & Ground Validation"]
+		F1 -> F2
+		F2 -> F3
+	}
+	subgraph cluster_G {
+		color=orange label="Automation & Scalability" labeljust=center style=filled
+		G1 [label="Automated Geospatial Pipeline
+(Scalable Assessments)"]
+		G2 [label="Temporal Monitoring
+(Monitor Decarbonization Efforts)"]
+		G3 [label="Development of Dashboards/Visualization Tools"]
+		G4 [label="BIM/BEM Integration"]
+		G5 [label="Policy Integration
+(Urban Planning Recommendations)"]
+		G6 [label="Publication & Dissemination"]
+		G1 -> G2
+		G2 -> G3
+		G3 -> G4
+		G4 -> G5
+		G5 -> G6
+	}
+	A6 -> B1
+	B4 -> C1
+	C3 -> D1
+	D3 -> E1
+	E2 -> F1
+	F3 -> G1
+}

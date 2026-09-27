@@ -1,0 +1,42 @@
+digraph "Building Energy Efficiency Methodology" {
+	dpi=600 rankdir=TB size=15
+	subgraph cluster_A {
+		color=black label="Data Collection" labeljust=center style=rounded
+		rank=same
+		A1 [label="Remote Sensing Data" fixedsize=true height=0.6 shape=rectangle width=1.5]
+		A2 [label="Aerial & Street-view" fixedsize=true height=0.6 shape=rectangle width=1.5]
+		A3 [label="EPC Data" fixedsize=true height=0.6 shape=rectangle width=1.5]
+		A1 -> A2 [arrowhead=none style=solid]
+		A2 -> A3 [arrowhead=none style=solid]
+	}
+	subgraph cluster_B {
+		color=black label="Data Preprocessing" labeljust=center style=rounded
+		rank=same
+		B1 [label="Geospatial Alignment" fixedsize=true height=0.6 shape=rectangle width=1.5]
+		B2 [label="Noise Reduction" fixedsize=true height=0.6 shape=rectangle width=1.5]
+		B3 [label="EPC Cleaning" fixedsize=true height=0.6 shape=rectangle width=1.5]
+		B1 -> B2 [arrowhead=none style=solid]
+		B2 -> B3 [arrowhead=none style=solid]
+	}
+	subgraph cluster_C {
+		color=black label="Feature Engineering" labeljust=center style=rounded
+		rank=same
+		C1 [label="Urban Indices" fixedsize=true height=0.6 shape=rectangle width=1.5]
+		C2 [label="SAR Features" fixedsize=true height=0.6 shape=rectangle width=1.5]
+		C3 [label="LiDAR Features" fixedsize=true height=0.6 shape=rectangle width=1.5]
+		C1 -> C2 [arrowhead=none style=solid]
+		C2 -> C3 [arrowhead=none style=solid]
+	}
+	subgraph cluster_D {
+		color=black label="Model Development" labeljust=center style=rounded
+		rank=same
+		D1 [label="ML Models" fixedsize=true height=0.6 shape=rectangle width=1.5]
+		D2 [label="DL Models" fixedsize=true height=0.6 shape=rectangle width=1.5]
+		D3 [label="Physics-based Models" fixedsize=true height=0.6 shape=rectangle width=1.5]
+		D1 -> D2 [arrowhead=none style=solid]
+		D2 -> D3 [arrowhead=none style=solid]
+	}
+	A2 -> B2 [constraint=true]
+	B2 -> C2 [constraint=true]
+	C2 -> D2 [constraint=true]
+}

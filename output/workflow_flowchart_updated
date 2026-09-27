@@ -1,0 +1,51 @@
+digraph "Building Energy Efficiency Methodology" {
+	center=true dpi=600 rankdir=TB size=15
+	subgraph cluster_data_collection {
+		color=black label="Data Collection" style=rounded
+		rank=same
+		DC1 [label="Remote Sensing Data
+(Sentinel-1, Sentinel-2, LiDAR)" shape=parallelogram]
+		DC2 [label="EPC Data
+(Energy Performance Certificates)" shape=parallelogram]
+		DC3 [label="Socioeconomic & Climate Data" shape=parallelogram]
+		DC1 -> DC2 [dir=none]
+		DC2 -> DC3 [dir=none]
+	}
+	subgraph cluster_data_preprocessing {
+		color=black label="Data Preprocessing" style=rounded
+		rank=same
+		DP1 [label="Geospatial Alignment
+(CRS, Resampling)" shape=parallelogram]
+		DP2 [label="Noise Reduction
+(Cloud Masking, Filtering)" shape=parallelogram]
+		DP3 [label="Data Cleaning & Harmonization" shape=parallelogram]
+		DP1 -> DP2 [dir=none]
+		DP2 -> DP3 [dir=none]
+	}
+	subgraph cluster_feature_engineering {
+		color=black label="Feature Engineering" style=rounded
+		rank=same
+		FE1 [label="Urban Indices
+(NDVI, NDBI, IBI)" shape=parallelogram]
+		FE2 [label="SAR Features
+(VV/VH Ratio, Texture Metrics)" shape=parallelogram]
+		FE3 [label="LiDAR Features
+(Height, Shadows)" shape=parallelogram]
+		FE1 -> FE2 [dir=none]
+		FE2 -> FE3 [dir=none]
+	}
+	subgraph cluster_model_development {
+		color=black label="Model Development" style=rounded
+		rank=same
+		MD1 [label="ML Models
+(Random Forest, XGBoost)" shape=parallelogram]
+		MD2 [label="DL Models
+(CNNs, Transformers)" shape=parallelogram]
+		MD3 [label="Statistical Modelling" shape=parallelogram]
+		MD1 -> MD2 [dir=none]
+		MD2 -> MD3 [dir=none]
+	}
+	DC3 -> DP1
+	DP3 -> FE1
+	FE3 -> MD1
+}

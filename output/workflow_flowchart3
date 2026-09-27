@@ -1,0 +1,54 @@
+digraph "Flexible Methodology Workflow" {
+	dpi=600 rankdir=TB size=15
+	A [label="Data Acquisition" shape=parallelogram]
+	A1 [label="Remote Sensing Data - Sentinel-2, Sentinel-1, Landsat-8, LiDAR)" shape=parallelogram]
+	A2 [label="EPC Data & Socioeconomic Data" shape=parallelogram]
+	A3 [label="Environmental Data - UHI, LCZ, Climate)" shape=parallelogram]
+	B [label="Data Preprocessing" shape=rectangle]
+	B1 [label="Georeferencing, Cloud Masking, Normalization" shape=rectangle]
+	B2 [label="Spatial Alignment - Raster-to-Vector)" shape=rectangle]
+	C [label="Feature Engineering" shape=rectangle]
+	C1 [label="Spectral Indices - NDVI, NDBI, IBI)" shape=rectangle]
+	C2 [label="SAR Metrics - VV/VH Ratio, Coherence)" shape=rectangle]
+	C3 [label="LiDAR-based Urban Morphology - Height, SVF, Shadows)" shape=rectangle]
+	C4 [label="Socioeconomic & Demographic Proxies" shape=rectangle]
+	D [label="Machine Learning Modeling" shape=rectangle]
+	D1 [label="Baseline Models - Random Forest, XGBoost)" shape=rectangle]
+	D2 [label="Advanced Models - CNNs, Ensemble Learning)" shape=rectangle]
+	D3 [label="Hyperparameter Tuning & Optimization" shape=rectangle]
+	E [label="Validation & Evaluation" shape=diamond]
+	E1 [label="Accuracy Metrics - Confusion Matrix, RMSE)" shape=rectangle]
+	E2 [label="Spatial Cross-Validation" shape=rectangle]
+	E3 [label="Ground Truth Comparison against Energy Audits)" shape=rectangle]
+	F [label="Planned Enhancements" fillcolor=lightblue shape=rectangle style=filled]
+	F1 [label="Integration with BIM/BEM Models" fillcolor=lightblue shape=rectangle style=filled]
+	F2 [label="Explainable AI (XAI) for Model Interpretation" fillcolor=lightblue shape=rectangle style=filled]
+	F3 [label="Automated Geospatial Pipeline, Scalable Assessments)" fillcolor=lightblue shape=rectangle style=filled]
+	F4 [label="Temporal Monitoring of Urban Energy Trends" fillcolor=lightblue shape=rectangle style=filled]
+	A -> A1
+	A -> A2
+	A -> A3
+	A1 -> B
+	A2 -> B
+	A3 -> B
+	B -> B1
+	B1 -> B2
+	B2 -> C
+	C -> C1
+	C1 -> C2
+	C2 -> C3
+	C3 -> C4
+	C4 -> D
+	D -> D1
+	D1 -> D2
+	D2 -> D3
+	D3 -> E
+	E -> E1
+	E1 -> E2
+	E2 -> E3
+	E3 -> F
+	F -> F1
+	F1 -> F2
+	F2 -> F3
+	F3 -> F4
+}

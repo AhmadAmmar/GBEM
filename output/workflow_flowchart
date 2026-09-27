@@ -1,0 +1,57 @@
+digraph Workflow {
+	node [color=lightblue shape=box style="rounded, filled"]
+	dpi=600 fontsize=20 label="Proposed Workflow" labeljust=c labelloc=t rankdir=TB size=15
+	A [label="Data Acquisition:-
+
+-Remote Sensing Data: Sentinel-1 SAR, Sentinel-2 MSI, Thermal Imagery, LiDaR
+-Aerial & Street-view (Google Maps API)
+-EPC Data
+-Building Geometries: OSM, OS, Verisk
+-Socioeconomic & Demographic Data: Density, Consumption, Usage Patterns
+-Climatic Data: ERA5, Met Office" color=lightblue]
+	B [label="Preprocessing:-
+
+-CRS Standardization, Resampling, Normalization, Patching
+-Noise Reduction: Cloud Masking, SAR Filtering
+-EPC Data Cleaning & Harmonization
+-Raster to Vector Mapping: Building Footprints Overlay" color=lightyellow]
+	C [label="Feature Engineering:-
+
+-Urban Indices: NDVI, NDBI, UI, IBI
+-SAR Features: VV/VH Ratio, Texture Metrics
+-LiDAR Features: Heights, Shadow Analysis" color=palegreen]
+	D [label="Model Development:-
+
+-ML Models: Random Forest, XGBoost, Ensemble
+-DL Models: CNNs, Transformers
+-Explainable AI (XAI): Model Interpretability
+-Statistical, Linear and Physics-based Modelling" color=lightcoral]
+	E [label="Refinement:-
+
+-Hyperparameter Tuning
+-Feature Importance Analysis" color=lightsalmon]
+	F [label="Validation:-
+
+-Cross-validation: Accuracy, RMSE, F1-score
+-Real-world & Ground Validation" color=thistle]
+	G [label="Analysis:-
+
+-Spatial Clustering: DBSCAN, K-means
+-Planning Retrofitting Interventions" color=khaki]
+	H [label="Automation & Scalability:-
+
+-Automated Pipeline: Spatiotemporal Assessments to Monitor Decarbonization Efforts
+-Development of Dashboards/Visualization Tools
+-BIM/BEM integration
+-Policy Integration & Urban Planning Recommendations
+-Publications & Dissemination" color=orange]
+	A -> B
+	B -> C
+	C -> D
+	D -> E
+	E -> D
+	E -> F
+	F -> E
+	F -> G
+	G -> H
+}
