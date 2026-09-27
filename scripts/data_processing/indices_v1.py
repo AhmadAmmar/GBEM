@@ -7,7 +7,7 @@ from skimage.util import img_as_ubyte
 from tqdm import tqdm
 
 # === Paths ===
-base_folder = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\Sat"
+base_folder = r"D:\OneDrive - Ulster University\PhD\data\london\Sat"
 
 # === Helpers ===
 def read_band(name):

@@ -1,7 +1,7 @@
 import geopandas as gpd
 
 # Path to your shapefile
-shapefile_path = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\Buildings\gis_osm_buildings_a_free_1.shp"
+shapefile_path = r"D:\OneDrive - Ulster University\PhD\data\london\Buildings\gis_osm_buildings_a_free_1.shp"
 
 # Load shapefile
 gdf = gpd.read_file(shapefile_path)

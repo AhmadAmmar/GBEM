@@ -1,9 +1,9 @@
 import geopandas as gpd
 
 # === File Paths ===
-input_geojson = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\london_2024_epc_with_calculated_indices.geojson"
-full_output_geojson = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\london_2024_epc_with_id.geojson"
-light_output_geojson = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\london_2024_epc_id_latlon_geom.geojson"
+input_geojson = r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_with_calculated_indices.geojson"
+full_output_geojson = r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_with_id.geojson"
+light_output_geojson = r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_id_latlon_geom.geojson"
 
 # === Load original full EPC GeoJSON ===
 print("📍 Loading original EPC file...")

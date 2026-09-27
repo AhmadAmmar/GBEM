@@ -3,7 +3,7 @@ import pandas as pd
 from tqdm import tqdm
 
 # Directory containing the subfolders with certificates.csv files
-base_dir = "D:/OneDrive - Ulster University/PhD/Data/all-domestic-certificates"
+base_dir = "D:/OneDrive - Ulster University/PhD/data/all-domestic-certificates"
 
 # Process all subfolders
 subfolders = [f for f in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, f))]

@@ -9,11 +9,11 @@ import matplotlib.patches as mpatches
 # -------------------------------------------------------------------
 # File paths
 # -------------------------------------------------------------------
-lst_path = "D:/OneDrive - Ulster University/PhD/Data/London/Sat/L8B10.tif"
-epc_csv  = "D:/OneDrive - Ulster University/PhD/Data/London/Certs/certificates_london_sample_100.csv"
+lst_path = "D:/OneDrive - Ulster University/PhD/data/london/Sat/L8B10.tif"
+epc_csv  = "D:/OneDrive - Ulster University/PhD/data/london/Certs/certificates_london_sample_100.csv"
 
-out_lst_map       = "D:/OneDrive - Ulster University/PhD/Data/London/Output/london_LST_2024_stretched.png"
-out_lst_map_epc   = "D:/OneDrive - Ulster University/PhD/Data/London/Output/london_LST_2024_stretched_with_EPC.png"
+out_lst_map       = "D:/OneDrive - Ulster University/PhD/data/london/Output/london_LST_2024_stretched.png"
+out_lst_map_epc   = "D:/OneDrive - Ulster University/PhD/data/london/Output/london_LST_2024_stretched_with_EPC.png"
 
 # -------------------------------------------------------------------
 # 1) Load the LST raster (original, unmodified data)

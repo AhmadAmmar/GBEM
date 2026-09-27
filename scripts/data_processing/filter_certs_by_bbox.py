@@ -4,8 +4,8 @@ from shapely.geometry import Point, box
 from tqdm import tqdm
 
 # File paths
-csv_file = "C:/Users/B00996107/OneDrive - Ulster University/PhD/Data/merged_certificates_with_latlon.csv"
-output_csv = "C:/Users/B00996107/OneDrive - Ulster University/PhD/Data/20231125T143956000_visual_30_hotsat1.csv"
+csv_file = "D:/OneDrive - Ulster University/PhD/data/merged_certificates_with_latlon.csv"
+output_csv = "D:/OneDrive - Ulster University/PhD/data/20231125T143956000_visual_30_hotsat1.csv"
 
 # Define the bounding box from the Hotsat-1 metadata
 # BBOX: [min_longitude, min_latitude, max_longitude, max_latitude]

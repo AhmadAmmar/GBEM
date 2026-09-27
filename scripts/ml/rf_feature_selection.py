@@ -8,7 +8,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # === Load the GeoJSON ===
-path = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\london_2024_epc_with_polygons.geojson"
+path = r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_with_polygons.geojson"
 gdf = gpd.read_file(path)
 
 # === Define target columns ===

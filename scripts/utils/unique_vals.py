@@ -1,7 +1,7 @@
 import pandas as pd
 
 # Path to the certificates file
-file_path = "D:/OneDrive - Ulster University/PhD/Data/reduced_merged_certificates.csv"
+file_path = "D:/OneDrive - Ulster University/PhD/data/reduced_merged_certificates.csv"
 
 try:
     # Read the FLAT_TOP_STOREY column

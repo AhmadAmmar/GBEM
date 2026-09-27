@@ -8,10 +8,10 @@ from osgeo import ogr
 from tqdm import tqdm
 
 # Directory containing the subfolders with certificates.csv files
-base_dir = "D:/OneDrive - Ulster University/PhD/Data/all-domestic-certificates"
+base_dir = "D:/OneDrive - Ulster University/PhD/data/all-domestic-certificates"
 
 # Path to save the merged certificates file
-output_file = "D:/OneDrive - Ulster University/PhD/Data/merged_certificates.csv"
+output_file = "D:/OneDrive - Ulster University/PhD/data/merged_certificates.csv"
 
 # Initialize the output file
 is_first_file = True

@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 warnings.filterwarnings("ignore")
 
 # ── I/O ──────────────────────────────────────────────────────────────────
-DATA_FILE = r"D:\OneDrive - Ulster University\PhD\Data\London\london_2024_epc_with_polygons.geojson"
+DATA_FILE = r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_with_polygons.geojson"
 OUTROOT   = r"D:\OneDrive - Ulster University\PhD\Outputs\shap_quicklook"
 RUN_DIR   = Path(OUTROOT) / f"run_{datetime.datetime.now().strftime('%Y%m%d_%H%M')}"
 RUN_DIR.mkdir(parents=True, exist_ok=True)

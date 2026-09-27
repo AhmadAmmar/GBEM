@@ -1,7 +1,7 @@
 import pandas as pd
 
 # Path to the merged certificates file with latitude and longitude
-file_path = "D:/OneDrive - Ulster University/PhD/Data/reduced_merged_certificates.csv"
+file_path = "D:/OneDrive - Ulster University/PhD/data/reduced_merged_certificates.csv"
 
 # Check if the file exists and print column names
 try:

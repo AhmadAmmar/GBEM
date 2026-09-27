@@ -1,8 +1,8 @@
 import pandas as pd
 
 # File paths
-input_file = "D:/OneDrive - Ulster University/PhD/Data/reduced_merged_certificates.csv"
-output_file = "D:/OneDrive - Ulster University/PhD/Data/column_data_types_new.csv"
+input_file = "D:/OneDrive - Ulster University/PhD/data/reduced_merged_certificates.csv"
+output_file = "D:/OneDrive - Ulster University/PhD/data/column_data_types_new.csv"
 
 # Chunk size for processing
 chunk_size = 100000

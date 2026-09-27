@@ -6,7 +6,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # === Load the GeoJSON ===
-path = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\london_2024_epc_with_polygons.geojson"
+path = r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_with_polygons.geojson"
 gdf = gpd.read_file(path)
 
 # === Define target columns ===
@@ -64,7 +64,7 @@ gdf['predicted_rating'] = predicted_labels
 gdf['predicted_class'] = predicted_class
 
 # === Save new GeoJSON ===
-output_path = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\london_2024_epc_predictions.geojson"
+output_path = r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_predictions.geojson"
 gdf.to_file(output_path, driver='GeoJSON')
 
 print(f"✅ Predictions saved to:\n{output_path}")

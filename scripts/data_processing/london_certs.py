@@ -4,9 +4,9 @@ from shapely.geometry import Point
 from tqdm import tqdm
 
 # File paths
-csv_file = "C:/Users/B00996107/OneDrive - Ulster University/PhD/Data/merged_certificates_with_latlon.csv"
-shp_file = "C:/Users/B00996107/OneDrive - Ulster University/PhD/Data/London/SHP/london.shp"
-output_csv = "C:/Users/B00996107/OneDrive - Ulster University/PhD/Data/london_filtered.csv"
+csv_file = "D:/OneDrive - Ulster University/PhD/data/merged_certificates_with_latlon.csv"
+shp_file = "D:/OneDrive - Ulster University/PhD/data/london/SHP/london.shp"
+output_csv = "D:/OneDrive - Ulster University/PhD/data/london_filtered.csv"
 
 # Load the London shapefile
 london_boundary = gpd.read_file(shp_file)

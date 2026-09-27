@@ -2,8 +2,8 @@ import pandas as pd
 import os
 
 # Path to the input and output files
-input_file = "D:/OneDrive - Ulster University/PhD/Data/merged_certificates_with_latlon.csv"
-output_file = "D:/OneDrive - Ulster University/PhD/Data/header_first_last.csv"
+input_file = "D:/OneDrive - Ulster University/PhD/data/merged_certificates_with_latlon.csv"
+output_file = "D:/OneDrive - Ulster University/PhD/data/header_first_last.csv"
 
 try:
     # Read the header and first row

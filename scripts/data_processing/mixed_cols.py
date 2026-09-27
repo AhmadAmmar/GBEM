@@ -1,8 +1,8 @@
 import pandas as pd
 
 # File paths
-input_file = "D:/OneDrive - Ulster University/PhD/Data/reduced_merged_certificates.csv"
-output_file = "D:/OneDrive - Ulster University/PhD/Data/unique_counties.csv"
+input_file = "D:/OneDrive - Ulster University/PhD/data/reduced_merged_certificates.csv"
+output_file = "D:/OneDrive - Ulster University/PhD/data/unique_counties.csv"
 
 # Column to inspect
 column_to_inspect = "COUNTY"

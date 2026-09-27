@@ -41,8 +41,8 @@ warnings.filterwarnings("ignore")
 # ───────────────────────── Defaults (overridable by CLI) ─────────────────────────
 BASE_DEFAULT     = r"D:/OneDrive - Ulster University/PhD"
 OUTROOT_DEFAULT  = os.path.join(BASE_DEFAULT, "Maps", "confirm_report", "london_epc_rf_maps")
-BOUNDARY_DEF     = r"D:/OneDrive - Ulster University/PhD/data/London/SHP/london.shp"
-BUILDINGS_DEF    = r"D:/OneDrive - Ulster University/PhD/Data/London/london_2024_epc_predictions.geojson"
+BOUNDARY_DEF     = r"D:/OneDrive - Ulster University/PhD/data/london/SHP/london.shp"
+BUILDINGS_DEF    = r"D:/OneDrive - Ulster University/PhD/data/london/london_2024_epc_predictions.geojson"
 PRED_DEF         = None              # if predictions live outside BUILDINGS_DEF
 JOIN_BUILD_DEF   = "UPRN"
 JOIN_PRED_DEF    = "UPRN"

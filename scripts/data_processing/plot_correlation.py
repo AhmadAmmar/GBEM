@@ -4,8 +4,8 @@ import seaborn as sns
 from scipy.stats import pearsonr
 
 # File paths
-input_file = "D:/OneDrive - Ulster University/PhD/Data/London/Output/satellite_samples_with_all_indices.csv"
-output_plots_dir = "D:/OneDrive - Ulster University/PhD/Data/London/Output/CorrelationPlots/"
+input_file = "D:/OneDrive - Ulster University/PhD/data/london/Output/satellite_samples_with_all_indices.csv"
+output_plots_dir = "D:/OneDrive - Ulster University/PhD/data/london/Output/CorrelationPlots/"
 
 # Load the dataset
 print("Loading dataset...")

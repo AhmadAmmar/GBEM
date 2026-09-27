@@ -2,8 +2,8 @@ import rasterio
 import os
 
 # Input and output paths
-input_file = "D:/OneDrive - Ulster University/PhD/Data/London/Sat/londonS2.tif"
-output_dir = "D:/OneDrive - Ulster University/PhD/Data/London/Sat/Bands/"
+input_file = "D:/OneDrive - Ulster University/PhD/data/london/Sat/londonS2.tif"
+output_dir = "D:/OneDrive - Ulster University/PhD/data/london/Sat/Bands/"
 
 # Create the output directory if it doesn't exist
 os.makedirs(output_dir, exist_ok=True)

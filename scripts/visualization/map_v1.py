@@ -11,15 +11,15 @@ import math
 # -------------------------------------------------------------------
 # File Paths
 # -------------------------------------------------------------------
-b12_path = "D:/OneDrive - Ulster University/PhD/Data/London/Sat/B12.tif"
-b8a_path = "D:/OneDrive - Ulster University/PhD/Data/London/Sat/B8A.tif"
-b4_path = "D:/OneDrive - Ulster University/PhD/Data/London/Sat/B4.tif"
+b12_path = "D:/OneDrive - Ulster University/PhD/data/london/Sat/B12.tif"
+b8a_path = "D:/OneDrive - Ulster University/PhD/data/london/Sat/B8A.tif"
+b4_path = "D:/OneDrive - Ulster University/PhD/data/london/Sat/B4.tif"
 
-epc_csv = "D:/OneDrive - Ulster University/PhD/Data/London/Certs/certificates_london_sample_100.csv"
-london_shp = "D:/OneDrive - Ulster University/PhD/Data/London/SHP/london.shp"
+epc_csv = "D:/OneDrive - Ulster University/PhD/data/london/Certs/certificates_london_sample_100.csv"
+london_shp = "D:/OneDrive - Ulster University/PhD/data/london/SHP/london.shp"
 
-output_map_with_epc = "D:/OneDrive - Ulster University/PhD/Data/London/Output/london_s2_falsecolor_with_epc.png"
-output_map_without_epc = "D:/OneDrive - Ulster University/PhD/Data/London/Output/london_s2_falsecolor_without_epc.png"
+output_map_with_epc = "D:/OneDrive - Ulster University/PhD/data/london/Output/london_s2_falsecolor_with_epc.png"
+output_map_without_epc = "D:/OneDrive - Ulster University/PhD/data/london/Output/london_s2_falsecolor_without_epc.png"
 
 # -------------------------------------------------------------------
 # Load EPC Data

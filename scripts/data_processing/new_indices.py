@@ -2,8 +2,8 @@ import geopandas as gpd
 import numpy as np
 
 # === File paths ===
-input_path = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\london_2024_epc_matched_only.geojson"
-output_path = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\london_2024_epc_with_calculated_indices.geojson"
+input_path = r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_matched_only.geojson"
+output_path = r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_with_calculated_indices.geojson"
 
 # === Load GeoDataFrame ===
 print("📍 Loading GeoJSON...")

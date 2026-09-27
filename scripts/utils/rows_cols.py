@@ -1,7 +1,7 @@
 import geopandas as gpd
 
 # Path to your matched EPC GeoJSON
-geojson_path = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\london_2024_epc_with_id.geojson"
+geojson_path = r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_with_id.geojson"
 
 # Load the GeoJSON
 gdf = gpd.read_file(geojson_path)

@@ -2,8 +2,8 @@ import pandas as pd
 import os
 
 # Paths to the merged certificates files
-merged_file = "D:\OneDrive - Ulster University\PhD\Data\London\Certs\certificates_london.csv"
-latlon_file = "D:/OneDrive - Ulster University/PhD/Data/reduced_merged_certificates_london_filtered.csv"
+merged_file = "D:\OneDrive - Ulster University\PhD\data\london\Certs\certificates_london.csv"
+latlon_file = "D:/OneDrive - Ulster University/PhD/data/reduced_merged_certificates_london_filtered.csv"
 
 # Function to count rows in a file
 def count_rows(file_path, file_description):

@@ -1,8 +1,8 @@
 import pandas as pd
 
 # File paths
-input_file = "D:/OneDrive - Ulster University/PhD/Data/London/Certs/certificates_london.csv"
-output_file = "D:/OneDrive - Ulster University/PhD/Data/London/Certs/certificates_london_sample_100.csv"
+input_file = "D:/OneDrive - Ulster University/PhD/data/london/Certs/certificates_london.csv"
+output_file = "D:/OneDrive - Ulster University/PhD/data/london/Certs/certificates_london_sample_100.csv"
 
 # Load the certificates dataset
 certificates = pd.read_csv(input_file)
