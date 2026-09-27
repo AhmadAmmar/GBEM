@@ -1,8 +1,8 @@
 import geopandas as gpd
 
 # === File Paths ===
-input_geojson = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\london_2024_epc_with_calculated_indices.geojson"
-output_csv = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\epc_sample_first_11.csv"
+input_geojson = r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_with_calculated_indices.geojson"
+output_csv = r"D:\OneDrive - Ulster University\PhD\data\london\epc_sample_first_11.csv"
 
 # === Load GeoJSON ===
 print("📍 Loading GeoJSON...")

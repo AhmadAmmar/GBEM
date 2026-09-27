@@ -1,8 +1,8 @@
 import pandas as pd
 
 # File paths
-input_file = "D:/OneDrive - Ulster University/PhD/Data/reduced_merged_certificates.csv"
-output_file = "D:/OneDrive - Ulster University/PhD/Data/column_datatypes.csv"
+input_file = "D:/OneDrive - Ulster University/PhD/data/reduced_merged_certificates.csv"
+output_file = "D:/OneDrive - Ulster University/PhD/data/column_datatypes.csv"
 
 # List of columns to analyze
 columns_to_check = [

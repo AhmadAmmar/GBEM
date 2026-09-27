@@ -4,24 +4,24 @@ from multiprocessing import Pool, cpu_count
 from tqdm import tqdm
 
 # File paths
-certificates_file = "C:/Users/B00996107/OneDrive - Ulster University/PhD/Data/london_filtered_2024.csv"
-output_file = "C:/Users/B00996107/OneDrive - Ulster University/PhD/Data/london_samples_2024.csv"
+certificates_file = "D:/OneDrive - Ulster University/PhD/data/london_filtered_2024.csv"
+output_file = "D:/OneDrive - Ulster University/PhD/data/london_samples_2024.csv"
 
 # Satellite band raster files
 rasters = {
-    "B2": "C:/Users/B00996107/OneDrive - Ulster University/PhD/Data/London/Sat/B2.tif",
-    "B3": "C:/Users/B00996107/OneDrive - Ulster University/PhD/Data/London/Sat/B3.tif",
-    "B4": "C:/Users/B00996107/OneDrive - Ulster University/PhD/Data/London/Sat/B4.tif",
-    "B5": "C:/Users/B00996107/OneDrive - Ulster University/PhD/Data/London/Sat/B5.tif",
-    "B6": "C:/Users/B00996107/OneDrive - Ulster University/PhD/Data/London/Sat/B6.tif",
-    "B7": "C:/Users/B00996107/OneDrive - Ulster University/PhD/Data/London/Sat/B7.tif",
-    "B8": "C:/Users/B00996107/OneDrive - Ulster University/PhD/Data/London/Sat/B8.tif",
-    "B8A": "C:/Users/B00996107/OneDrive - Ulster University/PhD/Data/London/Sat/B8A.tif",
-    "B11": "C:/Users/B00996107/OneDrive - Ulster University/PhD/Data/London/Sat/B11.tif",
-    "B12": "C:/Users/B00996107/OneDrive - Ulster University/PhD/Data/London/Sat/B12.tif",
-    "VV": "C:/Users/B00996107/OneDrive - Ulster University/PhD/Data/London/Sat/VV.tif",
-    "VH": "C:/Users/B00996107/OneDrive - Ulster University/PhD/Data/London/Sat/VH.tif",
-    "L8B10": "C:/Users/B00996107/OneDrive - Ulster University/PhD/Data/London/Sat/L8B10.tif",
+    "B2": "D:/OneDrive - Ulster University/PhD/data/london/Sat/B2.tif",
+    "B3": "D:/OneDrive - Ulster University/PhD/data/london/Sat/B3.tif",
+    "B4": "D:/OneDrive - Ulster University/PhD/data/london/Sat/B4.tif",
+    "B5": "D:/OneDrive - Ulster University/PhD/data/london/Sat/B5.tif",
+    "B6": "D:/OneDrive - Ulster University/PhD/data/london/Sat/B6.tif",
+    "B7": "D:/OneDrive - Ulster University/PhD/data/london/Sat/B7.tif",
+    "B8": "D:/OneDrive - Ulster University/PhD/data/london/Sat/B8.tif",
+    "B8A": "D:/OneDrive - Ulster University/PhD/data/london/Sat/B8A.tif",
+    "B11": "D:/OneDrive - Ulster University/PhD/data/london/Sat/B11.tif",
+    "B12": "D:/OneDrive - Ulster University/PhD/data/london/Sat/B12.tif",
+    "VV": "D:/OneDrive - Ulster University/PhD/data/london/Sat/VV.tif",
+    "VH": "D:/OneDrive - Ulster University/PhD/data/london/Sat/VH.tif",
+    "L8B10": "D:/OneDrive - Ulster University/PhD/data/london/Sat/L8B10.tif",
 }
 
 # Load certificates

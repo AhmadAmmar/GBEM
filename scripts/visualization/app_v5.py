@@ -4,7 +4,7 @@ from collections import Counter
 import pandas as pd
 
 # === Load data ===
-path = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\london_2024_epc_predictions_test.geojson"
+path = r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_predictions_test.geojson"
 gdf = gpd.read_file(path)
 
 # === Compute map center ===
@@ -112,6 +112,6 @@ legend_html = f"""
 m.get_root().html.add_child(folium.Element(legend_html))
 
 # === Save map ===
-output_html = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Maps\map_predicted_rating_test.html"
+output_html = r"D:\OneDrive - Ulster University\PhD\Maps\map_predicted_rating_test.html"
 m.save(output_html)
 print(f"✅ Map saved to: {output_html}")

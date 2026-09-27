@@ -2,8 +2,8 @@ import geopandas as gpd
 import osmnx as ox
 
 # File paths
-shp_file = "D:/OneDrive - Ulster University/PhD/Data/London SHP/london.shp"
-output_file = "D:/OneDrive - Ulster University/PhD/Data/london_osm_buildings.geojson"
+shp_file = "D:/OneDrive - Ulster University/PhD/data/London SHP/london.shp"
+output_file = "D:/OneDrive - Ulster University/PhD/data/london_osm_buildings.geojson"
 
 # Load the London shapefile
 london_boundary = gpd.read_file(shp_file)

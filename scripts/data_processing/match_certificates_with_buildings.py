@@ -5,9 +5,9 @@ from tqdm import tqdm
 import dask_geopandas as dgpd
 
 # File paths
-certificates_file = "D:/OneDrive - Ulster University/PhD/Data/reduced_merged_certificates.csv"
-filtered_buildings_file = "D:/OneDrive - Ulster University/PhD/Data/filtered_buildings.fgb"
-output_file = "D:/OneDrive - Ulster University/PhD/Data/certificates_with_buildings.fgb"
+certificates_file = "D:/OneDrive - Ulster University/PhD/data/reduced_merged_certificates.csv"
+filtered_buildings_file = "D:/OneDrive - Ulster University/PhD/data/filtered_buildings.fgb"
+output_file = "D:/OneDrive - Ulster University/PhD/data/certificates_with_buildings.fgb"
 
 # Chunk size for processing certificates
 chunk_size = 100000

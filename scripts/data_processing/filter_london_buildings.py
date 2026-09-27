@@ -2,9 +2,9 @@ import geopandas as gpd
 from tqdm import tqdm
 
 # File paths
-osm_buildings_file = "D:/OneDrive - Ulster University/PhD/Data/England Buildings/gis_osm_buildings_a_free_1.shp"
-london_shp_file = "D:/OneDrive - Ulster University/PhD/Data/London SHP/london.shp"
-output_file = "D:/OneDrive - Ulster University/PhD/Data/london_osm_buildings.shp"
+osm_buildings_file = "D:/OneDrive - Ulster University/PhD/data/England Buildings/gis_osm_buildings_a_free_1.shp"
+london_shp_file = "D:/OneDrive - Ulster University/PhD/data/London SHP/london.shp"
+output_file = "D:/OneDrive - Ulster University/PhD/data/london_osm_buildings.shp"
 
 # Load the London shapefile
 print("Loading London shapefile...")

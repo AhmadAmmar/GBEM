@@ -3,9 +3,9 @@ import numpy as np
 from tqdm import tqdm
 
 # File paths
-input_file = "D:/OneDrive - Ulster University/PhD/Data/reduced_merged_certificates.csv"
-output_file = "D:/OneDrive - Ulster University/PhD/Data/column_statistics_with_all_unique_fixed.csv"
-unique_values_output = "D:/OneDrive - Ulster University/PhD/Data/column_unique_values_fixed.csv"
+input_file = "D:/OneDrive - Ulster University/PhD/data/reduced_merged_certificates.csv"
+output_file = "D:/OneDrive - Ulster University/PhD/data/column_statistics_with_all_unique_fixed.csv"
+unique_values_output = "D:/OneDrive - Ulster University/PhD/data/column_unique_values_fixed.csv"
 
 # Function to calculate stats for numeric data across chunks
 def update_numeric_stats(chunk, stats):

@@ -7,9 +7,9 @@ from multiprocessing import Pool, cpu_count
 from tqdm import tqdm
 
 # === File Paths ===
-geojson_path = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\london_2024_epc_matched_only.geojson"
-raster_folder = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\Sat"
-output_path = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\london_2024_epc_with_indices.geojson"
+geojson_path = r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_matched_only.geojson"
+raster_folder = r"D:\OneDrive - Ulster University\PhD\data\london\Sat"
+output_path = r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_with_indices.geojson"
 
 # === Point Sampling Function (Parallel) ===
 def process_point_raster(args):

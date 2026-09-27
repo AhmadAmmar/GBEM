@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # Load dataset
-input_file = "D:/OneDrive - Ulster University/PhD/Data/London/Output/satellite_samples_with_all_indices.csv"
+input_file = "D:/OneDrive - Ulster University/PhD/data/london/Output/satellite_samples_with_all_indices.csv"
 print("Loading dataset...")
 data = pd.read_csv(input_file)
 

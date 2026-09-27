@@ -7,9 +7,9 @@ import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
 # === File Paths ===
-geojson_path = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\london_2024_epc_with_calculated_indices.geojson"
-raster_folder = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\Sat"
-output_geojson = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\london_2024_epc_with_zonal_means.geojson"
+geojson_path = r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_with_calculated_indices.geojson"
+raster_folder = r"D:\OneDrive - Ulster University\PhD\data\london\Sat"
+output_geojson = r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_with_zonal_means.geojson"
 
 # === Parameters ===
 batch_size = 10000

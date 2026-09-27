@@ -2,8 +2,8 @@ import os
 import shutil
 
 # Define the input and output folders
-input_folder = r"D:\OneDrive - Ulster University\PhD\Data\London\Sat\Bands"
-output_folder = r"D:\OneDrive - Ulster University\PhD\Data\London\Sat\Renamed_Bands"
+input_folder = r"D:\OneDrive - Ulster University\PhD\data\london\Sat\Bands"
+output_folder = r"D:\OneDrive - Ulster University\PhD\data\london\Sat\Renamed_Bands"
 
 # Ensure the output folder exists
 os.makedirs(output_folder, exist_ok=True)

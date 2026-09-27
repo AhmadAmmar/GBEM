@@ -10,10 +10,10 @@ from tqdm import tqdm
 import pandas as pd
 
 # Path to the merged certificates file
-input_file = "D:/OneDrive - Ulster University/PhD/Data/merged_certificates.csv"
+input_file = "D:/OneDrive - Ulster University/PhD/data/merged_certificates.csv"
 
 # Path to save the filtered certificates file
-output_file = "D:/OneDrive - Ulster University/PhD/Data/merged_certificates_with_latlon.csv"
+output_file = "D:/OneDrive - Ulster University/PhD/data/merged_certificates_with_latlon.csv"
 
 # Load the merged certificates file
 df = pd.read_csv(input_file)

@@ -8,8 +8,8 @@ from osgeo import ogr
 from tqdm import tqdm
 
 # Paths to directories and files
-base_dir = "D:/OneDrive - Ulster University/PhD/Data/all-domestic-certificates"
-uprn_file_path = "D:/OneDrive - Ulster University/PhD/Data/osopenuprn_202412_csv/osopenuprn_202412.csv"
+base_dir = "D:/OneDrive - Ulster University/PhD/data/all-domestic-certificates"
+uprn_file_path = "D:/OneDrive - Ulster University/PhD/data/osopenuprn_202412_csv/osopenuprn_202412.csv"
 
 # Load the UPRN dataset
 uprn_data = pd.read_csv(uprn_file_path)

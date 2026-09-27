@@ -3,9 +3,9 @@ import geopandas as gpd
 from shapely.geometry import Point
 
 # === Paths ===
-epc_path = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\london_samples_indices_binary_2024.csv"
-buildings_path = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\Buildings\gis_osm_buildings_a_free_1.shp"
-output_path = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\london_2024_epc_matched_only.geojson"
+epc_path = r"D:\OneDrive - Ulster University\PhD\data\london_samples_indices_binary_2024.csv"
+buildings_path = r"D:\OneDrive - Ulster University\PhD\data\london\Buildings\gis_osm_buildings_a_free_1.shp"
+output_path = r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_matched_only.geojson"
 
 # === Load EPC CSV and convert to GeoDataFrame ===
 epc_df = pd.read_csv(epc_path)

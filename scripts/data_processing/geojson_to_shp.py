@@ -1,8 +1,8 @@
 import geopandas as gpd
 
 # Load your GeoJSON
-input_geojson = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\gee_upload_epc_polygons.geojson"
-output_shp_folder = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\shapefile_export"
+input_geojson = r"D:\OneDrive - Ulster University\PhD\data\london\gee_upload_epc_polygons.geojson"
+output_shp_folder = r"D:\OneDrive - Ulster University\PhD\data\london\shapefile_export"
 
 # Read GeoJSON
 gdf = gpd.read_file(input_geojson)

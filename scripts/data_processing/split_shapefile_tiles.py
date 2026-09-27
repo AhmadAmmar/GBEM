@@ -4,8 +4,8 @@ import os
 from shapely.geometry import box
 
 # Paths
-input_shp = "D:/OneDrive - Ulster University/PhD/Data/London/Old SHP/london.shp"
-output_folder = "D:/OneDrive - Ulster University/PhD/Data/London/Old SHP"
+input_shp = "D:/OneDrive - Ulster University/PhD/data/london/Old SHP/london.shp"
+output_folder = "D:/OneDrive - Ulster University/PhD/data/london/Old SHP"
 
 # Load and split shapefile into 4 tiles
 gdf = gpd.read_file(input_shp)

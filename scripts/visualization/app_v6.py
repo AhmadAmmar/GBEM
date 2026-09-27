@@ -4,7 +4,7 @@ from collections import Counter
 import pandas as pd
 
 # === Load data (entire dataset with predictions) ===
-path = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\london_2024_epc_predictions.geojson"
+path = r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_predictions.geojson"
 gdf = gpd.read_file(path)
 
 # === Compute map center ===
@@ -86,6 +86,6 @@ legend_html = f"""
 m.get_root().html.add_child(folium.Element(legend_html))
 
 # === Save map ===
-output_path = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Maps\map_predicted_class.html"
+output_path = r"D:\OneDrive - Ulster University\PhD\Maps\map_predicted_class.html"
 m.save(output_path)
 print(f"✅ Binary classification map saved to:\n{output_path}")

@@ -7,13 +7,14 @@ import matplotlib.dates as mdates
 import matplotlib.patches as mpatches
 import matplotlib.transforms as transforms
 import pandas as pd
-from datetime import timedelta
+from datetime import timedelta, date
 
 # ───────────────────────── Config (tweak if needed) ─────────────────────────
 START_DATE = "2024-09-01"
 END_DATE   = "2027-09-30"
 
-TITLE = "PhD Project Timeline — Gantt Chart (updated 06 Oct 2025)"
+RUN_DATE = date.today()
+TITLE = f"PhD Project Timeline — Gantt Chart (updated {RUN_DATE:%d %b %Y})"
 
 # Milestone label behaviour
 TOP_Y_FRAC = 0.965          # baseline vertical position (inside axes)
@@ -25,9 +26,9 @@ LEFT_EDGE_X_NUDGE_PT  = 12  # nudge labels right (points) when at left edge
 CLUSTER_DAYS = 10           # dates within this many days are stacked
 
 # Outputs
-PNG_PATH = "phd_gantt_2025-10-06.png"
-PDF_PATH = "phd_gantt_2025-10-06.pdf"
-CSV_PATH = "phd_gantt_tasks_2025-10-06.csv"
+PNG_PATH = f"phd_gantt_{RUN_DATE:%Y-%m-%d}.png"
+PDF_PATH = f"phd_gantt_{RUN_DATE:%Y-%m-%d}.pdf"
+CSV_PATH = f"phd_gantt_tasks_{RUN_DATE:%Y-%m-%d}.csv"
 
 # ───────────────────────── Data ─────────────────────────
 tasks = [

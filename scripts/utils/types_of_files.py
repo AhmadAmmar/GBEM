@@ -1,6 +1,6 @@
 import os
 
-folder_path = r"D:\OneDrive - Ulster University\PhD\Data"
+folder_path = r"D:\OneDrive - Ulster University\PhD\data"
 file_extensions = set()
 
 for file in os.listdir(folder_path):

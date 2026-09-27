@@ -1,8 +1,8 @@
 import geopandas as gpd
 
 # File paths
-input_shp = "D:/OneDrive - Ulster University/PhD/Data/London/SHP/london.shp"
-output_shp = "D:/OneDrive - Ulster University/PhD/Data/London/SHP/london_wgs84.shp"
+input_shp = "D:/OneDrive - Ulster University/PhD/data/london/SHP/london.shp"
+output_shp = "D:/OneDrive - Ulster University/PhD/data/london/SHP/london_wgs84.shp"
 
 # Load the London shapefile
 london_boundary = gpd.read_file(input_shp)

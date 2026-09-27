@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 
 # File paths
-input_file = "D:/OneDrive - Ulster University/PhD/Data/reduced_merged_certificates.csv"
-output_file = "D:/OneDrive - Ulster University/PhD/Data/column_summary.csv"
+input_file = "D:/OneDrive - Ulster University/PhD/data/reduced_merged_certificates.csv"
+output_file = "D:/OneDrive - Ulster University/PhD/data/column_summary.csv"
 
 # Load the dataset in chunks to handle large files
 chunk_size = 100000

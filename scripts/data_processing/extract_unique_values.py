@@ -1,7 +1,7 @@
 import pandas as pd
 
 # File path
-input_file = "D:/OneDrive - Ulster University/PhD/Data/reduced_merged_certificates.csv"
+input_file = "D:/OneDrive - Ulster University/PhD/data/reduced_merged_certificates.csv"
 
 # Column to inspect
 column_to_inspect = "SHEATING_ENERGY_EFF"

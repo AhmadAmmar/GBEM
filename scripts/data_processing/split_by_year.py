@@ -2,7 +2,7 @@ import pandas as pd
 import os
 
 # Directory containing the files
-data_dir = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data"
+data_dir = r"D:\OneDrive - Ulster University\PhD\data"
 
 # List of input CSV filenames
 input_files = [

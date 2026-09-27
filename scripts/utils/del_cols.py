@@ -1,8 +1,8 @@
 import pandas as pd
 
 # Paths to the input and output files
-input_file = "D:/OneDrive - Ulster University/PhD/Data/merged_certificates_with_latlon.csv"
-output_file = "D:/OneDrive - Ulster University/PhD/Data/reduced_merged_certificates1.csv"
+input_file = "D:/OneDrive - Ulster University/PhD/data/merged_certificates_with_latlon.csv"
+output_file = "D:/OneDrive - Ulster University/PhD/data/reduced_merged_certificates1.csv"
 
 # Columns to drop
 columns_to_drop = [

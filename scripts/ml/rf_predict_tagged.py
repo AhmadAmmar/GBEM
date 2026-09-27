@@ -6,7 +6,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # === Load the GeoJSON ===
-path = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\london_2024_epc_with_polygons.geojson"
+path = r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_with_polygons.geojson"
 gdf = gpd.read_file(path)
 
 # === Define target columns ===
@@ -70,7 +70,7 @@ gdf['predicted_class'] = predicted_class
 # === Save only test data to separate file ===
 test_only = gdf[gdf['is_test'] == 1].copy()
 
-output_test_path = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\london_2024_epc_predictions_test.geojson"
+output_test_path = r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_predictions_test.geojson"
 test_only.to_file(output_test_path, driver='GeoJSON')
 
 print(f"✅ Test-only data saved to:\n{output_test_path}")

@@ -29,8 +29,8 @@ from pyproj import CRS
 OUTDIR = r"D:\OneDrive - Ulster University\PhD\Maps"
 
 # London
-LONDON_BOUNDARY = r"D:\OneDrive - Ulster University\PhD\data\London\SHP\london.shp"
-LONDON_EPC      = r"D:\OneDrive - Ulster University\PhD\data\London\london_epc_points.geojson"
+LONDON_BOUNDARY = r"D:\OneDrive - Ulster University\PhD\data\london\SHP\london.shp"
+LONDON_EPC      = r"D:\OneDrive - Ulster University\PhD\data\london\london_epc_points.geojson"
 LONDON_CRS      = "EPSG:27700"  # OSGB36 / British National Grid
 
 # Belfast

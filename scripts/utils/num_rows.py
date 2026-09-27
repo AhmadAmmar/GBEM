@@ -6,7 +6,7 @@ import pickle
 import json
 import fiona
 
-folder_path = r"D:\OneDrive - Ulster University\PhD\Data"
+folder_path = r"D:\OneDrive - Ulster University\PhD\data"
 extensions = ['.parquet', '.pkl', '.fgb', '.pbf', '.json', '.geojson', '.csv', '.gpkg']
 
 def get_row_count(filepath, ext):

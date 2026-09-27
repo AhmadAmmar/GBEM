@@ -11,14 +11,14 @@ import math
 # -------------------------------------------------------------------
 # File Paths
 # -------------------------------------------------------------------
-vv_path = "D:/OneDrive - Ulster University/PhD/Data/London/Sat/VV.tif"
-vh_path = "D:/OneDrive - Ulster University/PhD/Data/London/Sat/VH.tif"
+vv_path = "D:/OneDrive - Ulster University/PhD/data/london/Sat/VV.tif"
+vh_path = "D:/OneDrive - Ulster University/PhD/data/london/Sat/VH.tif"
 
-epc_csv = "D:/OneDrive - Ulster University/PhD/Data/London/Certs/certificates_london_sample_100.csv"
-london_shp = "D:/OneDrive - Ulster University/PhD/Data/London/SHP/london.shp"
+epc_csv = "D:/OneDrive - Ulster University/PhD/data/london/Certs/certificates_london_sample_100.csv"
+london_shp = "D:/OneDrive - Ulster University/PhD/data/london/SHP/london.shp"
 
-output_map_with_epc = "D:/OneDrive - Ulster University/PhD/Data/London/Output/london_s1_falsecolor_with_epc.png"
-output_map_without_epc = "D:/OneDrive - Ulster University/PhD/Data/London/Output/london_s1_falsecolor_without_epc.png"
+output_map_with_epc = "D:/OneDrive - Ulster University/PhD/data/london/Output/london_s1_falsecolor_with_epc.png"
+output_map_without_epc = "D:/OneDrive - Ulster University/PhD/data/london/Output/london_s1_falsecolor_without_epc.png"
 
 # -------------------------------------------------------------------
 # Load EPC Data

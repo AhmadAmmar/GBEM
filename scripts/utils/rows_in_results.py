@@ -18,11 +18,11 @@ import geopandas as gpd
 # -------------------------
 FILES = [
     # Core inputs / artifacts we want to inspect
-    r"D:\OneDrive - Ulster University\PhD\Data\London\Output\satellite_samples_with_all_indices.csv",
-    r"D:\OneDrive - Ulster University\PhD\Data\london_samples_indices_binary_2024.csv",               # OVERRIDDEN
-    r"D:\OneDrive - Ulster University\PhD\Data\London\london_2024_epc_with_polygons.geojson",         # OVERRIDDEN
-    r"D:\OneDrive - Ulster University\PhD\Data\London\london_2024_epc_predictions.geojson",           # OVERRIDDEN
-    r"D:\OneDrive - Ulster University\PhD\Data\London\london_2024_epc_predictions_test.geojson",      # OVERRIDDEN
+    r"D:\OneDrive - Ulster University\PhD\data\london\Output\satellite_samples_with_all_indices.csv",
+    r"D:\OneDrive - Ulster University\PhD\data\london_samples_indices_binary_2024.csv",               # OVERRIDDEN
+    r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_with_polygons.geojson",         # OVERRIDDEN
+    r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_predictions.geojson",           # OVERRIDDEN
+    r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_predictions_test.geojson",      # OVERRIDDEN
 
     # Intermediate JSON/CSV created by the A4 report script (these may be dict-like JSONs)
     r"D:\OneDrive - Ulster University\PhD\Maps\confirm_report\london_epc_rf_maps\run_20251008_1314\dataset_stats.json",
@@ -102,8 +102,8 @@ for p in FILES:
 summary = pd.DataFrame(records).sort_values(["exists", "ext", "file"], ascending=[False, True, True])
 
 # Reference files for percentages
-REF_POLY = r"D:\OneDrive - Ulster University\PhD\Data\London\london_2024_epc_with_polygons.geojson"
-REF_PRED = r"D:\OneDrive - Ulster University\PhD\Data\London\london_2024_epc_predictions.geojson"
+REF_POLY = r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_with_polygons.geojson"
+REF_PRED = r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_predictions.geojson"
 
 def _get_ref_count(summary_df: pd.DataFrame, path: str):
     row = summary_df.loc[summary_df["file"].str.lower() == Path(path).as_posix().lower()]

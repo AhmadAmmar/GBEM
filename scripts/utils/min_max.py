@@ -4,7 +4,7 @@ import rasterio
 from PIL import Image
 
 # Define the directory containing the files
-directory = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\a2a9a8ac-c897-4caf-81f0-9724169a4da0\visual\20231125T143956000_visual_30_hotsat1"
+directory = r"D:\OneDrive - Ulster University\PhD\data\a2a9a8ac-c897-4caf-81f0-9724169a4da0\visual\20231125T143956000_visual_30_hotsat1"
 
 # Loop over all files in the directory
 for filename in os.listdir(directory):

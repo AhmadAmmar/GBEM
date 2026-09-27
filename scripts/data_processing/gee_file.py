@@ -1,10 +1,10 @@
 import geopandas as gpd
 
 # === Input file (with polygon geometry and lat/lon columns) ===
-input_path = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\london_2024_epc_with_polygons.geojson"
+input_path = r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_with_polygons.geojson"
 
 # === Output for GEE ===
-output_path = r"C:\Users\B00996107\OneDrive - Ulster University\PhD\Data\London\gee_upload_epc_polygons.geojson"
+output_path = r"D:\OneDrive - Ulster University\PhD\data\london\gee_upload_epc_polygons.geojson"
 
 # === Load the full GeoJSON ===
 gdf = gpd.read_file(input_path)

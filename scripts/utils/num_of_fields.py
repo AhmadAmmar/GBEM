@@ -2,7 +2,7 @@ import pandas as pd
 import os
 
 # Path to the merged certificates file
-file_path = "D:/OneDrive - Ulster University/PhD/Data/merged_certificates_with_latlon.csv"
+file_path = "D:/OneDrive - Ulster University/PhD/data/merged_certificates_with_latlon.csv"
 
 try:
     # Read the first three rows
