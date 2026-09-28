@@ -16,7 +16,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from textwrap import fill
 
 # ------------------------ CONFIG ------------------------
-CSV_PATH = r"D:\OneDrive - Ulster University\PhD\Lit\Scopus\scopus.csv"
+CSV_PATH = r"D:\OneDrive - Ulster University\PhD\Lit\Scopus\2025-07-02_scopus.csv"
 TITLE    = "Literature Review Workflow - Objective 1"
 SUBTITLE = ""
 
