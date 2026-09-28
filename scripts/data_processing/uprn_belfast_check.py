@@ -5,7 +5,7 @@ UPRN audit & union for three CSVs, with robust encoding handling.
 Outputs (written into the same folder as inputs):
   - uprn_union_list.csv
   - <stem>_ONLY.csv for each input file
-  - uprn_union_rows_commoncols.csv  (deduped on UPRN_norm across common columns)
+  - uprn_union_rows_commoncols.csv  (deduped on UPRN_key across common columns)
 """
 
 import pandas as pd
@@ -107,7 +107,7 @@ if len(FILES) >= 3:
 
 # ---------- 2) Union list ----------
 union_uprn = set().union(*[sets[f] for f in FILES])
-union_df = pd.DataFrame({"UPRN_norm": sorted(union_uprn)})
+union_df = pd.DataFrame({"UPRN_key": sorted(union_uprn)})
 out_union = FOLDER / "uprn_union_list.csv"
 union_df.to_csv(out_union, index=False, encoding="utf-8")
 print(f"\nSaved union of unique UPRNs: {out_union} (n={pretty(len(union_df))})")
@@ -116,7 +116,7 @@ print(f"\nSaved union of unique UPRNs: {out_union} (n={pretty(len(union_df))})")
 for fname in FILES:
     only = sets[fname] - set().union(*[sets[f] for f in FILES if f != fname])
     out_only = FOLDER / f"{Path(fname).stem}_ONLY.csv"
-    pd.DataFrame({"UPRN_norm": sorted(only)}).to_csv(out_only, index=False, encoding="utf-8")
+    pd.DataFrame({"UPRN_key": sorted(only)}).to_csv(out_only, index=False, encoding="utf-8")
     print(f"{fname}: ONLY set saved ({pretty(len(only))}) -> {out_only}")
 
 # ---------- 4) Union of FULL ROWS (common columns; chunked; priority) ----------
@@ -134,12 +134,12 @@ if not common_cols:
     print("\n[Note] No common columns across files; skipping 'union of full rows'.")
 else:
     common_cols = list(common_cols)  # stable order
-    # ensure each file's UPRN column is included so we can normalise -> UPRN_norm
-    # we'll replace the original per-file UPRN column with a single UPRN_norm field
+    # ensure each file's UPRN column is included so we can normalise -> UPRN_key
+    # we'll replace the original per-file UPRN column with a single UPRN_key field
     pri_rank = {f: i for i, f in enumerate(FILE_PRIORITY)}
-    store: Dict[str, dict] = {}         # UPRN_norm -> row dict (common cols only)
-    srcset: Dict[str, Set[str]] = {}    # UPRN_norm -> set of source filenames
-    primary: Dict[str, str] = {}        # UPRN_norm -> chosen primary source
+    store: Dict[str, dict] = {}         # UPRN_key -> row dict (common cols only)
+    srcset: Dict[str, Set[str]] = {}    # UPRN_key -> set of source filenames
+    primary: Dict[str, str] = {}        # UPRN_key -> chosen primary source
 
     for fname in FILES:
         path = FOLDER / fname
@@ -149,9 +149,9 @@ else:
 
         for chunk in pd.read_csv(path, usecols=usecols, dtype=str,
                                  chunksize=CHUNK, low_memory=False, encoding=enc):
-            chunk["UPRN_norm"] = chunk[col].map(norm_uprn)
+            chunk["UPRN_key"] = chunk[col].map(norm_uprn)
             # limit to rows that actually have a UPRN
-            chunk = chunk.dropna(subset=["UPRN_norm"]).copy()
+            chunk = chunk.dropna(subset=["UPRN_key"]).copy()
 
             # Prepare rows dict (common columns only)
             # Keep a copy with only common_cols (drop the file-specific UPRN col if present)
@@ -159,11 +159,11 @@ else:
             data = chunk.drop(columns=drop_cols, errors="ignore")
 
             for _, row in data.iterrows():
-                k = row["UPRN_norm"]
+                k = row["UPRN_key"]
                 if not k:
                     continue
                 if k not in store:
-                    store[k] = row[["UPRN_norm"] + [c for c in common_cols if c != col]].to_dict()
+                    store[k] = row[["UPRN_key"] + [c for c in common_cols if c != col]].to_dict()
                     srcset[k] = {fname}
                     primary[k] = fname
                 else:
@@ -171,7 +171,7 @@ else:
                     srcset[k].add(fname)
                     # decide if we should replace the stored row based on FILE_PRIORITY
                     if pri_rank.get(fname, 9999) < pri_rank.get(primary[k], 9999):
-                        store[k] = row[["UPRN_norm"] + [c for c in common_cols if c != col]].to_dict()
+                        store[k] = row[["UPRN_key"] + [c for c in common_cols if c != col]].to_dict()
                         primary[k] = fname
 
     # Build DataFrame from dicts
@@ -184,7 +184,7 @@ else:
 
     df_rows = pd.DataFrame.from_records(records)
     # Put columns in a nice order
-    front = ["UPRN_norm", "primary_source", "source_files"]
+    front = ["UPRN_key", "primary_source", "source_files"]
     others = [c for c in df_rows.columns if c not in front]
     df_rows = df_rows[front + others]
 

@@ -149,7 +149,7 @@ def main():
 
     # 1) Load union XY and prep join table
     union = pd.read_csv(union_path, dtype=str, low_memory=False, encoding=union_enc)
-    uprn_union_col = "UPRN_norm" if "UPRN_norm" in union.columns else find_uprn_col_in_file(union_path, union_enc)
+    uprn_union_col = "UPRN_key" if "UPRN_key" in union.columns else find_uprn_col_in_file(union_path, union_enc)
 
     # detect X/Y columns (allow variants)
     xcol = "X_COR" if "X_COR" in union.columns else next((c for c in union.columns if c.upper().startswith("X")), None)

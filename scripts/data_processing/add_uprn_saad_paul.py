@@ -59,7 +59,7 @@ def to_num(s): return pd.to_numeric(s, errors="coerce")
 enc_p = sniff(PAUL_CSV)
 paul = pd.read_csv(PAUL_CSV, dtype=str, low_memory=False, encoding=enc_p)
 
-uprn_p = "UPRN_norm" if "UPRN_norm" in paul.columns else find_uprn_col(PAUL_CSV, enc_p)
+uprn_p = "UPRN_key" if "UPRN_key" in paul.columns else find_uprn_col(PAUL_CSV, enc_p)
 x_p = "X_COR" if "X_COR" in paul.columns else find_col(paul.columns, X_CANDS)
 y_p = "Y_COR" if "Y_COR" in paul.columns else find_col(paul.columns, Y_CANDS)
 if not (uprn_p and x_p and y_p):
@@ -112,15 +112,14 @@ for k in saad["UPRN_key"]:
     sources_map[k] = "paul;saad" if (k in keys_paul) else "saad"
 union["sources"] = union["UPRN_key"].map(sources_map)
 
-# Also publish a user-facing UPRN string (no leading zeros)
-union = union.rename(columns={"UPRN_key":"UPRN_norm"})[["UPRN_norm","X_COR","Y_COR","xy_source","sources"]]
+union = union[["UPRN_key","X_COR","Y_COR","xy_source","sources"]]
 
 # ----- Save -----
 union.to_csv(OUT_UNION, index=False, encoding="utf-8")
 
 print("\n=== Summary ===")
 print(f"Paul uniques:      {len(keys_paul):,}")
-print(f"Saad uniques:      {saad['UPRN_norm'].nunique() if 'UPRN_norm' in saad.columns else len(saad)}")
+print(f"Saad uniques:      {saad['UPRN_key'].nunique() if 'UPRN_key' in saad.columns else len(saad)}")
 print(f"Overlap keys:      {len(overlap):,}")
 print(f"Saad-only appended:{len(saad_only):,}")
 print(f"Union total:       {len(union):,}")

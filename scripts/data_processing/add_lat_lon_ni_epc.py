@@ -65,7 +65,7 @@ union = pd.read_csv(UNION_XY_CSV, dtype=str, low_memory=False, encoding=union_en
 
 # Detect columns
 # Prefer existing normalized column, but still rebuild our canonical key
-uprn_union_col = next((c for c in union.columns if c.lower() == "uprn_norm"), None)
+uprn_union_col = next((c for c in union.columns if c.lower() == "uprn_key"), None)
 if uprn_union_col is None:
     uprn_union_col = next((c for c in union.columns if "uprn" in c.lower()), None)
     if uprn_union_col is None:

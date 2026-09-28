@@ -50,8 +50,8 @@ def canonical_uprn(val):
 union_enc = sniff_encoding(UNION_V2_CSV)
 union = pd.read_csv(UNION_V2_CSV, dtype=str, low_memory=False, encoding=union_enc)
 
-# Build join key from UPRN_norm (or any UPRN-like column)
-uprn_union_col = "UPRN_norm" if "UPRN_norm" in union.columns else find_uprn_col(UNION_V2_CSV, union_enc)
+# Build join key from UPRN_key (or any UPRN-like column)
+uprn_union_col = "UPRN_key" if "UPRN_key" in union.columns else find_uprn_col(UNION_V2_CSV, union_enc)
 union["UPRN_key"] = union[uprn_union_col].map(canonical_uprn)
 
 # Keep only rows with both coords & a key
