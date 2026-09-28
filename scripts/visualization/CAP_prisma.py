@@ -22,6 +22,10 @@ SUBTITLE = ""
 
 DPI      = 300
 
+# Figures always go here, independent of wherever the source CSV lives
+OUT_DIR = r"D:\OneDrive - Ulster University\PhD\Review_Figures"
+os.makedirs(OUT_DIR, exist_ok=True)
+
 # Palette
 C_SCOPE, C_SEARCH, C_SCREEN  = "#e8f0fe", "#eafaf1", "#fff6e5"
 C_EXTRACT, C_BIB, C_SYNTH, C_OUT = "#f3e8ff", "#f1f5f9", "#fde2e4", "#e2f0d9"
@@ -206,8 +210,8 @@ for i in range(len(centers)-1):
                 arrowprops=dict(arrowstyle="-|>", lw=0.9, color=C_GUTTER))
 
 # save
-out_png = "fig_lit_sysrev_workflow_slide_COMPACT_TIGHTWIDTH.png"
-out_pdf = "fig_lit_sysrev_workflow_slide_COMPACT_TIGHTWIDTH.pdf"
+out_png = os.path.join(OUT_DIR, "fig_lit_sysrev_workflow_slide_COMPACT_TIGHTWIDTH.png")
+out_pdf = os.path.join(OUT_DIR, "fig_lit_sysrev_workflow_slide_COMPACT_TIGHTWIDTH.pdf")
 plt.savefig(out_png, bbox_inches="tight")
 plt.savefig(out_pdf, bbox_inches="tight")
 print("[Slide/WidthAuto] Saved:", os.path.abspath(out_png))
