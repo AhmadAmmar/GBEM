@@ -5,8 +5,8 @@ import rasterio
 import matplotlib.pyplot as plt
 
 # File paths
-epc_csv = r"D:\OneDrive - Ulster University\PhD\data\20231125T143956000_visual_30_hotsat1_2023.csv"
-thermal_tiff = r"D:\OneDrive - Ulster University\PhD\data\a2a9a8ac-c897-4caf-81f0-9724169a4da0\visual\20231125T143956000_visual_30_hotsat1\20231125T143956000_visual_30_hotsat1.tiff"
+epc_csv = r"D:\OneDrive - Ulster University\PhD\data\belfast\hotsat\20231125T143956000_visual_30_hotsat1_2023.csv"
+thermal_tiff = r"D:\OneDrive - Ulster University\PhD\data\belfast\hotsat\20231125T143956000_visual_30_hotsat1\20231125T143956000_visual_30_hotsat1.tiff"
 
 # Load EPC CSV file into a DataFrame and drop rows with missing coordinates
 epc_df = pd.read_csv(epc_csv)
