@@ -16,7 +16,7 @@ from matplotlib.patches import FancyBboxPatch
 from textwrap import fill
 
 # ───────────────────────── CONFIG ─────────────────────────
-CSV_PATH = r"D:\OneDrive - Ulster University\PhD\Lit\Scopus\scopus.csv"     # path to your Scopus CSV (TITLE-only queries)
+CSV_PATH = r"D:\OneDrive - Ulster University\PhD\Lit\Scopus\2025-07-02_scopus.csv"     # path to your Scopus CSV (TITLE-only queries)
 KEEP_A4  = False            # set True to also export an A4 page with same layout
 
 TITLE    = "Literature & Systematic Review — Compact Workflow (Objective 1)"

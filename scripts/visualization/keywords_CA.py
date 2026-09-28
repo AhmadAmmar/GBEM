@@ -42,8 +42,8 @@ LEFT_MARGIN   = 0.055           # outer page margin
 RIGHT_MARGIN  = 0.055
 
 # ====================== FIND & READ SCOPUS CSV ====================
-CANDIDATE_PATHS = [r"D:\OneDrive - Ulster University\PhD\Lit\Scopus\scopus.csv",
-                   r"D:\OneDrive - Ulster University\PhD\Lit\Scopus\scopus(1).csv",
+CANDIDATE_PATHS = [r"D:\OneDrive - Ulster University\PhD\Lit\Scopus\2025-07-02_scopus.csv",
+                   r"D:\OneDrive - Ulster University\PhD\Lit\Scopus\2025-07-14_scopus.csv",
                    "/mnt/data/scopus.csv", "/mnt/data/scopus(2).csv",
                    "scopus.csv", "scopus(2).csv"]
 CSV_PATH = next((p for p in CANDIDATE_PATHS if os.path.exists(p)), None)
