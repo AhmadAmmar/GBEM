@@ -2,7 +2,7 @@
 import pandas as pd, re
 from pathlib import Path
 
-UNION_IN  = r"D:\OneDrive - Ulster University\PhD\data\belfast\uprn\BELFS_20250829_F\uprn_union_with_xy_updated.csv"
+UNION_IN  = r"D:\OneDrive - Ulster University\PhD\data\belfast\uprn\BELFS_20250829_F\uprn_union_with_xy_v2.csv"
 UNION_OUT = Path(UNION_IN).with_name("uprn_union_with_xy_clean.csv")
 ENCODINGS = ("utf-8","utf-8-sig","cp1252","latin1")
 

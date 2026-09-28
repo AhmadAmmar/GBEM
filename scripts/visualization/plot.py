@@ -4,7 +4,7 @@ import seaborn as sns
 from scipy.stats import pearsonr
 
 # Load your dataset
-file_path = r"D:\OneDrive - Ulster University\PhD\data\london_samples_indices_binary_2024.csv"
+file_path = r"D:\OneDrive - Ulster University\PhD\data\london\london_samples_indices_binary_2024.csv"
 df = pd.read_csv(file_path)
 
 # Select relevant columns and drop missing values

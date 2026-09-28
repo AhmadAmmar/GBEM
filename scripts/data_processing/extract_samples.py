@@ -4,8 +4,8 @@ from multiprocessing import Pool, cpu_count
 from tqdm import tqdm
 
 # File paths
-certificates_file = "D:/OneDrive - Ulster University/PhD/data/london_filtered_2024.csv"
-output_file = "D:/OneDrive - Ulster University/PhD/data/london_samples_2024.csv"
+certificates_file = "D:/OneDrive - Ulster University/PhD/data/london/london_filtered_2024.csv"
+output_file = "D:/OneDrive - Ulster University/PhD/data/london/london_samples_2024.csv"
 
 # Satellite band raster files
 rasters = {

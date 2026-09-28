@@ -19,7 +19,7 @@ import geopandas as gpd
 FILES = [
     # Core inputs / artifacts we want to inspect
     r"D:\OneDrive - Ulster University\PhD\data\london\Output\satellite_samples_with_all_indices.csv",
-    r"D:\OneDrive - Ulster University\PhD\data\london_samples_indices_binary_2024.csv",               # OVERRIDDEN
+    r"D:\OneDrive - Ulster University\PhD\data\london\london_samples_indices_binary_2024.csv",               # OVERRIDDEN
     r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_with_polygons.geojson",         # OVERRIDDEN
     r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_predictions.geojson",           # OVERRIDDEN
     r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_predictions_test.geojson",      # OVERRIDDEN

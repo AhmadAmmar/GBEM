@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 
 # File paths
-input_file = "D:/OneDrive - Ulster University/PhD/data/london_samples_2024.csv"
-output_file = "D:/OneDrive - Ulster University/PhD/data/london_samples_indices_2024.csv"
+input_file = "D:/OneDrive - Ulster University/PhD/data/london/london_samples_2024.csv"
+output_file = "D:/OneDrive - Ulster University/PhD/data/london/london_samples_indices_2024.csv"
 
 # Load the dataset
 print("Loading dataset...")

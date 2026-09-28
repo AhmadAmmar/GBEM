@@ -5,8 +5,8 @@ from rasterio.warp import reproject, Resampling
 from scipy.stats import pearsonr, linregress
 
 # File paths for the two raster files
-hotsat_tiff = r"D:\OneDrive - Ulster University\PhD\data\a2a9a8ac-c897-4caf-81f0-9724169a4da0\20230713T005702000_visual_30_hotsat1\20230713T005702000_visual_30_hotsat1.tiff"
-landsat_tiff = r"D:\OneDrive - Ulster University\PhD\data\a2a9a8ac-c897-4caf-81f0-9724169a4da0\20230713T005702000_visual_30_hotsat1\Landsat8_Thermal_July2023.tif"
+hotsat_tiff = r"D:\OneDrive - Ulster University\PhD\data\belfast\hotsat\20230713T005702000_visual_30_hotsat1\20230713T005702000_visual_30_hotsat1.tiff"
+landsat_tiff = r"D:\OneDrive - Ulster University\PhD\data\belfast\hotsat\20230713T005702000_visual_30_hotsat1\Landsat8_Thermal_July2023.tif"
 
 # Open the HotSat raster and read the first band
 with rasterio.open(hotsat_tiff) as src_h:
