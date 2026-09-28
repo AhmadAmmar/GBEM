@@ -3,7 +3,7 @@
 Add X/Y coordinates to uprn_union_list.csv by matching UPRNs
 from BELFS_20250829_F / _EXT_F / _REJ_F (in that priority).
 
-- Keeps UPRN_norm as the join key (digits-only).
+- Keeps UPRN_key as the join key (digits-only).
 - Fills only where BOTH X and Y are available.
 - Writes: uprn_union_with_xy.csv and uprn_union_missing_xy.csv (QA).
 
@@ -18,7 +18,7 @@ from typing import Tuple, Optional
 # ------------ CONFIG ------------
 FOLDER = Path(r"D:\OneDrive - Ulster University\PhD\data\belfast\uprn\BELFS_20250829_F")
 
-UNION_FILE = FOLDER / "uprn_union_list.csv"  # produced earlier (has UPRN_norm)
+UNION_FILE = FOLDER / "uprn_union_list.csv"  # produced earlier (has UPRN_key)
 
 FILE_PRIORITY = [
     "BELFS_20250829_F.csv",
@@ -88,8 +88,8 @@ def to_numeric_safe(s):
 
 # ---------- Load union list ----------
 union = pd.read_csv(UNION_FILE, dtype=str, low_memory=False)
-if "UPRN_norm" not in union.columns:
-    raise ValueError(f"'UPRN_norm' not found in {UNION_FILE}. Recreate the union list first.")
+if "UPRN_key" not in union.columns:
+    raise ValueError(f"'UPRN_key' not found in {UNION_FILE}. Recreate the union list first.")
 
 # Prepare output columns
 union["X_COR"] = pd.NA
@@ -114,8 +114,8 @@ for fname in FILE_PRIORITY:
     df = pd.read_csv(path, usecols=usecols, dtype=str, low_memory=False, encoding=enc)
 
     # Normalize UPRN and clean XY
-    df["UPRN_norm"] = df[uprn_col].map(norm_uprn)
-    df = df.dropna(subset=["UPRN_norm"]).copy()
+    df["UPRN_key"] = df[uprn_col].map(norm_uprn)
+    df = df.dropna(subset=["UPRN_key"]).copy()
 
     # Coerce to numeric (keeps projected units as-is; no reprojection here)
     df["X_temp"] = to_numeric_safe(df[x_col])
@@ -125,17 +125,17 @@ for fname in FILE_PRIORITY:
     df = df[df["X_temp"].notna() & df["Y_temp"].notna()].copy()
 
     # If duplicates: keep the first occurrence
-    df = df.drop_duplicates(subset=["UPRN_norm"], keep="first")
+    df = df.drop_duplicates(subset=["UPRN_key"], keep="first")
 
     # Map to union where still missing
-    x_map = df.set_index("UPRN_norm")["X_temp"]
-    y_map = df.set_index("UPRN_norm")["Y_temp"]
+    x_map = df.set_index("UPRN_key")["X_temp"]
+    y_map = df.set_index("UPRN_key")["Y_temp"]
 
     missing_mask = union["X_COR"].isna() & union["Y_COR"].isna()
     if missing_mask.any():
         # candidates from this source
-        x_new = union.loc[missing_mask, "UPRN_norm"].map(x_map)
-        y_new = union.loc[missing_mask, "UPRN_norm"].map(y_map)
+        x_new = union.loc[missing_mask, "UPRN_key"].map(x_map)
+        y_new = union.loc[missing_mask, "UPRN_key"].map(y_map)
         fill_mask = x_new.notna() & y_new.notna()
 
         union.loc[missing_mask & fill_mask, "X_COR"] = x_new[fill_mask].values
@@ -153,7 +153,7 @@ print(f"\nSaved: {out_all}")
 print(f"Total UPRNs: {len(union):,} | with XY: {int(filled.sum()):,} | missing XY: {int((~filled).sum()):,}")
 
 # Optional: export missing list for follow-up (e.g., geocoding)
-missing_df = union.loc[~filled, ["UPRN_norm"]].copy()
+missing_df = union.loc[~filled, ["UPRN_key"]].copy()
 if not missing_df.empty:
     out_missing = FOLDER / "uprn_union_missing_xy.csv"
     missing_df.to_csv(out_missing, index=False, encoding="utf-8")

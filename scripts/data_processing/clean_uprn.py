@@ -38,7 +38,7 @@ df = pd.read_csv(UNION_IN, dtype=str, low_memory=False, encoding=enc)
 # pick columns
 xcol = "X_COR" if "X_COR" in df.columns else next((c for c in df.columns if c.upper().startswith("X")), None)
 ycol = "Y_COR" if "Y_COR" in df.columns else next((c for c in df.columns if c.upper().startswith("Y")), None)
-uprn_col = "UPRN_norm" if "UPRN_norm" in df.columns else next((c for c in df.columns if "uprn" in c.lower()), None)
+uprn_col = "UPRN_key" if "UPRN_key" in df.columns else next((c for c in df.columns if "uprn" in c.lower()), None)
 if not (uprn_col and xcol and ycol):
     raise ValueError("Missing UPRN or X/Y columns in union file.")
 
@@ -47,10 +47,10 @@ df["UPRN_key"]  = df[uprn_col].map(canonical)
 df = df.dropna(subset=["UPRN_key", xcol, ycol]).copy()
 df = df.drop_duplicates(subset=["UPRN_key"], keep="first")
 
-# write back with a clean UPRN_norm = canonical key (for consistency)
+# write back with the canonical join key
 cols = ["UPRN_key", xcol, ycol] + ([ "xy_source" ] if "xy_source" in df.columns else [])
-out = df[cols].rename(columns={"UPRN_key":"UPRN_norm", xcol:"X_COR", ycol:"Y_COR"})
+out = df[cols].rename(columns={xcol:"X_COR", ycol:"Y_COR"})
 out.to_csv(UNION_OUT, index=False, encoding="utf-8")
 
 print(f"Wrote clean union: {UNION_OUT}")
-print(f"Rows: {len(out):,}  |  unique UPRNs: {out['UPRN_norm'].nunique():,}")
+print(f"Rows: {len(out):,}  |  unique UPRNs: {out['UPRN_key'].nunique():,}")

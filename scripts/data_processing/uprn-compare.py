@@ -115,7 +115,7 @@ enc_paul = sniff_encoding(PAUL_UNION_CSV)
 union = pd.read_csv(PAUL_UNION_CSV, dtype=str, low_memory=False, encoding=enc_paul)
 
 # figure UPRN column
-uprn_col_union = "UPRN_norm" if "UPRN_norm" in union.columns else find_uprn_col(PAUL_UNION_CSV, enc_paul)
+uprn_col_union = "UPRN_key" if "UPRN_key" in union.columns else find_uprn_col(PAUL_UNION_CSV, enc_paul)
 union["UPRN_key"] = union[uprn_col_union].map(canonical_uprn)
 
 # figure XY columns
