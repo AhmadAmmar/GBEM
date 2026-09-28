@@ -41,6 +41,10 @@ BOTTOM_MARGIN = 0.055           # space for footer
 LEFT_MARGIN   = 0.055           # outer page margin
 RIGHT_MARGIN  = 0.055
 
+# Figures always go here, independent of wherever the source CSV lives
+OUT_DIR = r"D:\OneDrive - Ulster University\PhD\Review_Figures"
+os.makedirs(OUT_DIR, exist_ok=True)
+
 # ====================== FIND & READ SCOPUS CSV ====================
 CANDIDATE_PATHS = [r"D:\OneDrive - Ulster University\PhD\Lit\Scopus\2025-07-02_scopus.csv",
                    r"D:\OneDrive - Ulster University\PhD\Lit\Scopus\2025-07-14_scopus.csv",
@@ -151,7 +155,7 @@ if WRITE_CSV:
     rows = []
     for cat, items in selected.items():
         for k, n in items: rows.append({"cluster": cat, "keyword": k, "count": n})
-    out_csv = os.path.join(os.path.dirname(CSV_PATH) or os.getcwd(), "top_keywords_by_cluster_COMPACT.csv")
+    out_csv = os.path.join(OUT_DIR, "top_keywords_by_cluster_COMPACT.csv")
     pd.DataFrame(rows).to_csv(out_csv, index=False)
     print("[Keyword Panels] Wrote:", out_csv)
 
@@ -268,9 +272,8 @@ ax.text(0.5, 0.02,
         ha="center", va="bottom", fontsize=NOTE_FS)
 
 # save
-out_dir = os.path.dirname(CSV_PATH) or os.getcwd()
-png = os.path.join(out_dir, "fig_keywords_clusters_ranked_columns_COMPACT.png")
-pdf = os.path.join(out_dir, "fig_keywords_clusters_ranked_columns_COMPACT.pdf")
+png = os.path.join(OUT_DIR, "fig_keywords_clusters_ranked_columns_COMPACT.png")
+pdf = os.path.join(OUT_DIR, "fig_keywords_clusters_ranked_columns_COMPACT.pdf")
 plt.savefig(png, bbox_inches="tight")
 plt.savefig(pdf, bbox_inches="tight")
 print("[Keyword Panels] Saved:", png)

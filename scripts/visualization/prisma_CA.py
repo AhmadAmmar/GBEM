@@ -19,6 +19,10 @@ from textwrap import fill
 CSV_PATH = r"D:\OneDrive - Ulster University\PhD\Lit\Scopus\2025-07-02_scopus.csv"     # path to your Scopus CSV (TITLE-only queries)
 KEEP_A4  = False            # set True to also export an A4 page with same layout
 
+# Figures always go here, independent of wherever the source CSV lives
+OUT_DIR = r"D:\OneDrive - Ulster University\PhD\Review_Figures"
+os.makedirs(OUT_DIR, exist_ok=True)
+
 TITLE    = "Literature & Systematic Review — Compact Workflow (Objective 1)"
 SUBTITLE = "PRISMA-guided • TITLE-only Boolean blocks • bibliometrics • synthesis • publication plan"
 
@@ -290,10 +294,10 @@ def draw_canvas(height_in, out_pdf, out_png):
 
 # Tight (auto height, no empty space)
 draw_canvas(TOTAL_H_IN,
-            "fig_lit_sysrev_workflow_onecol_TIGHT.pdf",
-            "fig_lit_sysrev_workflow_onecol_TIGHT.png")
+            os.path.join(OUT_DIR, "fig_lit_sysrev_workflow_onecol_TIGHT.pdf"),
+            os.path.join(OUT_DIR, "fig_lit_sysrev_workflow_onecol_TIGHT.png"))
 
 # Optional A4 export (same layout, just sized to A4 height)
 if KEEP_A4:
-    draw_canvas(11.69, "fig_lit_sysrev_workflow_onecol_A4.pdf",
-                "fig_lit_sysrev_workflow_onecol_A4.png")
+    draw_canvas(11.69, os.path.join(OUT_DIR, "fig_lit_sysrev_workflow_onecol_A4.pdf"),
+                os.path.join(OUT_DIR, "fig_lit_sysrev_workflow_onecol_A4.png"))

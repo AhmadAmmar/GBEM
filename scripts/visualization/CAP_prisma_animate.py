@@ -35,6 +35,11 @@ TITLE    = "Literature Review Workflow - Objective 1"
 SUBTITLE = ""               # keep empty for slide
 
 DPI      = 300
+
+# Figures (and the intermediate frames/ folder) always go here, independent
+# of wherever the source CSV lives
+OUT_DIR = r"D:\OneDrive - Ulster University\PhD\Review_Figures"
+os.makedirs(OUT_DIR, exist_ok=True)
 H_IN     = 7.5              # slide-ish height; width is auto (8.8–14 in clamp)
 
 # Palette
@@ -235,9 +240,10 @@ def inches_to_px(bbox_in, fig_px_size, W_IN, H_IN):
     return (x_px, y_px, w_px, h_px)
 
 def build_animation():
-    os.makedirs("frames", exist_ok=True)
-    base_png = "frames/_base_full.png"
-    base_pdf = "frames/_base_full.pdf"
+    frames_dir = os.path.join(OUT_DIR, "frames")
+    os.makedirs(frames_dir, exist_ok=True)
+    base_png = os.path.join(frames_dir, "_base_full.png")
+    base_pdf = os.path.join(frames_dir, "_base_full.pdf")
     fig, ax, bboxes_in, fig_px = draw_base(save_path_png=base_png, save_path_pdf=base_pdf)
     plt.close(fig)
 
@@ -271,25 +277,25 @@ def build_animation():
         ring_box = (x_px, y_px_from_top, x_px + w_px, y_px_from_top + h_px)
         draw.rounded_rectangle(ring_box, radius=rr, outline=HIGHLIGHT_COL, width=HIGHLIGHT_W)
 
-        out_path = f"frames/workflow_focus_{step:03d}.png"
+        out_path = os.path.join(frames_dir, f"workflow_focus_{step:03d}.png")
         frame.save(out_path)
         frames.append(frame)
 
     # Final 'all clear' frame (no blur)
     all_clear = base.copy()
-    out_path = f"frames/workflow_focus_{len(bboxes_in)+1:03d}.png"
+    out_path = os.path.join(frames_dir, f"workflow_focus_{len(bboxes_in)+1:03d}.png")
     all_clear.save(out_path)
     frames.append(all_clear)
 
     # GIF
-    gif_path = "workflow_focus.gif"
+    gif_path = os.path.join(OUT_DIR, "workflow_focus.gif")
     frames[0].save(gif_path, save_all=True, append_images=frames[1:],
                    duration=FRAME_MS, loop=0, disposal=2)
     print("Wrote GIF:", os.path.abspath(gif_path))
 
     # MP4 (optional)
     if _try_mp4 and _HAVE_IMAGEIO:
-        mp4_path = "workflow_focus.mp4"
+        mp4_path = os.path.join(OUT_DIR, "workflow_focus.mp4")
         imageio.mimsave(mp4_path, [np.array(f.convert("RGB")) for f in frames], fps=max(1, int(1000/FRAME_MS)))
         print("Wrote MP4:", os.path.abspath(mp4_path))
     else:
