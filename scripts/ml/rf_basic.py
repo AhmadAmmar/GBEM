@@ -15,8 +15,13 @@ print("Loading dataset...")
 data = pd.read_csv(input_file)
 
 # Define target and features
+# Features are the contiguous block of satellite/spectral-index columns
+# starting at S2_B2 (Sentinel-2 band B2) and running to the end of the
+# file. Anchored on the column name rather than a fixed position (21)
+# so it stays correct if EPC/building-attribute columns are ever added
+# or reordered before this block.
 target = "CURRENT_ENERGY_RATING"
-start_column_index = 21
+start_column_index = data.columns.get_loc("S2_B2")
 features = data.columns[start_column_index:]
 data = data.dropna(subset=list(features) + [target])
 
