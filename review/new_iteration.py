@@ -65,6 +65,13 @@ def build(new, version, stamp):
     pdf = new / "latex" / f"{job}.pdf"
     if pdf.exists():
         shutil.copy(pdf, new / "build" / pdf.name); shutil.copy(pdf, cfg.PHD / "PDF" / f"{stamp}_Review_Paper_v{version}.pdf")
+        # companion contents document (table of contents, lists of figures and tables), if the template provides it
+        mc = new / "latex" / "tools" / "make_contents.py"
+        if mc.exists():
+            subprocess.run([sys.executable, str(mc), version], cwd=new / "latex")
+            toc = new / "build" / f"{job}_Contents.pdf"
+            if toc.exists():
+                shutil.copy(toc, cfg.PHD / "PDF" / f"{stamp}_Review_Paper_v{version}_Contents.pdf")
     docx = new / "build" / f"{job}.docx"
     subprocess.run([sys.executable, str(new / "latex" / "tools" / "make_docx.py"), str(docx)])
     tmp = docx.with_suffix(".pandoc.tex")

@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.4.0] - 2026-09-30
+
+### Added
+- `review/new_iteration.py` also builds a companion contents document (table of contents, list of figures, list of tables) when the manuscript template provides `tools/make_contents.py`, and copies it to `PDF/` with the time stamp. The manuscript itself stays in journal format.
+
 ## [0.3.1] - 2026-09-30
 
 ### Fixed
