@@ -62,7 +62,7 @@ def run(cfg, P):
         sheet.to_csv(sheet_path, index=False, encoding="utf-8-sig")
 
     # database arm = in the current screened records; otherwise other methods
-    in_db = set(dec["doi"].map(norm_doi))
+    in_db = set(dec.loc[dec.get("arm", pd.Series("database", index=dec.index)).fillna("database") == "database", "doi"].map(norm_doi)) - {""}
     sheet["arm_now"] = sheet["doi"].map(lambda d: "Database" if norm_doi(d) in in_db else "Other methods")
     F = sheet[sheet["include_focused"].astype(str).str.upper().eq("Y")].copy()
     F.to_csv(P["out"] / "focused_final.csv", index=False, encoding="utf-8-sig")

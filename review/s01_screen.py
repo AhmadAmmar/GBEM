@@ -20,6 +20,10 @@ DECISIONS = [INCLUDED, "Excluded (T/A)", "Review (umbrella)", "Excluded (record 
 def rule_decision(r, years):
     t, ta, tl = r["text"], r["ta"], r["tl"]
     dt = str(r["doc_type"])
+    if re.match(r"\s*(retracted|retraction|withdrawn)\b", str(r["title"]), re.I) or dt in ("Retracted", "Erratum"):
+        return "Excluded (record type)", f"Retracted or erratum ({dt})" if dt in ("Retracted", "Erratum") else "Retracted article"
+    if dt == "Preprint" and r.get("arm") == "other methods":   # eligibility: preprints only via other methods (flagged)
+        dt = "Article"
     if dt not in ("Article", "Review", "Conference Paper"):
         return "Excluded (record type)", f"Record type not eligible ({dt})"
     if pd.notna(r["year"]) and not (years[0] <= int(r["year"]) <= years[1]):
@@ -83,6 +87,10 @@ def cohen_kappa(a, b):
 
 def run(cfg, P):
     df = read_csv(P["out"] / "records.csv")
+    other_path = P["out"] / "prior_records.csv"   # records identified via other methods (previous work of the authors)
+    if other_path.exists():
+        df = pd.concat([df, read_csv(other_path)], ignore_index=True)
+    df["arm"] = df.get("arm", pd.Series("database", index=df.index)).fillna("database")
     for c in ["title", "abstract", "author_keywords", "index_keywords"]:
         df[c] = df[c].fillna("")
     df["text"] = (df["title"] + " . " + df["abstract"] + " . " + df["author_keywords"] + " . " + df["index_keywords"]).str.lower()
@@ -90,6 +98,8 @@ def run(cfg, P):
     df["tl"] = df["title"].str.lower()
     res = df.apply(lambda r: rule_decision(r, cfg.SEARCH["years"]), axis=1, result_type="expand")
     df["rule_decision"], df["rule_reason"] = res[0], res[1]
+    # decisions made without an abstract are marked, so that they are verified first
+    df["title_only"] = df["abstract"].str.len().lt(100) & df["rule_decision"].isin([INCLUDED, "Excluded (T/A)"])
     df["decision"], df["reason"], df["decided_by"] = df["rule_decision"], df["rule_reason"], "rules"
 
     # ---- human overrides (first reviewer verification)
@@ -139,18 +149,35 @@ def run(cfg, P):
         df[k] = met.map(lambda d: d.get(k))
     geo = df.apply(study_country, axis=1, result_type="expand")
     df["study_country"], df["country_source"] = geo[0], geo[1]
-    keep = ["rid", "db", "found_in", "doi", "authors", "title", "year", "source_title", "doc_type", "cited_by",
-            "rule_decision", "rule_reason", "decision", "reason", "decided_by", "rating_ml", "study_country", "country_source",
+    for c in ("searches", "prior_sources"):
+        df[c] = df.get(c, pd.Series("", index=df.index)).fillna("")
+    keep = ["rid", "arm", "db", "found_in", "searches", "prior_sources", "doi", "authors", "title", "year", "source_title", "doc_type",
+            "cited_by", "rule_decision", "rule_reason", "decision", "reason", "decided_by", "title_only", "rating_ml", "study_country", "country_source",
             "modality", "target", "method", "validation", "accuracy_pct", "r2", "f1", "cvrmse_pct", "auc"]
     df[keep].to_csv(P["out"] / "screening_decisions.csv", index=False, encoding="utf-8-sig")
+    # the authors' previous literature: decision for every prior work
+    ps_path = P["out"] / "prior_literature_status.csv"
+    if ps_path.exists():
+        ps = read_csv(ps_path).drop(columns=["decision", "reason"], errors="ignore")
+        ps.merge(df[["rid", "decision", "reason"]], on="rid", how="left").to_csv(ps_path, index=False, encoding="utf-8-sig")
 
     C = df[core]
+    D, O = df[df["arm"] == "database"], df[df["arm"] == "other methods"]
     pct = lambda n, d: round(100 * n / d, 1) if d else 0.0
-    st = {"n_screened": int((df["decision"] != "Excluded (record type)").sum()),
-          "n_removed_record_type": int((df["decision"] == "Excluded (record type)").sum()),
-          "n_reviews": int((df["decision"] == "Review (umbrella)").sum()),
-          "n_excluded_ta": int((df["decision"] == "Excluded (T/A)").sum()),
-          "excluded_reasons": df.loc[df["decision"] == "Excluded (T/A)", "reason"].value_counts().to_dict(),
+    st = {"n_screened": int((D["decision"] != "Excluded (record type)").sum()),
+          "n_removed_record_type": int((D["decision"] == "Excluded (record type)").sum()),
+          "n_reviews": int((D["decision"] == "Review (umbrella)").sum()),
+          "n_excluded_ta": int((D["decision"] == "Excluded (T/A)").sum()),
+          "excluded_reasons": D.loc[D["decision"] == "Excluded (T/A)", "reason"].value_counts().to_dict(),
+          "n_core_db": int((D["decision"] == INCLUDED).sum()),
+          "n_other_identified": int(len(O)), "n_other_record_type": int((O["decision"] == "Excluded (record type)").sum()),
+          "n_other_screened": int((O["decision"] != "Excluded (record type)").sum()),
+          "n_other_reviews": int((O["decision"] == "Review (umbrella)").sum()),
+          "n_other_excluded": int((O["decision"] == "Excluded (T/A)").sum()),
+          "n_core_other": int((O["decision"] == INCLUDED).sum()),
+          "n_prior_core": int((C["prior_sources"] != "").sum()), "n_title_only": int(df["title_only"].sum()),
+          "n_title_only_other": int(O["title_only"].sum()),
+          "n_reviews_total": int((df["decision"] == "Review (umbrella)").sum()),
           "n_core": int(core.sum()), "n_core_conference": int((C["doc_type"] == "Conference Paper").sum()),
           "n_verified_by_reviewer": n_over, "n_rule_decisions_changed": changed, "kappa": kappa, "n_dual_sample": n_dual_sample,
           "n_core_title_abstract_country": int(C["country_source"].str.startswith("title").sum()),

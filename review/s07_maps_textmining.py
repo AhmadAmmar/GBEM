@@ -113,12 +113,18 @@ def run(cfg, P):
     df = df[df["decision"] != "Excluded (record type)"].copy()
     df["year"] = df["year"].astype(int)
     core = df["decision"].eq("Included (core)")
+    # core-set analyses use every included study: database records and records identified via other methods
+    allrec = rec
+    if (P["out"] / "prior_records.csv").exists():
+        allrec = pd.concat([rec, read_csv(P["out"] / "prior_records.csv")], ignore_index=True)
+    CC = allrec.merge(dec[["rid", "decision", "study_country", "modality", "target", "method"]], on="rid")
+    CC = CC[CC["decision"].eq("Included (core)")].copy()
     fig_, S = P["fig"], {}
 
     # ---------------- word clouds
     kw = collections.Counter(norm_kw(k) for s in df["author_keywords"].fillna("") for k in str(s).split(";") if k.strip())
     S["wc_keywords"] = cloud(dict(kw.most_common(150)), fig_ / "figS1_wordcloud_keywords.png", f"Author keywords, bibliometric corpus (n = {len(df):,})")
-    S["wc_abstracts"] = cloud(ngram_freqs(df.loc[core, "abstract"]), fig_ / "figS2_wordcloud_abstracts.png", f"Terms in abstracts, core set (n = {int(core.sum()):,}; search terms excluded)", "Greens")
+    S["wc_abstracts"] = cloud(ngram_freqs(CC["abstract"]), fig_ / "figS2_wordcloud_abstracts.png", f"Terms in abstracts, core set (n = {len(CC):,}; search terms excluded)", "Greens")
     sn = P["out"] / "fulltext_snippets.csv"
     if sn.exists():
         snips = read_csv(sn)
@@ -156,7 +162,7 @@ def run(cfg, P):
     S["n_affiliation_countries"] = len(cnt)
 
     # ---------------- what sort of studies from where: modality small multiples (study areas)
-    C = df[core].fillna("")
+    C = CC.fillna("")
     mods = ["GIS / cadastral", "Climate / LCZ / UHI", "Thermal / LST", "LiDAR / 3D", "Aerial / UAV", "Optical satellite", "Street-level imagery", "SAR"]
     fig, axes = plt.subplots(2, 4, figsize=(7.2, 2.9), dpi=300)
     for ax, m in zip(axes.ravel(), mods):
@@ -265,6 +271,8 @@ def run(cfg, P):
               "keywords": read_csv(P["out"] / "keyword_frequencies.csv").head(300), "thematic_map": read_csv(P["out"] / "thematic_map.csv"),
               "top_cited": read_csv(P["out"] / "top_cited.csv"), "top_cited_references": read_csv(P["out"] / "top_cited_references.csv"),
               "focused_studies": F, "country_profiles": pd.DataFrame(prof)}
+    if (P["out"] / "prior_literature_status.csv").exists():   # the authors' previous literature and where each work stands
+        sheets["prior_literature"] = read_csv(P["out"] / "prior_literature_status.csv")
     with pd.ExcelWriter(P["out"] / "review_tables.xlsx") as xw:
         for name, t in sheets.items():
             t.to_excel(xw, sheet_name=name[:31], index=name in ("screening_summary", "country_profiles"))

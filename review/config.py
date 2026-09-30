@@ -46,6 +46,22 @@ SEARCH = {
 # Supplementary evidence (citation searching / expert suggestion)
 OTHER_METHODS_DIRS = [LIT / "New Lit", LIT / "New Lit 1", LIT / "Relevant", LIT / "Review"]
 
+# Earlier documented database searches, combined with the current one (each: label, date, query file, export glob)
+EARLIER_SEARCHES = [
+    {"label": "Scopus title search", "date": "2025-10-07", "field": "TITLE",
+     "query_file": LIT / "Scopus" / "2025-10-07_query_v1.txt", "glob": str(LIT / "Scopus" / "2025-10-07_scopus.csv")},
+]
+
+# The authors' previous work: literature cited in assessment reports and presentations, the reference library
+# and the PDF library (harvested and verified against Crossref by prior_literature.py)
+PRIOR = {
+    "documents": [PHD / "DOC", PHD / "PPT"],                  # .docx / .pptx reports and presentations
+    "exclude": ["Review_Paper", "Review Paper"],               # drafts of this review are not prior work
+    "bib": LIT / "LitRev.bib",
+    "pdf_dirs": [LIT],
+    "out_dir": LIT / "prior_literature",
+}
+
 # Human inputs (created as templates on first run; filled in by the review team)
 HUMAN = {
     "screening_overrides": "screening_overrides.csv",      # verified decisions (first reviewer)

@@ -56,7 +56,7 @@ def run(cfg, P):
     fig, ax = plt.subplots(figsize=(6.6, 3.0), dpi=300)
     years = np.arange(int(df["year"].min()), last_year + 1)
     ax.bar(years, [yr.get(y, 0) for y in years], color="#9fb8d8", label=f"Bibliometric corpus (n = {len(df):,})")
-    ax.bar(years, [yc.get(y, 0) for y in years], color="#2f5d8a", label=f"Core systematic set (n = {int(core.sum()):,})")
+    ax.bar(years, [yc.get(y, 0) for y in years], color="#2f5d8a", label=f"Core set, database records (n = {int(core.sum()):,})")
     # milestone labels sit above the tallest bar on two alternating levels, so they never cover bars or each other
     miles = [(2002, "EPBD\n2002/91/EC"), (2008, "EPCs E&W\n2007-08"), (2010, "EPBD recast\n2010/31/EU"),
              (2015, "Sentinel-2A;\nEA open LiDAR"), (2018, "ECOSTRESS;\nMEES in force"), (2024, "EPBD recast\n2024/1275")]
@@ -192,7 +192,9 @@ def run(cfg, P):
     fig.tight_layout(); fig.savefig(P["fig"] / "fig08_thematic.png"); plt.close(fig)
 
     # ---------- map of core study areas
-    sc = df.loc[core, "study_country"].fillna("").replace("", np.nan).dropna().value_counts()
+    # all included studies (database and other methods), as in the synthesis
+    dall = read_csv(P["out"] / "screening_decisions.csv")
+    sc = dall.loc[dall["decision"].eq("Included (core)"), "study_country"].fillna("").replace("", np.nan).dropna().value_counts()
     sc.to_csv(P["out"] / "core_study_countries.csv", header=["studies"], encoding="utf-8-sig")
     try:
         import geopandas as gpd, cartopy.io.shapereader as shpreader
