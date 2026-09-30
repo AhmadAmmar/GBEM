@@ -8,7 +8,7 @@ import textwrap
 import numpy as np, pandas as pd
 import matplotlib; matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
+from matplotlib.patches import FancyBboxPatch, FancyArrowPatch, Patch
 from common import load, read_csv
 
 plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 8, "axes.spines.top": False, "axes.spines.right": False})
@@ -130,7 +130,7 @@ def run(cfg, P):
     for ax, (M, yl_, xl_, yl, xl) in zip(axes, [(mat("modality", mods, "target", tgts), mods, tgts, "Data modality", "Energy-efficiency target"),
                                                 (mat("target", tgts, "method", mets), tgts, mets, "Energy-efficiency target", "Method family")]):
         ax.imshow(M, cmap="Blues", aspect="auto")
-        ax.set_xticks(range(len(xl_))); ax.set_xticklabels([textwrap.fill(x, 14) for x in xl_], fontsize=5.6)
+        ax.set_xticks(range(len(xl_))); ax.set_xticklabels([textwrap.fill(x, 10, break_long_words=False) for x in xl_], fontsize=5.6)
         ax.set_yticks(range(len(yl_))); ax.set_yticklabels(yl_, fontsize=6); ax.set_xlabel(xl, fontsize=6.5); ax.set_ylabel(yl, fontsize=6.5)
         for i in range(M.shape[0]):
             for j in range(M.shape[1]):
@@ -148,9 +148,8 @@ def run(cfg, P):
         ax.text(r["value"] + 0.01, i, f"{r['metric']} {r['value']:.2f}", va="center", fontsize=5.6)
     ax.set_yticks(range(len(Pp))); ax.set_yticklabels([f"{s} ({int(y)})  [{t}]" for s, y, t in zip(Pp["study"], Pp["year"], Pp["target_type"])], fontsize=6)
     ax.set_xlim(0, 1.12); ax.set_xlabel("Reported headline metric (as reported; not comparable across metrics or class counts)")
-    for k in Pp["validation"].unique():
-        ax.barh([], [], color=VCOL.get(k, "#999"), label=k)
-    ax.legend(frameon=False, fontsize=6, loc="lower right", title="Validation design", title_fontsize=6)
+    handles = [Patch(color=VCOL.get(k, "#999"), label=k) for k in Pp["validation"].unique()]
+    ax.legend(handles=handles, frameon=False, fontsize=6, loc="lower right", title="Validation design", title_fontsize=6)
     fig.tight_layout(); fig.savefig(fig_ / "fig11_performance.png"); plt.close(fig)
 
     # ---------------- Fig 12 validation over time
