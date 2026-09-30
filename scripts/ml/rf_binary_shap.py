@@ -1,3 +1,4 @@
+"""Random forest for binary EPC efficiency class with confusion matrix, ROC curve and SHAP feature importance."""
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt

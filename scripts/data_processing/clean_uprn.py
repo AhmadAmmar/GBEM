@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Clean the merged Belfast UPRN table with coordinates: normalise UPRNs (digits only, Excel scientific notation fixed), write uprn_union_with_xy_clean.csv."""
 import pandas as pd, re
 from pathlib import Path
 

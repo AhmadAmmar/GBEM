@@ -1,3 +1,4 @@
+"""Report the number of rows in every data file (CSV, Parquet, GeoJSON, GeoPackage, FlatGeobuf, pickle) in the data folder."""
 import os
 import pandas as pd
 import geopandas as gpd

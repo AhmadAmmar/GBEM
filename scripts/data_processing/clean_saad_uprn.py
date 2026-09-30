@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Clean the Belfast UPRN point file: detect encoding and coordinate columns, normalise UPRNs, write uprn_saad_clean.csv."""
 import pandas as pd, re
 from pathlib import Path
 

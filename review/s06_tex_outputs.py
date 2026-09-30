@@ -110,14 +110,14 @@ def run(cfg, P):
     n["NRemovedType"] = fmt(S["n_removed_record_type"]); n["NScreened"] = fmt(S["n_screened"])
     n["NReviews"] = fmt(S["n_reviews"]); n["NExcludedTA"] = fmt(S["n_excluded_ta"]); n["NCore"] = fmt(S["n_core"])
     n["NCoreConference"] = fmt(S["n_core_conference"]); n["NVerified"] = fmt(S["n_verified_by_reviewer"])
-    n["KappaValue"] = fmt(S["kappa"]["kappa"], 2) if S["kappa"] else "TBC"
-    n["NKappaSample"] = fmt(S["kappa"]["n"]) if S["kappa"] else "TBC"
+    n["KappaValue"] = fmt(S["kappa"]["kappa"], 2) if S["kappa"] else "pending"
+    n["NKappaSample"] = fmt(S["kappa"]["n"]) if S["kappa"] else "pending"
     reasons = sorted(S["excluded_reasons"].items(), key=lambda x: -x[1])
     for i in range(8):
         L = "ABCDEFGH"[i]
         n["NExclReason" + L] = fmt(reasons[i][1]) if i < len(reasons) else "0"
         n["ExclReason" + L] = (reasons[i][0][0].lower() + reasons[i][0][1:] if reasons[i][0][1:2].islower() else reasons[i][0]) if i < len(reasons) else "--"
-    n["RecallRetrieved"] = str(cfg.SEARCH["recall_benchmark"]["retrieved"] or "TBC")
+    n["RecallRetrieved"] = str(cfg.SEARCH["recall_benchmark"]["retrieved"] or "pending")
     n["RecallN"] = str(cfg.SEARCH["recall_benchmark"]["n"])
     for i in range(6):
         cl = B["network"]["clusters"][i] if i < len(B["network"]["clusters"]) else ["--"]
