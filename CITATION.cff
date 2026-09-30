@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "GBEM: Geospatial Building Energy Mapping"
+abstract: "Code for estimating and mapping building energy efficiency from Earth observation and geospatial data, and the analysis pipeline for a systematic review of remote sensing and geospatial methods for building energy efficiency assessment. Developed as part of a PhD project at Ulster University."
+type: software
+authors:
+  - family-names: Ammar
+    given-names: Ahmad
+    affiliation: "Ulster University"
+  - family-names: Bhatti
+    given-names: Saad
+    affiliation: "Ulster University"
+  - family-names: McKenzie
+    given-names: Paul
+    affiliation: "Ulster University"
+license: Apache-2.0
+repository-code: "https://github.com/AhmadAmmar/GBEM"
+keywords:
+  - energy performance certificate
+  - building energy efficiency
+  - remote sensing
+  - Earth observation
+  - GIS
+  - machine learning
+  - systematic review
