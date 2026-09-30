@@ -58,6 +58,14 @@ def main():
         tmp.unlink()
     if docx.exists():
         shutil.copy(docx, cfg.PHD / "DOC" / f"{stamp}_Review_Paper_v{a.version}.docx")
+    # version the iteration in the (internal) manuscript repository, if there is one
+    if (cfg.REVIEW / ".git").exists():
+        git = lambda *a: subprocess.run(["git", *a], cwd=cfg.REVIEW, capture_output=True, text=True)
+        git("add", "-A")
+        if git("diff", "--cached", "--quiet").returncode:
+            git("commit", "-m", f"Iteration v{a.version} ({stamp})")
+            git("tag", "-a", f"v{a.version}-draft", "-m", f"Draft v{a.version} ({cfg.SEARCH['search_date']} search)")
+            print("Committed and tagged in the manuscript repository:", f"v{a.version}-draft")
     print("Iteration ready:", new)
 
 
