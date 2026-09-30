@@ -38,9 +38,9 @@ SEARCH = {
     "scopus_glob": str(LIT / "Scopus" / "2026-09-30_scopus_v2*.csv"),
     "wos_glob": str(LIT / "WoS" / "2026-09-30_wos_v2*.txt"),
     # hit counts shown by the database interfaces (for the PRISMA box); None = use export size
-    "scopus_hits": None,
+    "scopus_hits": 3989,                  # Scopus, run 2026-09-30, exported 17:24 (export v2)
     "wos_hits": None,
-    "recall_benchmark": {"n": 17, "retrieved": None},   # Step 2 of the query file
+    "recall_benchmark": {"n": 17, "retrieved": 15},     # Step 2 of the query file; see Lit/Scopus/EXPORT_LOG.md
 }
 
 # Supplementary evidence (citation searching / expert suggestion)

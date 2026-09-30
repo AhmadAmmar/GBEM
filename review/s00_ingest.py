@@ -13,6 +13,8 @@ SCHEMA = ["rid", "db", "doi", "title", "abstract", "author_keywords", "index_key
 
 WOS_DT = {"Article": "Article", "Review": "Review", "Proceedings Paper": "Conference Paper",
           "Article; Proceedings Paper": "Conference Paper", "Review; Early Access": "Review", "Article; Early Access": "Article"}
+# Scopus spells the type "Conference paper" in current exports and "Conference Paper" in older ones
+DT_CANON = {"article": "Article", "review": "Review", "conference paper": "Conference Paper"}
 
 
 def read_scopus(files):
@@ -58,6 +60,7 @@ def run(cfg, P, scopus_files=None, wos_files=None):
     allr["title_n"] = allr["title"].map(norm_title)
     allr["year"] = pd.to_numeric(allr["year"], errors="coerce").astype("Int64")
     allr["cited_by"] = pd.to_numeric(allr["cited_by"], errors="coerce").fillna(0)
+    allr["doc_type"] = allr["doc_type"].map(lambda x: DT_CANON.get(str(x).strip().lower(), x))
     # priority: Scopus record kept (richer affiliation/keyword fields), then the more complete abstract
     allr["prio"] = (allr["db"] != "Scopus").astype(int)
     allr["abs_len"] = allr["abstract"].fillna("").str.len()

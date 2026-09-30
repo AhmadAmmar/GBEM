@@ -77,8 +77,8 @@ if FOUND:
         N_AFTER_DEDUP = len(dfx)
 
         N_TITLE_ABS_SCREENED = N_AFTER_DEDUP
-        N_FULLTEXT_ASSESSED  = "TBD"
-        N_INCLUDED           = "TBD"
+        N_FULLTEXT_ASSESSED  = "n/a"
+        N_INCLUDED           = "n/a"
     except Exception as e:
         print("[Slide/WidthAuto] CSV read error:", e)
 

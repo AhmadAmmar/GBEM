@@ -118,6 +118,7 @@ def run(cfg, P):
         s = elig.sample(frac=cfg.DUAL_SAMPLE_FRACTION, random_state=cfg.RANDOM_SEED)
         s[["rid", "title", "abstract"]].assign(decision_reviewer2="", reason_reviewer2="").to_csv(samp_path, index=False, encoding="utf-8-sig")
     s2 = read_csv(samp_path)
+    n_dual_sample = int(len(s2))
     s2 = s2[s2["decision_reviewer2"].fillna("").astype(str).str.strip().ne("")]
     kappa = None
     if len(s2):
@@ -151,7 +152,7 @@ def run(cfg, P):
           "n_excluded_ta": int((df["decision"] == "Excluded (T/A)").sum()),
           "excluded_reasons": df.loc[df["decision"] == "Excluded (T/A)", "reason"].value_counts().to_dict(),
           "n_core": int(core.sum()), "n_core_conference": int((C["doc_type"] == "Conference Paper").sum()),
-          "n_verified_by_reviewer": n_over, "n_rule_decisions_changed": changed, "kappa": kappa,
+          "n_verified_by_reviewer": n_over, "n_rule_decisions_changed": changed, "kappa": kappa, "n_dual_sample": n_dual_sample,
           "n_core_title_abstract_country": int(C["country_source"].str.startswith("title").sum()),
           "core_n_countries": int(C["study_country"].replace("", np.nan).nunique()),
           "core_countries": C["study_country"].replace("", np.nan).dropna().value_counts().to_dict(),

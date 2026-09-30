@@ -80,12 +80,12 @@ if FOUND:
             key = pd.Series(range(len(df)), name="_k")
         dfx = df.assign(_k=key).drop_duplicates(subset=["_k"])
         N_AFTER_DEDUP = len(dfx)
-        # placeholders for now
+        # screening counts are not computed by this script (see review/s01_screen.py)
         N_TITLE_ABS_SCREENED = N_AFTER_DEDUP
-        N_TITLE_ABS_EXCLUDED = "TBD"
-        N_FULLTEXT_ASSESSED  = "TBD"
-        N_FULLTEXT_EXCLUDED  = "TBD"
-        N_INCLUDED           = "TBD"
+        N_TITLE_ABS_EXCLUDED = "n/a"
+        N_FULLTEXT_ASSESSED  = "n/a"
+        N_FULLTEXT_EXCLUDED  = "n/a"
+        N_INCLUDED           = "n/a"
     except Exception as e:
         print(f"[Lit/SysRev] CSV read error: {e}")
 

@@ -57,13 +57,15 @@ def run(cfg, P):
     years = np.arange(int(df["year"].min()), last_year + 1)
     ax.bar(years, [yr.get(y, 0) for y in years], color="#9fb8d8", label=f"Bibliometric corpus (n = {len(df):,})")
     ax.bar(years, [yc.get(y, 0) for y in years], color="#2f5d8a", label=f"Core systematic set (n = {int(core.sum()):,})")
-    for y, lab in [(2002, "EPBD\n2002/91/EC"), (2008, "EPCs E&W\n2007-08"), (2010, "EPBD recast\n2010/31/EU"),
-                   (2015, "Sentinel-2A;\nEA open LiDAR"), (2018, "ECOSTRESS;\nMEES in force"), (2024, "EPBD recast\n2024/1275")]:
-        if y in years:
-            ax.annotate(lab, (y, yr.get(y, 0)), xytext=(y, yr.max() * 0.6 + (yr.max() * 0.08 if y % 2 else 0)), ha="center",
-                        fontsize=5.8, arrowprops=dict(arrowstyle="-", color="#888", lw=0.5), color="#444")
+    # milestone labels sit above the tallest bar on two alternating levels, so they never cover bars or each other
+    miles = [(2002, "EPBD\n2002/91/EC"), (2008, "EPCs E&W\n2007-08"), (2010, "EPBD recast\n2010/31/EU"),
+             (2015, "Sentinel-2A;\nEA open LiDAR"), (2018, "ECOSTRESS;\nMEES in force"), (2024, "EPBD recast\n2024/1275")]
+    for i, (y, lab) in enumerate(m for m in miles if m[0] in years):
+        ax.annotate(lab, (y, yr.get(y, 0)), xytext=(y, yr.max() * (1.10 if i % 2 == 0 else 1.30)), ha="center", va="bottom",
+                    fontsize=5.8, arrowprops=dict(arrowstyle="-", color="#888", lw=0.5), color="#444")
+    ax.set_ylim(0, yr.max() * 1.55)
     ax.text(last_year, yr.get(last_year, 0) + yr.max() * 0.02, "partial\nyear", ha="center", fontsize=5.5, color="#666")
-    ax.set_xlabel("Publication year"); ax.set_ylabel("Documents"); ax.legend(frameon=False, loc="upper left")
+    ax.set_xlabel("Publication year"); ax.set_ylabel("Documents"); ax.legend(frameon=False, loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=2)
     fig.tight_layout(); fig.savefig(P["fig"] / "fig04_annual.png"); plt.close(fig)
 
     # ---------- sources and document types
