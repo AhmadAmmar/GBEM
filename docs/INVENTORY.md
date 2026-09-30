@@ -16,6 +16,7 @@ Generated 2026-09-30 by `tools/make_inventory.py`. Dates: last commit that chang
 | `config.py` | Paths and search metadata for the review pipeline. | 2026-09-30 | 2026-09-30 | current |
 | `local_settings.example.py` | Copy to local_settings.py (git-ignored) and edit for your machine. | 2026-09-30 | 2026-09-30 | current |
 | `new_iteration.py` | Create the next time-stamped iteration, run the pipeline, build PDF and Word. | 2026-09-30 | 2026-09-30 | current |
+| `prior_literature.py` | Harvest and verify the literature used in the authors' previous work. | not committed | 2026-09-30 | current |
 | `run_all.py` | Run the full review pipeline for one iteration folder. | 2026-09-30 | 2026-09-30 | current |
 | `s00_ingest.py` | Stage 0 - read Scopus CSV and Web of Science exports, harmonise, de-duplicate. | 2026-09-30 | 2026-09-30 | current |
 | `s01_screen.py` | Stage 1 - screening and abstract-level coding. | 2026-09-30 | 2026-09-30 | current |

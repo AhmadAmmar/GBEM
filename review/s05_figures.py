@@ -36,32 +36,49 @@ def run(cfg, P):
     supp = read_csv(P["inputs"] / cfg.HUMAN["supplementary_studies"])
     fig_ = P["fig"]
 
-    # ---------------- PRISMA 2020
-    fig, ax = canvas(7.2, 6.6)
-    for y0, y1, lab in [(0.80, 0.97, "Identification"), (0.30, 0.79, "Screening"), (0.03, 0.29, "Included")]:
-        ax.add_patch(FancyBboxPatch((0.01, y0), 0.045, y1 - y0, boxstyle="round,pad=0.002", fc="#dbe7f3", ec="none"))
-        ax.text(0.0325, (y0 + y1) / 2, lab, rotation=90, ha="center", va="center", fontsize=7.5, weight="bold")
-    ident = f"Records identified ({I['search_date']}, {I['field']})\nScopus n = {I['n_scopus']:,}"
+    # ---------------- PRISMA 2020 (databases: left and centre; other methods: right)
+    fig, ax = canvas(7.2, 7.0)
+    for y0, y1, lab in [(0.81, 0.97, "Identification"), (0.31, 0.80, "Screening"), (0.02, 0.30, "Included")]:
+        ax.add_patch(FancyBboxPatch((0.005, y0), 0.035, y1 - y0, boxstyle="round,pad=0.002", fc="#dbe7f3", ec="none"))
+        ax.text(0.0225, (y0 + y1) / 2, lab, rotation=90, ha="center", va="center", fontsize=7, weight="bold")
+    L, M, R, W = 0.05, 0.345, 0.645, 0.27
+    ax.text(L + (M + W - L) / 2, 0.985, "Identification of studies via databases", ha="center", fontsize=7, weight="bold")
+    ax.text(R + W / 2 + 0.02, 0.985, "Identification via other methods", ha="center", fontsize=7, weight="bold")
+    ident = f"Records identified from Scopus\nsearch of {I['search_date']}, {I['field']}:\nn = {I['n_scopus']:,}"
+    for e in I.get("earlier_searches", []):
+        ident += f"\nsearch of {e['date']}, {e['field']}:\nn = {e['n']:,}"
     if I["n_wos"]:
-        ident += f"\nWeb of Science n = {I['n_wos']:,}"
-    box(ax, 0.08, 0.84, 0.40, 0.12, ident, fc="#f4f8fc")
-    box(ax, 0.55, 0.84, 0.42, 0.12, f"Records removed before screening:\nduplicates n = {I['n_duplicates']:,}\nineligible record type or years n = {S['n_removed_record_type']:,}")
-    arrow(ax, 0.48, 0.90, 0.55, 0.90)
-    box(ax, 0.08, 0.66, 0.40, 0.10, f"Records screened (title, abstract, keywords)\nn = {S['n_screened']:,}\n= bibliometric corpus", fc="#f4f8fc")
-    arrow(ax, 0.28, 0.84, 0.28, 0.76)
-    exc = "\n".join(f"{k}: n = {v:,}" for k, v in S["excluded_reasons"].items())
-    box(ax, 0.55, 0.52, 0.42, 0.26, f"Records excluded (n = {S['n_excluded_ta']:,}):\n{exc}", wrap=72, fs=5.8)
-    arrow(ax, 0.48, 0.71, 0.55, 0.66)
-    box(ax, 0.08, 0.50, 0.40, 0.10, f"Review articles set aside for umbrella/context use\nn = {S['n_reviews']:,}", fc="#fff8e6")
-    arrow(ax, 0.28, 0.66, 0.28, 0.60)
+        ident += f"\nWeb of Science: n = {I['n_wos']:,}"
+    box(ax, L, 0.83, W, 0.13, ident, fc="#f4f8fc", fs=6.0, wrap=46)
+    box(ax, M, 0.83, W, 0.13, f"Removed before screening:\nduplicates within and between searches:\nn = {I['n_duplicates']:,}\n"
+        f"ineligible record type or years, errata and retracted articles: n = {S['n_removed_record_type']:,}", fs=6.0, wrap=44)
+    arrow(ax, L + W, 0.895, M, 0.895)
+    oth = S.get("n_other_identified", 0)
+    box(ax, R, 0.83, W + 0.04, 0.13, "Records identified from the authors' previous reports, presentations, reference library and PDF "
+        f"library, citation searching and expert suggestion, and not retrieved by the searches: n = {oth:,}", fc="#f4f8fc", fs=6.0, wrap=54)
+    box(ax, L, 0.66, W, 0.10, f"Records screened (title, abstract, keywords)\nn = {S['n_screened']:,} = bibliometric corpus", fc="#f4f8fc", fs=6.0, wrap=48)
+    arrow(ax, L + W / 2, 0.83, L + W / 2, 0.76)
+    exc = "\n".join(f"{k}: {v:,}" for k, v in S["excluded_reasons"].items())
+    box(ax, M, 0.50, W, 0.28, f"Records excluded (n = {S['n_excluded_ta']:,}):\n{exc}", wrap=52, fs=5.4)
+    arrow(ax, L + W, 0.71, M, 0.66)
+    box(ax, L, 0.51, W, 0.09, f"Review articles set aside for umbrella/context use\nn = {S['n_reviews']:,}", fc="#fff8e6", fs=6.0, wrap=48)
+    arrow(ax, L + W / 2, 0.66, L + W / 2, 0.60)
     ver = f"verified by reviewer: {S['n_verified_by_reviewer']:,}" if S["n_verified_by_reviewer"] else "reviewer verification in progress"
-    box(ax, 0.08, 0.33, 0.40, 0.12, f"Primary studies eligible at title/abstract stage\nn = {S['n_core']:,}\n({ver})", fc="#f4f8fc")
-    arrow(ax, 0.28, 0.50, 0.28, 0.45)
-    box(ax, 0.55, 0.33, 0.42, 0.14, f"Identification via other methods\n(citation searching, expert suggestion)\nrecords n = {len(supp):,}; eligible for the focused subset n = {Fs['n_focused_other']}", fc="#f4f8fc", fs=6.1)
-    box(ax, 0.08, 0.16, 0.40, 0.11, f"Core systematic set\nn = {S['n_core']:,} studies", fc="#e6f2e6")
-    arrow(ax, 0.28, 0.33, 0.28, 0.27)
-    box(ax, 0.55, 0.05, 0.42, 0.14, f"Focused subset: building-level estimation of energy-efficiency ratings, labels or scores\nn = {Fs['n_focused']} ({Fs['n_focused_db']} database + {Fs['n_focused_other']} other methods)", fc="#e6f2e6", fs=6.1)
-    arrow(ax, 0.48, 0.20, 0.55, 0.12); arrow(ax, 0.76, 0.33, 0.76, 0.19)
+    box(ax, L, 0.34, W, 0.11, f"Primary studies eligible at title/abstract stage\nn = {S.get('n_core_db', S['n_core']):,}\n({ver})", fc="#f4f8fc", fs=6.0, wrap=48)
+    arrow(ax, L + W / 2, 0.51, L + W / 2, 0.45)
+    box(ax, R, 0.66, W + 0.04, 0.10, f"Records screened with the same criteria\nn = {S.get('n_other_screened', 0):,}", fc="#f4f8fc", fs=6.0, wrap=50)
+    arrow(ax, R + W / 2 + 0.02, 0.83, R + W / 2 + 0.02, 0.76)
+    box(ax, R, 0.49, W + 0.04, 0.13, f"Excluded: record type (book, report, dataset, thesis, web) n = {S.get('n_other_record_type', 0):,}; "
+        f"title/abstract n = {S.get('n_other_excluded', 0):,}; review articles set aside n = {S.get('n_other_reviews', 0):,}", fs=5.8, wrap=54)
+    arrow(ax, R + W / 2 + 0.02, 0.66, R + W / 2 + 0.02, 0.62)
+    box(ax, R, 0.34, W + 0.04, 0.11, f"Primary studies eligible\nn = {S.get('n_core_other', 0):,}", fc="#f4f8fc", fs=6.0, wrap=50)
+    arrow(ax, R + W / 2 + 0.02, 0.49, R + W / 2 + 0.02, 0.45)
+    box(ax, L, 0.15, W, 0.12, f"Core systematic set\nn = {S['n_core']:,} studies\n({S.get('n_core_db', S['n_core']):,} database + {S.get('n_core_other', 0):,} other methods)",
+        fc="#e6f2e6", fs=6.2, wrap=48)
+    arrow(ax, L + W / 2, 0.34, L + W / 2, 0.27); arrow(ax, R + 0.02, 0.34, L + W, 0.24)
+    box(ax, R, 0.03, W + 0.04, 0.14, f"Focused subset: building-level estimation of energy-efficiency ratings, labels or scores\n"
+        f"n = {Fs['n_focused']} ({Fs['n_focused_db']} database + {Fs['n_focused_other']} other methods)", fc="#e6f2e6", fs=6.0, wrap=52)
+    arrow(ax, L + W, 0.18, R, 0.10)
     fig.savefig(fig_ / "fig02_prisma.png"); plt.close(fig)
 
     # ---------------- Fig 1 framework

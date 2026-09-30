@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.5.0] - 2026-09-30
+
+### Added
+- `review/prior_literature.py` harvests the literature of earlier work (reference lists of reports and presentations, BibTeX library, PDF library). It resolves each citation to a DOI through Crossref (and the arXiv API for preprints), flags citations whose DOI belongs to another work or does not exist, and flags retracted articles. Results are cached, so re-runs are reproducible offline.
+- Earlier documented searches (`EARLIER_SEARCHES`) are combined with the current search. Each record keeps the searches that found it and, where the current string misses it, the concept block that is not matched.
+- Works from earlier literature that no search retrieves become PRISMA "other methods" records and are screened with the same rules. `prior_literature_status.csv` gives the route and decision for every earlier work, and it is also a sheet in `review_tables.xlsx`.
+- The PRISMA diagram shows both identification routes. The manuscript macros cover the earlier search, the earlier literature and the decisions made on titles only.
+
+### Changed
+- Bibliometric indicators remain based on database records only. Core-set analyses (map, modality maps, country profiles, abstract word cloud) use every included study.
+
+### Fixed
+- Retracted articles and errata are excluded as ineligible record types (a retracted article was previously screened as an included study).
+- Decisions made without an abstract are flagged (`title_only`) for verification first.
+
 ## [0.4.0] - 2026-09-30
 
 ### Added

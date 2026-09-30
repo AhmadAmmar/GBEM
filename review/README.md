@@ -13,7 +13,8 @@ Turns the database exports into every number, table and figure in the review man
 1. Save the exports (see `Lit/Scopus/2026-09-30_query_v2.txt`, Step 3):
    - Scopus CSV → `Lit/Scopus/2026-09-30_scopus_v2.csv` (or `_part1.csv`, `_part2.csv`, …)
    - Web of Science tab-delimited → `Lit/WoS/2026-09-30_wos_v2_part1.txt`, …
-2. Put the hit counts, search date and recall-check result into `SEARCH` in `config.py`.
+2. Put the hit counts, search date and recall-check result into `SEARCH` in `config.py`. Earlier documented searches whose results are combined with the current one go in `EARLIER_SEARCHES`.
+   To include the literature of earlier work (reports, presentations, reference library, PDF library), run `python prior_literature.py --version v1` first. It resolves every citation to a DOI, checks it against Crossref, and writes dated files to `PRIOR["out_dir"]`. Works that no search retrieves are screened as "other methods" records.
 3. Run:
    ```bash
    cd code/review
