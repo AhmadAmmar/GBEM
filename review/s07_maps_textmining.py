@@ -193,12 +193,16 @@ def run(cfg, P):
         ax.plot([x, -13.2], [yy, ly], color="#9aa7b5", lw=0.35, zorder=2)
         ax.scatter(x, yy, s=26, color=c, edgecolor="white", linewidth=0.5, zorder=3)
         ax.text(-13.5, ly, label(s, y), fontsize=4.6, ha="right", va="center", color="#333")
-    for s, y, (x, yy), c in other:
+    placed = []   # labels of neighbouring points go below the marker instead of above
+    for s, y, (x, yy), c in sorted(other, key=lambda o: o[2][0]):
         ax.scatter(x, yy, s=26, color=c, edgecolor="white", linewidth=0.5, zorder=3)
-        ax.text(x + 0.6, yy + 0.4, label(s, y), fontsize=4.6, color="#333", zorder=4)
+        near = any(abs(x - px) < 6 and abs(yy - py) < 2 for px, py in placed)
+        ax.text(x + 0.6, yy - 0.5 if near else yy + 0.4, label(s, y), fontsize=4.6, color="#333", zorder=4,
+                va="top" if near else "baseline")
+        placed.append((x, yy))
     for k, c in list(vcol.items()) + [("Other / not reported", "#8c8c8c")]:
         ax.scatter([], [], s=30, color=c, label=k)
-    ax.legend(frameon=False, fontsize=5, loc="lower right", title="Validation design", title_fontsize=5.5)
+    ax.legend(frameon=False, fontsize=5, loc="upper right", title="Validation design", title_fontsize=5.5)
     fig.tight_layout(); fig.savefig(fig_ / "figS6_map_focused.png"); plt.close(fig)
 
     # ---------------- country profiles (study area): targets and methods

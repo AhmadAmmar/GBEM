@@ -113,9 +113,9 @@ def run(cfg, P):
     S["n_keywords_unique"], S["docs_with_kw"] = len(kwc), int(df["kw"].map(bool).sum())
     S["top_keywords"] = dict(kwc.most_common(30))
 
-    fig, axes = plt.subplots(1, 4, figsize=(7.2, 3.6), dpi=300)
+    fig, axes = plt.subplots(2, 2, figsize=(7.2, 5.6), dpi=300)
     S["block_top"] = {}
-    for i, (ax, b) in enumerate(zip(axes, BLOCKS)):
+    for i, (ax, b) in enumerate(zip(axes.flat, BLOCKS)):
         items = [(k, v) for k, v in kwc.most_common() if block_of(k) == b][:12]
         S["block_top"][b] = items[:8]
         ax.barh([k for k, _ in items][::-1], [v for _, v in items][::-1], color=["#3b6ea5", "#c0504d", "#4f9a55", "#8064a2"][i])
@@ -172,7 +172,7 @@ def run(cfg, P):
     for _, r in tm.iterrows():
         ax.text(r["centrality"], r["density"], r["label"].replace(", ", "\n"), fontsize=4.6, ha="center", va="center")
     xr = max(tm["centrality"].max() - tm["centrality"].min(), 1); yr_ = max(tm["density"].max() - tm["density"].min(), 1)
-    ax.set_xlim(tm["centrality"].min() - 0.35 * xr, tm["centrality"].max() + 0.25 * xr)
+    ax.set_xlim(tm["centrality"].min() - 0.6 * xr, tm["centrality"].max() + 0.45 * xr)
     ax.set_ylim(tm["density"].min() - 0.3 * yr_, tm["density"].max() + 0.3 * yr_)
     ax.set_xlabel("Centrality (external link strength)"); ax.set_ylabel("Density (internal link strength)")
     for (x, y, t) in [(0.98, 0.98, "Motor themes"), (0.02, 0.98, "Niche themes"), (0.02, 0.02, "Emerging or\ndeclining"), (0.98, 0.02, "Basic themes")]:
