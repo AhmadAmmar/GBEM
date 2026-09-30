@@ -1,0 +1,15 @@
+GBEM - Geospatial Building Energy Mapping
+Copyright 2025-2026 Ulster University
+
+This software was developed as part of a doctoral research project at the
+School of Geography and Environmental Sciences, Ulster University, United Kingdom.
+
+  Researcher:  Ahmad Ammar
+  Supervisors: Dr Saad Bhatti, Paul McKenzie
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Third-party data (for example Energy Performance Certificate records, Ordnance
+Survey and other address or building data, satellite imagery, LiDAR, and
+bibliographic database exports) are NOT distributed with this software and
+remain subject to their own licences and terms of use. See DATA.md.

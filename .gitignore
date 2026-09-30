@@ -25,3 +25,19 @@ uk-lidar-program
 # Ignore system files
 .DS_Store
 Thumbs.db   
+# Building-level outputs that identify individual properties (restricted; see DATA.md)
+maps/*.html
+*.geojson
+!scripts/data_processing/data_iwt_assets/**/*.geojson
+*.gpkg
+*.parquet
+*.xlsx
+
+# Documents and literature (publisher copyright / unpublished work)
+*.pdf
+*.docx
+
+# Review pipeline: machine-specific settings and run outputs
+review/local_settings.py
+review/**/outputs/
+review/**/inputs/
