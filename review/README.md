@@ -4,7 +4,7 @@ Turns the database exports into every number, table and figure in the review man
 
 ## Setup
 
-- Python 3.11+ with `pandas`, `numpy`, `networkx`, `matplotlib`, `geopandas`, `cartopy`; `pdftotext` (Poppler) for full-text support; a LaTeX distribution with `latexmk`; `pandoc` for the Word version.
+- Python 3.11+ with the packages in `requirements.txt` (`pip install -r requirements.txt`); `pdftotext` (Poppler) for full-text support; a LaTeX distribution with `latexmk`; `pandoc` for the Word version.
 - Data locations are machine-specific: copy `local_settings.example.py` to `local_settings.py` (git-ignored) or set the `GBEM_*` environment variables described in `config.py`.
 - Database exports, the PDF library and the manuscript are **not** part of this repository (publisher and database licences; unpublished work).
 
@@ -33,6 +33,7 @@ To re-run the analysis inside an existing iteration: `python run_all.py --iterat
 | `s03_focused.py` | Builds the focused-subset candidate list; merges the full-text extraction sheet | `focused_final.csv`, `focused_candidates_pending.csv`, `stats_focused.json` | Tables 8, 9, D, E; Figs 11–12 |
 | `s04_fulltext.py` | Finds library PDFs by DOI or title; extracts Conclusions and sentences on validation, metrics, linkage, time gaps, uncertainty and data availability | `pdf_doi_index.csv`, `fulltext_snippets.csv`, `fulltext_missing.csv` | Support for extraction and appraisal |
 | `s05_figures.py` | PRISMA diagram, framework, workflow, timeline, evidence map, performance, validation, roadmap, graphical abstract | `latex/figures/*.png` | Figs 1–3, 9–13, graphical abstract |
+| `s07_maps_textmining.py` | Word clouds (author keywords, abstracts, Conclusions of focused full texts); minimal maps of where papers come from (affiliations), where each data modality is applied, and the focused study areas; country profiles by target and method; country collaboration network; national output over time; all tables in one Excel workbook | `review_tables.xlsx`, `top_authors.csv`, `stats_extras.json`; `figS1`–`figS9` | Appendix H (supplementary figures) |
 | `s06_tex_outputs.py` | Writes `\newcommand` macros for every number, the generated table bodies and the search string; fetches BibTeX by DOI for new focused studies | `latex/generated/*.tex`, `references.bib` additions | Every number and generated table in the text |
 
 `run_all.py` writes `analysis/outputs/MANIFEST.md`, which records this mapping for each run.

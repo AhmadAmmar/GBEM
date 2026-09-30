@@ -1,3 +1,4 @@
+"""List the file extensions present in the data folder."""
 import os
 
 folder_path = r"D:\OneDrive - Ulster University\PhD\data"
