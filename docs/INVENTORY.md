@@ -1,4 +1,4 @@
-# GBEM code inventory
+# Code inventory
 
 Generated 2026-09-30 by `tools/make_inventory.py`. Dates: last commit that changed the file, and file modification date.
 
@@ -173,15 +173,15 @@ Generated 2026-09-30 by `tools/make_inventory.py`. Dates: last commit that chang
 | `app.py` | === Load your GeoDataFrame === | 2026-09-28 | 2026-09-28 | archived |
 | `app_v2.py` | === Load your dataset === | 2026-09-28 | 2026-09-28 | archived |
 | `app_v3.py` | === Load test data with predictions === | 2026-09-28 | 2026-09-28 | archived |
-| `CAP_prisma.py` | Literature Review — Compact Slide Workflow (Objective 1) — WIDTH-AUTO | 2026-09-30 | 2026-09-28 | archived; superseded by review/s05_figures.py (workflow figure) |
-| `CAP_prisma_animate.py` | Literature Review Workflow (Objective 1) — Focus Animation | 2026-09-30 | 2026-09-28 | archived; superseded by review/s05_figures.py (workflow figure) |
+| `CAP_prisma.py` | Literature Review — Compact Slide Workflow (Objective 1) — WIDTH-AUTO | 2026-09-30 | 2026-09-30 | archived; superseded by review/s05_figures.py (workflow figure) |
+| `CAP_prisma_animate.py` | Literature Review Workflow (Objective 1) — Focus Animation | 2026-09-30 | 2026-09-30 | archived; superseded by review/s05_figures.py (workflow figure) |
 | `flowchart.py` | Initialize the flowchart with a title | 2026-09-28 | 2025-07-30 | archived |
 | `flowchart_v1.py` | Create a new directed graph | 2026-09-28 | 2025-07-30 | archived |
 | `flowchart_v2.py` | Create the Digraph object | 2026-09-28 | 2025-07-30 | archived |
 | `flowchart_v3.py` | Create the flowchart object | 2026-09-28 | 2025-07-30 | archived |
 | `flowchart_v4.py` | Create a new directed graph | 2026-09-28 | 2025-07-30 | archived |
 | `keywords_CA.py` | radiant_keywords_clusters.py  (compact, gapless grid) | 2026-09-30 | 2026-09-28 | archived; superseded by review/s02_bibliometrics.py (keyword blocks, Fig. 7) |
-| `prisma_CA.py` | One-Column Literature/Systematic Review — Ultra-Compact (Objective 1) | 2026-09-30 | 2026-09-28 | archived; superseded by review/s05_figures.py (PRISMA 2020 diagram) |
+| `prisma_CA.py` | One-Column Literature/Systematic Review — Ultra-Compact (Objective 1) | 2026-09-30 | 2026-09-30 | archived; superseded by review/s05_figures.py (PRISMA 2020 diagram) |
 | `result_map.py` | London EPC vs RF Predictions — Print-Ready Map (v1.4) — All Points + Auto Point Size | 2026-09-28 | 2026-09-28 | archived |
 | `result_map_CA.py` | London EPC vs RF Predictions — Print-Ready Map (v2.4, overlap-proof A4) | 2026-09-28 | 2026-09-28 | archived |
 | `results_maps_CA.py` | EPC vs RF — Print-Ready Map (v3.0) | 2026-09-28 | 2026-09-28 | archived |

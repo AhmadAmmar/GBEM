@@ -12,7 +12,7 @@ Feeds : Tables 8, 9, D.13, E.14; Figs 11, 12; Sections 4.2-4.8.
 """
 import pathlib
 import pandas as pd
-from common import norm_doi, dump, read_csv
+from common import norm_doi, norm_title, dump, read_csv
 
 SEED = pathlib.Path(__file__).resolve().parent / "seed" / "focused_seed.csv"
 COLS = ["key", "doi", "study", "title", "year", "arm", "country", "area", "data", "target", "target_type", "n_classes",
@@ -35,15 +35,16 @@ def run(cfg, P):
         s = s[s["arm"] == "Supplementary"][["doi", "study", "year"]].assign(route="citation searching / expert suggestion", note="")
         s.to_csv(supp_path, index=False, encoding="utf-8-sig")
     sheet = read_csv(sheet_path).reindex(columns=COLS)
-    known = set(sheet["doi"].map(norm_doi))
+    known = set(sheet["doi"].map(norm_doi)) - {""}
+    known_titles = set(sheet["title"].map(norm_title)) - {""}
 
-    # database-arm candidates not yet in the sheet
+    # database-arm candidates not yet in the sheet (matched by DOI, or by title when there is no DOI)
     core = dec[dec["decision"] == "Included (core)"].copy()
     cand = core[core["target"].fillna("").str.contains("Rating")]
     new = []
     for _, r in cand.iterrows():
         d = norm_doi(r["doi"])
-        if d and d in known:
+        if (d and d in known) or (not d and norm_title(r["title"]) in known_titles):
             continue
         first = str(r["authors"]).split(";")[0].split(",")[0].strip()
         new.append({"key": "", "doi": r["doi"], "study": f"{first} et al.", "year": r["year"], "arm": "Database",

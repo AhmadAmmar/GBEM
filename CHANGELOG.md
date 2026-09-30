@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.3.0] - 2026-09-30
+
+### Added
+- `review/new_iteration.py --rebuild <iteration> [--rerun]`: compiles an existing iteration again after its text has been edited.
+- Conditional manuscript macros `\IfKappa`, `\IfVerified` and `\IfRecall`, so the text reads correctly both before and after dual screening and the recall check; `\ClusterList` lists however many keyword clusters the network produces.
+
+### Changed
+- Search metadata set for the Scopus search of 2026-09-30 (export v2: 3,989 records; recall check 15 of 17 benchmark studies).
+- Values that are not yet available are no longer printed as "pending"; the surrounding sentence changes instead.
+- Annual-output figure: milestone labels placed above the bars on alternating levels; legend above the plot.
+
+### Fixed
+- Scopus document types are normalised at ingest (current exports write "Conference paper", older ones "Conference Paper"); previously conference papers in new exports were removed as an ineligible record type.
+- Focused-subset candidates without a DOI were appended to the extraction sheet again on every run; they are now matched by title.
+
 ## [0.2.0] - 2026-09-30
 
 ### Added

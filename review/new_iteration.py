@@ -1,12 +1,15 @@
 """Create the next time-stamped iteration, run the pipeline, build PDF and Word.
 
     python new_iteration.py --version 0.3 [--scopus ...] [--wos ...] [--skip-fulltext] [--no-build]
+    python new_iteration.py --version 0.3 --rebuild <iteration folder> [--rerun]   # after editing its text
 
 - Copies latex/ (sources, bibliography, tools) and analysis/inputs/ (human-edited CSVs) from the
   latest iteration, so reviewer decisions and extraction work carry forward.
 - Runs run_all.py into the new folder.
 - Compiles Review_v<version>.pdf (latexmk) and Review_v<version>.docx (tools/make_docx.py) into build/,
   and copies both to PDF/ and DOC/ with the time stamp.
+- --rebuild compiles an existing iteration again (optionally re-running the analysis first with --rerun)
+  and overwrites only that iteration's own build files and time-stamped copies.
 """
 import argparse, datetime, pathlib, shutil, subprocess, sys
 HERE = pathlib.Path(__file__).resolve().parent
@@ -26,7 +29,14 @@ def main():
     ap.add_argument("--version", required=True)
     ap.add_argument("--scopus", nargs="*"); ap.add_argument("--wos", nargs="*")
     ap.add_argument("--skip-fulltext", action="store_true"); ap.add_argument("--no-build", action="store_true")
+    ap.add_argument("--rebuild", help="existing iteration folder to compile again"); ap.add_argument("--rerun", action="store_true")
     a = ap.parse_args()
+    if a.rebuild:
+        it = pathlib.Path(a.rebuild).resolve()
+        if a.rerun:
+            run_all.main(["--iteration", str(it)] + (["--skip-fulltext"] if a.skip_fulltext else []))
+        build(it, a.version, it.name.rsplit("_v", 1)[0])
+        return
     stamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M")
     new = cfg.REVIEW / "iterations" / f"{stamp}_v{a.version}"
     prev = latest_iteration()
@@ -45,27 +55,31 @@ def main():
     run_all.main(args + (["--skip-fulltext"] if a.skip_fulltext else []))
     if a.no_build:
         return
-    job = f"Review_v{a.version}"
+    build(new, a.version, stamp)
+
+
+def build(new, version, stamp):
+    job = f"Review_v{version}"
     subprocess.run(["latexmk", "-pdf", f"-jobname={job}", "-interaction=nonstopmode", "main.tex"], cwd=new / "latex")
     (new / "build").mkdir(exist_ok=True)
     pdf = new / "latex" / f"{job}.pdf"
     if pdf.exists():
-        shutil.copy(pdf, new / "build" / pdf.name); shutil.copy(pdf, cfg.PHD / "PDF" / f"{stamp}_Review_Paper_v{a.version}.pdf")
+        shutil.copy(pdf, new / "build" / pdf.name); shutil.copy(pdf, cfg.PHD / "PDF" / f"{stamp}_Review_Paper_v{version}.pdf")
     docx = new / "build" / f"{job}.docx"
     subprocess.run([sys.executable, str(new / "latex" / "tools" / "make_docx.py"), str(docx)])
     tmp = docx.with_suffix(".pandoc.tex")
     if tmp.exists():
         tmp.unlink()
     if docx.exists():
-        shutil.copy(docx, cfg.PHD / "DOC" / f"{stamp}_Review_Paper_v{a.version}.docx")
+        shutil.copy(docx, cfg.PHD / "DOC" / f"{stamp}_Review_Paper_v{version}.docx")
     # version the iteration in the (internal) manuscript repository, if there is one
     if (cfg.REVIEW / ".git").exists():
         git = lambda *a: subprocess.run(["git", *a], cwd=cfg.REVIEW, capture_output=True, text=True)
         git("add", "-A")
         if git("diff", "--cached", "--quiet").returncode:
-            git("commit", "-m", f"Iteration v{a.version} ({stamp})")
-            git("tag", "-a", f"v{a.version}-draft", "-m", f"Draft v{a.version} ({cfg.SEARCH['search_date']} search)")
-            print("Committed and tagged in the manuscript repository:", f"v{a.version}-draft")
+            git("commit", "-m", f"Iteration v{version} ({stamp})")
+            git("tag", "-a", f"v{version}-draft", "-m", f"Draft v{version} ({cfg.SEARCH['search_date']} search)")
+            print("Committed and tagged in the manuscript repository:", f"v{version}-draft")
     print("Iteration ready:", new)
 
 

@@ -21,7 +21,7 @@ Turns the database exports into every number, table and figure in the review man
    ```
    This creates `iterations/<date>_<time>_v0.3/`, runs all stages, compiles `Review_v0.3.pdf` and `Review_v0.3.docx` into its `build/`, and copies both to `PDF/` and `DOC/` with the time stamp. Add `--skip-fulltext` for a faster run, or `--no-build` to run the analysis only.
 
-To re-run the analysis inside an existing iteration: `python run_all.py --iteration <iteration folder>`.
+To re-run the analysis inside an existing iteration: `python run_all.py --iteration <iteration folder>`. To compile an existing iteration again after editing its text: `python new_iteration.py --version 0.3 --rebuild <iteration folder>` (add `--rerun` to re-run the analysis first).
 
 ## Stages
 
