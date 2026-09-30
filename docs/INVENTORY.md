@@ -24,7 +24,7 @@ Generated 2026-09-30 by `tools/make_inventory.py`. Dates: last commit that chang
 | `s04_fulltext.py` | Stage 4 - full-text support for extraction. | 2026-09-30 | 2026-09-30 | current |
 | `s05_figures.py` | Stage 5 - PRISMA diagram, schematic and synthesis figures. | 2026-09-30 | 2026-09-30 | current |
 | `s06_tex_outputs.py` | Stage 6 - write LaTeX fragments that the manuscript \input{}s. | 2026-09-30 | 2026-09-30 | current |
-| `s07_maps_textmining.py` | Stage 7 - supplementary bibliometrics: word clouds, minimal maps, country profiles, collaboration, table workb | not committed | 2026-09-30 | current |
+| `s07_maps_textmining.py` | Stage 7 - supplementary bibliometrics: word clouds, minimal maps, country profiles, collaboration, table workb | 2026-09-30 | 2026-09-30 | current |
 
 ## `scripts/data_processing/`
 
@@ -36,8 +36,8 @@ Generated 2026-09-30 by `tools/make_inventory.py`. Dates: last commit that chang
 | `add_uprn_saad_paul.py` | Combine Paul's 'uprn_union_with_xy.csv' with Saad's 'uprn_saad_clean.csv' | 2026-09-28 | 2026-09-28 | current |
 | `calculate_correlations.py` | Load the dataset | 2026-09-28 | 2026-09-28 | current |
 | `certs_w_latlon.py` | Path to the merged certificates file | 2026-09-28 | 2026-09-28 | current |
-| `clean_saad_uprn.py` | Clean the Belfast UPRN point file: detect encoding and coordinate columns, normalise UPRNs, write uprn_saad_cl | 2026-09-28 | 2026-09-30 | current |
-| `clean_uprn.py` | Clean the merged Belfast UPRN table with coordinates: normalise UPRNs (digits only, Excel scientific notation  | 2026-09-28 | 2026-09-30 | current |
+| `clean_saad_uprn.py` | Clean the Belfast UPRN point file: detect encoding and coordinate columns, normalise UPRNs, write uprn_saad_cl | 2026-09-30 | 2026-09-30 | current |
+| `clean_uprn.py` | Clean the merged Belfast UPRN table with coordinates: normalise UPRNs (digits only, Excel scientific notation  | 2026-09-30 | 2026-09-30 | current |
 | `column_names.py` | Quick schema peek: | 2026-09-28 | 2025-09-09 | current |
 | `concat_certs.py` | Directory containing the subfolders with certificates.csv files | 2026-09-28 | 2026-09-28 | current |
 | `concat_certs_lat_lon.py` | Directory containing the subfolders with certificates.csv files | 2026-09-28 | 2026-09-28 | current |
@@ -100,7 +100,7 @@ Generated 2026-09-30 by `tools/make_inventory.py`. Dates: last commit that chang
 | File | Purpose | Last commit | Modified | Status |
 |---|---|---|---|---|
 | `rf_basic.py` | Load dataset | 2026-09-28 | 2026-09-28 | current |
-| `rf_binary_shap.py` | Random forest for binary EPC efficiency class with confusion matrix, ROC curve and SHAP feature importance. | 2026-09-28 | 2026-09-30 | current |
+| `rf_binary_shap.py` | Random forest for binary EPC efficiency class with confusion matrix, ROC curve and SHAP feature importance. | 2026-09-30 | 2026-09-30 | current |
 | `rf_feature_selection.py` | === Load the GeoJSON === | 2026-09-28 | 2026-09-28 | current |
 | `rf_predict_geojson.py` | === Load the GeoJSON === | 2026-09-28 | 2026-09-28 | current |
 | `rf_predict_tagged.py` | === Load the GeoJSON === | 2026-09-28 | 2026-09-28 | current |
@@ -126,11 +126,11 @@ Generated 2026-09-30 by `tools/make_inventory.py`. Dates: last commit that chang
 | `num_of_cols.py` | Directory containing the subfolders with certificates.csv files | 2026-09-28 | 2026-09-28 | current |
 | `num_of_fields.py` | Path to the merged certificates file | 2026-09-28 | 2026-09-28 | current |
 | `num_of_rows.py` | File path to the filtered buildings file | 2026-09-28 | 2026-09-28 | current |
-| `num_rows.py` | Report the number of rows in every data file (CSV, Parquet, GeoJSON, GeoPackage, FlatGeobuf, pickle) in the da | 2026-09-28 | 2026-09-30 | current |
+| `num_rows.py` | Report the number of rows in every data file (CSV, Parquet, GeoJSON, GeoPackage, FlatGeobuf, pickle) in the da | 2026-09-30 | 2026-09-30 | current |
 | `rows_cols.py` | Path to your matched EPC GeoJSON | 2026-09-28 | 2026-09-28 | current |
 | `rows_in_results.py` | Row counts for key EPC artifacts (CSV/XLS/XLSX/JSON/GEOJSON) with D:\ path overrides. | 2026-09-28 | 2026-09-28 | current |
 | `rows_uprn.py` | Directory containing the subfolders with certificates.csv files | 2026-09-28 | 2026-09-28 | current |
-| `types_of_files.py` | List the file extensions present in the data folder. | 2026-09-28 | 2026-09-30 | current |
+| `types_of_files.py` | List the file extensions present in the data folder. | 2026-09-30 | 2026-09-30 | current |
 | `unique_vals.py` | Path to the certificates file | 2026-09-28 | 2026-09-28 | current |
 | `unique_vals_all.py` | File paths | 2026-09-28 | 2026-09-28 | current |
 | `years.py` | Load the filtered CSV | 2026-09-28 | 2026-09-28 | current |
@@ -173,15 +173,15 @@ Generated 2026-09-30 by `tools/make_inventory.py`. Dates: last commit that chang
 | `app.py` | === Load your GeoDataFrame === | 2026-09-28 | 2026-09-28 | archived |
 | `app_v2.py` | === Load your dataset === | 2026-09-28 | 2026-09-28 | archived |
 | `app_v3.py` | === Load test data with predictions === | 2026-09-28 | 2026-09-28 | archived |
-| `CAP_prisma.py` | Literature Review — Compact Slide Workflow (Objective 1) — WIDTH-AUTO | not committed | 2026-09-28 | archived; superseded by review/s05_figures.py (workflow figure) |
-| `CAP_prisma_animate.py` | Literature Review Workflow (Objective 1) — Focus Animation | not committed | 2026-09-28 | archived; superseded by review/s05_figures.py (workflow figure) |
+| `CAP_prisma.py` | Literature Review — Compact Slide Workflow (Objective 1) — WIDTH-AUTO | 2026-09-30 | 2026-09-28 | archived; superseded by review/s05_figures.py (workflow figure) |
+| `CAP_prisma_animate.py` | Literature Review Workflow (Objective 1) — Focus Animation | 2026-09-30 | 2026-09-28 | archived; superseded by review/s05_figures.py (workflow figure) |
 | `flowchart.py` | Initialize the flowchart with a title | 2026-09-28 | 2025-07-30 | archived |
 | `flowchart_v1.py` | Create a new directed graph | 2026-09-28 | 2025-07-30 | archived |
 | `flowchart_v2.py` | Create the Digraph object | 2026-09-28 | 2025-07-30 | archived |
 | `flowchart_v3.py` | Create the flowchart object | 2026-09-28 | 2025-07-30 | archived |
 | `flowchart_v4.py` | Create a new directed graph | 2026-09-28 | 2025-07-30 | archived |
-| `keywords_CA.py` | radiant_keywords_clusters.py  (compact, gapless grid) | not committed | 2026-09-28 | archived; superseded by review/s02_bibliometrics.py (keyword blocks, Fig. 7) |
-| `prisma_CA.py` | One-Column Literature/Systematic Review — Ultra-Compact (Objective 1) | not committed | 2026-09-28 | archived; superseded by review/s05_figures.py (PRISMA 2020 diagram) |
+| `keywords_CA.py` | radiant_keywords_clusters.py  (compact, gapless grid) | 2026-09-30 | 2026-09-28 | archived; superseded by review/s02_bibliometrics.py (keyword blocks, Fig. 7) |
+| `prisma_CA.py` | One-Column Literature/Systematic Review — Ultra-Compact (Objective 1) | 2026-09-30 | 2026-09-28 | archived; superseded by review/s05_figures.py (PRISMA 2020 diagram) |
 | `result_map.py` | London EPC vs RF Predictions — Print-Ready Map (v1.4) — All Points + Auto Point Size | 2026-09-28 | 2026-09-28 | archived |
 | `result_map_CA.py` | London EPC vs RF Predictions — Print-Ready Map (v2.4, overlap-proof A4) | 2026-09-28 | 2026-09-28 | archived |
 | `results_maps_CA.py` | EPC vs RF — Print-Ready Map (v3.0) | 2026-09-28 | 2026-09-28 | archived |
@@ -196,4 +196,4 @@ Generated 2026-09-30 by `tools/make_inventory.py`. Dates: last commit that chang
 
 | File | Purpose | Last commit | Modified | Status |
 |---|---|---|---|---|
-| `make_inventory.py` | Write a dated inventory of every script in a repository. | not committed | 2026-09-30 | current |
+| `make_inventory.py` | Write a dated inventory of every script in a repository. | 2026-09-30 | 2026-09-30 | current |
