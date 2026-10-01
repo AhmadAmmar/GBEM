@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.6.0] - 2026-10-01
+
+### Added
+- `review/prior_literature.py` also reads the reference lists of reports saved as PDF, and reference lists that have no heading (trailing blocks of references in .docx files).
+- `review/new_iteration.py` accepts a build only if LaTeX reports no errors and no undefined citations or references; otherwise it stops with a message and copies nothing.
+- Two rating-estimation studies added to the focused seed table (Dai et al., 2025; Sun et al., 2022).
+
+### Changed
+- Coding dictionaries: rating targets include "energy efficiency classification", efficiency bands and grades; machine-learning methods include attention and fusion networks, multi-branch and graph neural networks.
+- Spatially blocked cross-validation counts as testing on unseen areas.
+
+### Fixed
+- Unresolved citations keep their cited text in `prior_literature_status.csv`.
+
 ## [0.5.0] - 2026-09-30
 
 ### Added

@@ -24,10 +24,12 @@ OUTDOOR = r"outdoor thermal comfort|pedestrian|thermal sensation|\butci\b|\bpet\
 INDOOR = r"indoor positioning|occupant localization|indoor air quality|pm2\.5|pm10|wi-?fi|indoor temperature|laboratory|test cell|hot box"
 UAV_CLOSE = r"\buav|drone|unmanned aerial|handheld|close[- ]range|infrared thermograph|thermographic (survey|inspection)|\birt\b"
 STOCK_WORDS = r"satellite|lidar|\bgis\b|street|city|cities|urban|district|neighbo|stock|national|region"
-RATING = r"\bepcs?\b|energy performance certificat|\bbers?\b|building energy rating|energy label|energy rating|energy class|rating band|\bsap (rating|score)"
+RATING = (r"\bepcs?\b|energy performance certificat|\bbers?\b|building energy rating|energy label|energy rating|energy class|rating band|\bsap (rating|score)|"
+          r"energy efficiency (classif|class|rating|band|grade|level)\w*|efficiency (band|grade)s?\b|energy grade")
 ML = (r"machine learning|deep learning|neural network|random forest|xgboost|gradient boost|lightgbm|catboost|"
       r"convolutional|\bcnns?\b|support vector|\bsvm\b|k-nearest|\bknn\b|transformer|lstm|artificial intelligence|"
-      r"decision tree|ensemble learning|transfer learning|vision[- ]language|large language|foundation model")
+      r"decision tree|ensemble learning|transfer learning|vision[- ]language|large language|foundation model|"
+      r"attention (mechanism|fusion|network)|fusion network|dual-branch|multi-branch|graph neural|\bgnns?\b|autoencoder")
 
 MODALITY = {
     "Optical satellite": r"satellite imag|multispectral|sentinel-?2|landsat|worldview|quickbird|planetscope|high-resolution (satellite|remote)|\bndvi\b|very high resolution",

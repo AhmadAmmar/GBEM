@@ -11,7 +11,7 @@
 - --rebuild compiles an existing iteration again (optionally re-running the analysis first with --rerun)
   and overwrites only that iteration's own build files and time-stamped copies.
 """
-import argparse, datetime, pathlib, shutil, subprocess, sys
+import argparse, datetime, pathlib, re, shutil, subprocess, sys
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import config as cfg, run_all
@@ -63,6 +63,14 @@ def build(new, version, stamp):
     subprocess.run(["latexmk", "-pdf", f"-jobname={job}", "-interaction=nonstopmode", "main.tex"], cwd=new / "latex")
     (new / "build").mkdir(exist_ok=True)
     pdf = new / "latex" / f"{job}.pdf"
+    # a PDF is only accepted if LaTeX reported no errors and no undefined citations or references
+    log = (new / "latex" / f"{job}.log")
+    logt = log.read_text(encoding="utf-8", errors="ignore") if log.exists() else "! no log file"
+    n_err, n_undef = len(re.findall(r"^!", logt, flags=re.M)), len(re.findall(r"Warning: (?:Citation|Reference) .* undefined", logt))
+    if n_err or n_undef:
+        print(f"BUILD NOT ACCEPTED: {n_err} LaTeX errors, {n_undef} undefined citations/references. See {log}")
+        print("Fix the source (often a character in references.bib), then run again with --rebuild.")
+        return
     if pdf.exists():
         shutil.copy(pdf, new / "build" / pdf.name); shutil.copy(pdf, cfg.PHD / "PDF" / f"{stamp}_Review_Paper_v{version}.pdf")
         # companion contents document (table of contents, lists of figures and tables), if the template provides it
