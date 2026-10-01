@@ -69,7 +69,7 @@ def run(cfg, P):
     sheet[sheet["include_focused"].astype(str).eq("?")].to_csv(P["out"] / "focused_candidates_pending.csv", index=False, encoding="utf-8-sig")
     pred = F[~F["validation"].fillna("").isin(PREDICTIVE_EXCLUDE) & F["validation"].fillna("").ne("")]
     vc = pred["validation"].value_counts()
-    held = int(vc.get("Held-out city", 0) + vc.get("Held-out area", 0))
+    held = int(vc.get("Held-out city", 0) + vc.get("Held-out area", 0) + vc.get("Spatially blocked CV", 0))   # tested on unseen areas
     num = lambda s: pd.to_numeric(s, errors="coerce")
     binf1 = num(F.loc[F["target_type"].eq("Binary") & F["metric"].str.contains("F1", na=False), "value"])
     st = {"n_focused": int(len(F)), "n_focused_db": int((F["arm_now"] == "Database").sum()),

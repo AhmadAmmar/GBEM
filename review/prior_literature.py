@@ -150,14 +150,42 @@ def citations_from_document(p):
                     body_end = i; break
             out += [(t, "reference list") for t in P[start:body_end] if looks_like_reference(t)]
             body = P[:heads[-1]]
-        else:
-            body = P
+        else:   # reference list without a heading: the trailing block of reference-like paragraphs
+            i = len(P) - 1
+            while i >= 0 and (looks_like_reference(P[i]) or (len(P[i]) < 250 and YEAR_RX.search(P[i]))):
+                i -= 1
+            tail = P[i + 1:]
+            if len(tail) >= 3:
+                out += [(t, "reference list (no heading)") for t in tail if looks_like_reference(t) or YEAR_RX.search(t)]
+            body = P[:i + 1]
         out += [(t, "text (DOI)") for t in body if DOI_RX.search(t)]
     else:
         for k, s in enumerate(pptx_slides(p), 1):
             is_ref = any(REF_HEAD.match(t) for t in s)
             out += [(t, f"slide {k}") for t in s if (is_ref and looks_like_reference(t)) or DOI_RX.search(t)]
     return out
+
+
+def pdf_report_citations(p):
+    """Reference list of a report saved as PDF: entries after the last 'References' heading, one per paragraph."""
+    t = subprocess.run(["pdftotext", str(p), "-"], capture_output=True, text=True, errors="ignore").stdout
+    lines = t.splitlines()
+    heads = [i for i, l in enumerate(lines) if REF_HEAD.match(l.strip())]
+    if not heads:
+        return []
+    # a new entry starts with an author ("Surname, X." / "Surname et al.") or a titled item followed by its year
+    start = re.compile(r"^[A-Z][A-Za-z'\-]+(?: [A-Z][a-z'\-]+)?,\s+(?:[A-Z]\.|[A-Z][a-z]+,)|^[A-Z][A-Za-z'\-]+ et al|^\[\d+\]|"
+                       r"^[A-Z][^()]{2,140}\((?:\d{4}[a-z]?|no date)\)")
+    entries = []
+    for l in lines[heads[-1] + 1:]:
+        l = l.replace("\f", "").strip()
+        if not l or re.fullmatch(r"\d{1,3}", l):   # blank lines and page numbers
+            continue
+        if start.match(l) or not entries:
+            entries.append(l)
+        else:
+            entries[-1] += " " + l
+    return [(re.sub(r"\s+", " ", e), "reference list") for e in entries if looks_like_reference(e) or YEAR_RX.search(e)]
 
 
 def bib_entries(p):
@@ -203,6 +231,16 @@ def main(argv=None):
             rows.append({"source_type": "presentation" if f.suffix == ".pptx" else "report/document", "source": f.name,
                          "where": where, "cited_text": text[:600]})
         print(f"  {len(cits):4d} citations  {f.name}")
+
+    # 1b. final versions of reports saved as PDF
+    for d in P.get("pdf_reports", []):
+        for f in sorted(pathlib.Path(d).glob("*.pdf")):
+            if any(x in f.name for x in P["exclude"] + P.get("exclude_pdf", [])):
+                continue
+            cits = pdf_report_citations(f)
+            for text, where in cits:
+                rows.append({"source_type": "report/document", "source": f.name, "where": where, "cited_text": text[:600]})
+            print(f"  {len(cits):4d} citations  {f.name}")
 
     # 2. reference library
     for e in bib_entries(pathlib.Path(P["bib"])):

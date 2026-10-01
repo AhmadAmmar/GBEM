@@ -221,7 +221,7 @@ def prior_records(cfg, P, rec, blocks):
             row.update(rid=r["rid"], arm="other methods", searches="", not_in_current_search_because=r["not_in_current_search_because"])
         status.append(row)
     for _, w in unres.iterrows():
-        status.append({"doi": "", "title": w.get("title") or w.get("example_citation", ""), "year": w.get("year", ""),
+        status.append({"doi": "", "title": next((str(x) for x in (w.get("title"), w.get("example_citation")) if isinstance(x, str) and x.strip()), ""), "year": w.get("year", ""),
                        "sources": w["sources"], "source_types": w["source_types"], "citation_check": w["status"], "rid": "",
                        "arm": "not assessed (not resolvable to a DOI)", "searches": "",
                        "not_in_current_search_because": "grey literature or incomplete citation; no verified identity"})

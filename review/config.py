@@ -56,6 +56,8 @@ EARLIER_SEARCHES = [
 # and the PDF library (harvested and verified against Crossref by prior_literature.py)
 PRIOR = {
     "documents": [PHD / "DOC", PHD / "PPT"],                  # .docx / .pptx reports and presentations
+    "pdf_reports": [PHD / "PDF"],                              # final versions of reports saved as PDF
+    "exclude_pdf": ["Certificate", "Outline", "Contents"],
     "exclude": ["Review_Paper", "Review Paper"],               # drafts of this review are not prior work
     "bib": LIT / "LitRev.bib",
     "pdf_dirs": [LIT],
