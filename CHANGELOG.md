@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.9.0] - 2026-10-08
+
+### Added
+- `review/s05_figures.py` draws the screening decision flow (`figS_screening_rules.png` and `.pdf`): the search components and limits, each screening criterion in the order it is applied with the number of records leaving at that step, the two inclusion routes, verification, and the focused subset. Counts are read from the screening decisions, so the figure follows every run.
+
 ## [0.8.0] - 2026-10-08
 
 ### Changed
