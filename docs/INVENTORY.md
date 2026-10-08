@@ -12,7 +12,7 @@ Generated 2026-10-08 by `tools/make_inventory.py`. Dates: last commit that chang
 
 | File | Purpose | Last commit | Modified | Status |
 |---|---|---|---|---|
-| `common.py` | Shared dictionaries and helpers (coding rules, normalisation, I/O). | 2026-10-01 | 2026-10-08 | current |
+| `common.py` | Shared dictionaries and helpers (coding rules, normalisation, I/O). | 2026-10-08 | 2026-10-08 | current |
 | `config.py` | Paths and search metadata for the review pipeline. | 2026-10-08 | 2026-10-08 | current |
 | `local_settings.example.py` | Copy to local_settings.py (git-ignored) and edit for your machine. | 2026-09-30 | 2026-09-30 | current |
 | `new_iteration.py` | Create the next time-stamped iteration, run the pipeline, build PDF and Word. | 2026-10-08 | 2026-10-08 | current |

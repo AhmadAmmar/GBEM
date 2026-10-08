@@ -56,7 +56,7 @@ def main():
         if samp.exists():
             import pandas as pd
             d = pd.read_csv(samp, dtype=str, encoding="utf-8-sig")
-            if d.get("decision_reviewer2", pd.Series(dtype=str)).fillna("").str.strip().eq("").all():
+            if d.get("decision_reviewer2", pd.Series(dtype=str)).fillna("").astype(str).str.strip().eq("").all():
                 samp.unlink()
     args = ["--iteration", str(new)] + (["--scopus", *a.scopus] if a.scopus else []) + (["--wos", *a.wos] if a.wos else [])
     run_all.main(args + (["--skip-fulltext"] if a.skip_fulltext else []))

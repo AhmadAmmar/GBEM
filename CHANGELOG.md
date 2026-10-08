@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.11.0] - 2026-10-08
+
+### Changed
+- Screening is by a single reviewer by default: `DUAL_SAMPLE_FRACTION` in `review/config.py` is 0, so no second-reviewer sample is drawn and no inter-rater agreement is computed. Setting it above 0 restores the sample and Cohen's kappa.
+- Figures state that reviewer verification is pending until decisions have been entered.
+
+### Added
+- `verification_queue.csv`: the work list for the reviewer, with decisions resting on weak evidence first, then included records, then excluded records.
+- Manuscript macros `\IfDual` and `\NRuleChanged`.
+
 ## [0.10.0] - 2026-10-08
 
 ### Added
