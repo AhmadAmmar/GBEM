@@ -44,18 +44,19 @@ def run(cfg, P):
     L, M, R, W = 0.05, 0.345, 0.645, 0.27
     ax.text(L + (M + W - L) / 2, 0.985, "Identification of studies via databases", ha="center", fontsize=7, weight="bold")
     ax.text(R + W / 2 + 0.02, 0.985, "Identification via other methods", ha="center", fontsize=7, weight="bold")
-    ident = f"Records identified from Scopus\nsearch of {I['search_date']}, {I['field']}:\nn = {I['n_scopus']:,}"
+    ident = f"Records identified from Scopus\nsearch of {I['search_date']}\n({I['field']})\nn = {I['n_scopus']:,}"
     for e in I.get("earlier_searches", []):
         ident += f"\nsearch of {e['date']}, {e['field']}:\nn = {e['n']:,}"
     if I["n_wos"]:
         ident += f"\nWeb of Science: n = {I['n_wos']:,}"
     box(ax, L, 0.83, W, 0.13, ident, fc="#f4f8fc", fs=6.0, wrap=46)
-    box(ax, M, 0.83, W, 0.13, f"Removed before screening:\nduplicates within and between searches:\nn = {I['n_duplicates']:,}\n"
+    dup_label = "duplicates within and between searches" if I.get("earlier_searches") or I["n_wos"] else "duplicate records"
+    box(ax, M, 0.83, W, 0.13, f"Removed before screening:\n{dup_label}:\nn = {I['n_duplicates']:,}\n"
         f"ineligible record type or years, errata and retracted articles: n = {S['n_removed_record_type']:,}", fs=6.0, wrap=44)
     arrow(ax, L + W, 0.895, M, 0.895)
     oth = S.get("n_other_identified", 0)
-    box(ax, R, 0.83, W + 0.04, 0.13, "Records identified from the authors' previous reports, presentations, reference library and PDF "
-        f"library, citation searching and expert suggestion, and not retrieved by the searches: n = {oth:,}", fc="#f4f8fc", fs=6.0, wrap=54)
+    box(ax, R, 0.83, W + 0.04, 0.13, "Records identified from earlier scoping searches, the authors' previous reports, presentations, reference "
+        f"library and PDF library, citation searching and expert suggestion, and not retrieved by the search: n = {oth:,}", fc="#f4f8fc", fs=6.0, wrap=54)
     box(ax, L, 0.66, W, 0.10, f"Records screened (title, abstract, keywords)\nn = {S['n_screened']:,} = bibliometric corpus", fc="#f4f8fc", fs=6.0, wrap=48)
     arrow(ax, L + W / 2, 0.83, L + W / 2, 0.76)
     exc = "\n".join(f"{k}: {v:,}" for k, v in S["excluded_reasons"].items())

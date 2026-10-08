@@ -175,6 +175,8 @@ def run(cfg, P):
           "n_other_reviews": int((O["decision"] == "Review (umbrella)").sum()),
           "n_other_excluded": int((O["decision"] == "Excluded (T/A)").sum()),
           "n_core_other": int((O["decision"] == INCLUDED).sum()),
+          "n_other_scoping": int(O["prior_sources"].str.startswith("earlier scoping").sum()),
+          "n_core_other_scoping": int(((O["decision"] == INCLUDED) & O["prior_sources"].str.startswith("earlier scoping")).sum()),
           "n_prior_core": int((C["prior_sources"] != "").sum()), "n_title_only": int(df["title_only"].sum()),
           "n_title_only_other": int(O["title_only"].sum()),
           "n_reviews_total": int((df["decision"] == "Review (umbrella)").sum()),

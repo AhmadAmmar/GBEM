@@ -61,7 +61,7 @@ def query_blocks(query_file):
             if words:
                 rx.append(r"\b" + r"[\s\-]+".join(words) + (r"(?:s|es)?\b" if not words[-1].endswith(r"\w*") else ""))
         blocks.append(re.compile("|".join(rx), re.I))
-    return blocks
+    return blocks[:3]
 
 
 def diagnose(r, blocks, years, doc_types):
@@ -227,6 +227,24 @@ def prior_records(cfg, P, rec, blocks):
                        "not_in_current_search_because": "grey literature or incomplete citation; no verified identity"})
     if new:
         rec = pd.concat([rec, pd.DataFrame(new)], ignore_index=True)
+    # earlier scoping exports (search string not preserved): records the current search does not return
+    n_scoping = 0
+    for s in getattr(cfg, "SCOPING_EXPORTS", []):
+        sfiles = sorted(glob.glob(s["glob"]))
+        if not sfiles:
+            continue
+        e = read_scopus(sfiles)
+        e["doi_n"], e["title_n"] = e["doi"].map(norm_doi), e["title"].map(norm_title)
+        e["doc_type"] = e["doc_type"].map(lambda x: DT_CANON.get(str(x).strip().lower(), x))
+        have_rid, have_doi, have_t = set(rec["rid"]), set(rec["doi_n"]) - {""}, set(rec["title_n"]) - {""}
+        e = e[~e["rid"].isin(have_rid) & ~e["doi_n"].isin(have_doi) & ~e["title_n"].isin(have_t)].drop_duplicates("rid")
+        if len(e):
+            e = e.assign(db="Scopus (earlier scoping export)", found_in="Scopus (earlier scoping export)", searches="", arm="other methods",
+                         prior_sources=f"{s['label']} ({s['date']})")
+            e["not_in_current_search_because"] = e.apply(
+                lambda r: diagnose(r, blocks, cfg.SEARCH["years"], ("Article", "Review", "Conference Paper")), axis=1)
+            e["cited_by"] = pd.to_numeric(e["cited_by"], errors="coerce").fillna(0)
+            rec = pd.concat([rec, e], ignore_index=True); n_scoping += len(e)
     pd.DataFrame(status).to_csv(P["out"] / "prior_literature_status.csv", index=False, encoding="utf-8-sig")
     S = pd.DataFrame(status)
     return rec, {"prior_file": files[-1].name if files else "", "n_prior_works": int(len(S)),
@@ -234,5 +252,6 @@ def prior_records(cfg, P, rec, blocks):
                  "n_prior_in_earlier_only": int(((S["arm"] == "database") & ~S["searches"].fillna("").str.contains(
                      f"Scopus {cfg.SEARCH['search_date']}", regex=False)).sum()),
                  "n_prior_other_methods": int((S["arm"] == "other methods").sum()),
+                 "n_scoping_other_methods": int(n_scoping),
                  "n_prior_unresolved": int(S["arm"].str.startswith("not assessed").sum()),
                  "n_prior_verified": int((S["arm"] != "").sum() - S["arm"].str.startswith("not assessed").sum())}
