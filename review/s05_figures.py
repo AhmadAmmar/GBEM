@@ -37,6 +37,12 @@ def screening_flow(cfg, P, I, S, Fs):
     the first criterion it does not meet. The description of the search components has to follow the query file.
     """
     dec = read_csv(P["out"] / "screening_decisions.csv")
+    tp = P["out"] / "stats_triage.json"     # triage of the candidates (stage 8), if it has been run
+    tri = ""
+    if tp.exists() and Fs["n_pending"]:
+        T = load(tp)
+        tri = (f"; ordered for full-text screening by triage rules: {T['triage']['Likely']:,} likely, {T['triage']['Unclear']:,} unclear, "
+               f"{T['triage']['Unlikely']:,} unlikely; full text read for {T['n_with_fulltext']:,}")
     D = dec[dec["arm"].fillna("database") == "database"]
     rr, rd = D["rule_reason"].fillna(""), D["rule_decision"]
     n = lambda *keys: int(sum(rr.str.startswith(k).sum() for k in keys))
@@ -96,7 +102,7 @@ def screening_flow(cfg, P, I, S, Fs):
     box(ax, LX, y - 0.195, RX + RW - LX, 0.066,
         f"Focused subset: core studies coded with a rating or label target are candidates; inclusion is decided on the full text "
         f"(building-level estimation of an energy rating, label or score, or data designed for it): n = {Fs['n_focused']} "
-        f"({Fs['n_pending']:,} candidates awaiting a decision)", fc="#dcebdc", fs=5.8, wrap=124)
+        f"({Fs['n_pending']:,} candidates awaiting a decision{tri})", fc="#dcebdc", fs=5.8, wrap=124)
     arrow(ax, LX + LW / 2, y - 0.10, LX + LW / 2, y - 0.129)
     for ext in ("png", "pdf"):
         fig.savefig(P["fig"] / f"figS_screening_rules.{ext}")

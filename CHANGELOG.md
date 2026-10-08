@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.12.1] - 2026-10-09
+
+### Changed
+- The screening flow figure reports the triage of the pending candidates (likely, unclear, unlikely; full texts read) in its last box.
+
 ## [0.12.0] - 2026-10-09
 
 ### Added
