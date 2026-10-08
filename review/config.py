@@ -29,18 +29,18 @@ TEMPLATE = _setting("TEMPLATE_DIR", REVIEW / "pipeline" / "template")   # manusc
 # Search metadata (PRISMA-S). Update after running the queries.
 # ---------------------------------------------------------------------------
 SEARCH = {
-    "query_file": LIT / "Scopus" / "2026-10-08_query_v3.txt",
+    "query_file": LIT / "Scopus" / "2026-10-08_query_v5.txt",
     "search_date": "2026-10-08",            # date the database search was run
-    "field": "TITLE-ABS-KEY OR TITLE",      # union of a title-abstract-keyword search and a title search
+    "field": "TITLE-ABS-KEY OR TITLE",      # union of three title-abstract-keyword components and a title component
     "years": (2000, 2026),
-    "doc_types": ["Article", "Review", "Conference Paper"],
+    "doc_types": ["Article", "Review", "Conference Paper", "Data Paper"],
     # database exports (glob patterns); multi-part exports are concatenated
-    "scopus_glob": str(LIT / "Scopus" / "2026-10-08_scopus_v3*.csv"),
-    "wos_glob": str(LIT / "WoS" / "2026-10-08_wos_v3*.txt"),
+    "scopus_glob": str(LIT / "Scopus" / "2026-10-08_scopus_v5*.csv"),
+    "wos_glob": str(LIT / "WoS" / "2026-10-08_wos_v5*.txt"),
     # hit counts shown by the database interfaces (for the PRISMA box); None = use export size
-    "scopus_hits": None,                  # export v3: 4,615 records (see Lit/Scopus/EXPORT_LOG.md)
+    "scopus_hits": None,                  # export v5: 7,746 records (see Lit/Scopus/EXPORT_LOG.md)
     "wos_hits": None,
-    "recall_benchmark": {"n": 17, "retrieved": 15},     # Step 2 of the query file
+    "recall_benchmark": {"n": 17, "retrieved": 17},     # Step 2 of the query file
 }
 
 # Supplementary evidence (citation searching / expert suggestion)

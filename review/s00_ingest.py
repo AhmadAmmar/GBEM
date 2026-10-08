@@ -4,6 +4,7 @@ Output: outputs/records.csv (one row per unique record, common schema)
         outputs/duplicates.csv, outputs/stats_ingest.json
 Feeds : PRISMA identification boxes; every later stage.
 """
+import html
 import glob, pathlib, re
 import pandas as pd
 from common import norm_doi, norm_title, dump, read_csv
@@ -14,13 +15,16 @@ SCHEMA = ["rid", "db", "doi", "title", "abstract", "author_keywords", "index_key
 WOS_DT = {"Article": "Article", "Review": "Review", "Proceedings Paper": "Conference Paper",
           "Article; Proceedings Paper": "Conference Paper", "Review; Early Access": "Review", "Article; Early Access": "Article"}
 # Scopus spells the type "Conference paper" in current exports and "Conference Paper" in older ones
-DT_CANON = {"article": "Article", "review": "Review", "conference paper": "Conference Paper"}
+DT_CANON = {"article": "Article", "review": "Review", "conference paper": "Conference Paper", "data paper": "Data Paper"}
 
 
 def read_scopus(files):
     frames = []
     for f in files:
         d = pd.read_csv(f, encoding="utf-8-sig", low_memory=False)
+        for c in ("Title", "Abstract", "Author Keywords", "Index Keywords", "Source title"):   # the database leaves some HTML entities (&amp; &gt;)
+            if c in d:
+                d[c] = d[c].map(lambda x: html.unescape(x) if isinstance(x, str) else x)
         frames.append(pd.DataFrame({
             "rid": d.get("EID"), "db": "Scopus", "doi": d.get("DOI"), "title": d.get("Title"),
             "abstract": d.get("Abstract"), "author_keywords": d.get("Author Keywords"),
@@ -128,7 +132,7 @@ def run(cfg, P, scopus_files=None, wos_files=None):
     only_earlier = ~rec["searches"].str.contains(current, regex=False)
     rec["not_in_current_search_because"] = ""
     rec.loc[only_earlier, "not_in_current_search_because"] = rec[only_earlier].apply(
-        lambda r: diagnose(r, blocks, cfg.SEARCH["years"], ("Article", "Review", "Conference Paper")), axis=1)
+        lambda r: diagnose(r, blocks, cfg.SEARCH["years"], tuple(cfg.SEARCH["doc_types"])), axis=1)
     rec, prior_status = prior_records(cfg, P, rec, blocks)
     cols = SCHEMA + ["doi_n", "title_n", "found_in", "searches", "arm", "prior_sources", "not_in_current_search_because"]
     rec[rec["arm"] == "database"][cols].to_csv(P["out"] / "records.csv", index=False, encoding="utf-8-sig")
@@ -216,7 +220,7 @@ def prior_records(cfg, P, rec, blocks):
                      prior_sources=w["source_types"])
             r["not_in_current_search_because"] = ("not indexed in the exports of any search" if m is None else "") or ""
             if m is not None:
-                r["not_in_current_search_because"] = diagnose(r, blocks, cfg.SEARCH["years"], ("Article", "Review", "Conference Paper"))
+                r["not_in_current_search_because"] = diagnose(r, blocks, cfg.SEARCH["years"], tuple(cfg.SEARCH["doc_types"]))
             new.append(r)
             row.update(rid=r["rid"], arm="other methods", searches="", not_in_current_search_because=r["not_in_current_search_because"])
         status.append(row)
@@ -242,7 +246,7 @@ def prior_records(cfg, P, rec, blocks):
             e = e.assign(db="Scopus (earlier scoping export)", found_in="Scopus (earlier scoping export)", searches="", arm="other methods",
                          prior_sources=f"{s['label']} ({s['date']})")
             e["not_in_current_search_because"] = e.apply(
-                lambda r: diagnose(r, blocks, cfg.SEARCH["years"], ("Article", "Review", "Conference Paper")), axis=1)
+                lambda r: diagnose(r, blocks, cfg.SEARCH["years"], tuple(cfg.SEARCH["doc_types"])), axis=1)
             e["cited_by"] = pd.to_numeric(e["cited_by"], errors="coerce").fillna(0)
             rec = pd.concat([rec, e], ignore_index=True); n_scoping += len(e)
     pd.DataFrame(status).to_csv(P["out"] / "prior_literature_status.csv", index=False, encoding="utf-8-sig")

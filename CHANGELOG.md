@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.8.0] - 2026-10-08
+
+### Changed
+- First-pass screening rules rewritten (`review/s01_screen.py`, dictionaries in `review/common.py`). A record is now included only if every eligibility criterion is met in its title or abstract: built object, energy-efficiency outcome, a named geospatial or remote-sensing data source or method (author keywords also count; index keywords do not) and stock scale. Urban heat island, urban form and land use on their own are treated as setting, not as a geospatial method. Close-range sensing and building models are eligible only when applied to many buildings. Previously a record was included unless an exclusion rule matched, and no built-object criterion was tested.
+- Studies that estimate an energy rating are included through a separate route that does not require a geospatial term. `screening_decisions.csv` has two new columns: `route` and `to_verify` (decisions resting on weak evidence, to be checked first).
+- Articles that are reviews by their title are set aside as reviews.
+- Search metadata set for the widened Scopus search (query v5; 7,746 records; 17 of 17 benchmark studies). "Data paper" is an eligible document type.
+- Ambiguous terms tightened: "footprint" requires a building or data context, "airborne" and "satellite" require a sensing context, "transformer" requires a model context.
+
+### Added
+- Manuscript macros `\NCoreRouteGeo`, `\NCoreRouteRating`, `\NToVerify` and `\IfRecallAll`.
+
+### Fixed
+- HTML entities left by the database in titles, abstracts and keywords are decoded at ingest.
+- "Energy consumption" of buildings counts as an outcome term (a benchmark study was excluded without it).
+
 ## [0.7.0] - 2026-10-08
 
 ### Added

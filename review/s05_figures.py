@@ -60,7 +60,7 @@ def run(cfg, P):
     box(ax, L, 0.66, W, 0.10, f"Records screened (title, abstract, keywords)\nn = {S['n_screened']:,} = bibliometric corpus", fc="#f4f8fc", fs=6.0, wrap=48)
     arrow(ax, L + W / 2, 0.83, L + W / 2, 0.76)
     exc = "\n".join(f"{k}: {v:,}" for k, v in S["excluded_reasons"].items())
-    box(ax, M, 0.50, W, 0.28, f"Records excluded (n = {S['n_excluded_ta']:,}):\n{exc}", wrap=52, fs=5.4)
+    box(ax, M, 0.50, W, 0.28, f"Records excluded (n = {S['n_excluded_ta']:,}):\n{exc}", wrap=56, fs=4.9 if len(S["excluded_reasons"]) > 7 else 5.4)
     arrow(ax, L + W, 0.71, M, 0.66)
     box(ax, L, 0.51, W, 0.09, f"Review articles set aside for umbrella/context use\nn = {S['n_reviews']:,}", fc="#fff8e6", fs=6.0, wrap=48)
     arrow(ax, L + W / 2, 0.66, L + W / 2, 0.60)

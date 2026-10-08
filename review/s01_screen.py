@@ -1,6 +1,7 @@
 """Stage 1 - screening and abstract-level coding.
 
-Pass 1: transparent keyword rules (first screener) -> decision + reason.
+Pass 1: transparent keyword rules (first screener) -> decision, reason, inclusion route and a flag for
+        decisions that rest on weak evidence. Every criterion has to be met in the title or abstract.
 Pass 2: human decisions in inputs/screening_overrides.csv replace rule decisions.
 Dual screening: a seeded random sample is written to inputs/ for the second reviewer;
 Cohen's kappa is computed once their file is filled in.
@@ -10,39 +11,62 @@ Feeds : PRISMA screening boxes, Table 7 (modalities), Fig. 10 (evidence map), Fi
 """
 import re
 import numpy as np, pandas as pd
-from common import (EFF, GEO, PV, OUTDOOR, INDOOR, UAV_CLOSE, STOCK_WORDS, RATING, ML, MODALITY, TARGET, METHOD,
-                    VALIDATION, COUNTRIES, CITY2C, CNORM, has, codes, dump, read_csv)
+from common import (BUILT, EFF, GEO, CONTEXT, PV, OUTDOOR, INDOOR, CLOSE, WIDE, MANY, REVIEW_TITLE, RATING, RATING_EST, ML,
+                    MODALITY, TARGET, METHOD, VALIDATION, COUNTRIES, CITY2C, CNORM, has, codes, dump, read_csv)
 
 INCLUDED = "Included (core)"
 DECISIONS = [INCLUDED, "Excluded (T/A)", "Review (umbrella)", "Excluded (record type)"]
+ROUTE_GEO, ROUTE_RATING = "geospatial data or method", "rating estimation"
 
 
-def rule_decision(r, years):
+def rule_decision(r, years, doc_types=("Article", "Review", "Conference Paper", "Data Paper")):
+    """First-pass decision for one record: (decision, reason, route, to_verify).
+
+    A record is included only if every eligibility criterion is met in the title or abstract:
+    population (buildings), outcome (energy efficiency or a recognised proxy), exposure (a geospatial or
+    remote-sensing data source or method, named in the title, abstract or author keywords) and scale (a wide-area
+    source, or close-range sensing applied to many buildings).
+    Studies that estimate an energy rating with a learning method are included without the exposure and
+    scale criteria (route "rating estimation"), because they answer the focused question of the review.
+    to_verify marks decisions that rest on weak evidence and are checked first by the reviewer.
+    """
     t, ta, tl = r["text"], r["ta"], r["tl"]
     dt = str(r["doc_type"])
     if re.match(r"\s*(retracted|retraction|withdrawn)\b", str(r["title"]), re.I) or dt in ("Retracted", "Erratum"):
-        return "Excluded (record type)", f"Retracted or erratum ({dt})" if dt in ("Retracted", "Erratum") else "Retracted article"
+        return "Excluded (record type)", f"Retracted or erratum ({dt})" if dt in ("Retracted", "Erratum") else "Retracted article", "", False
     if dt == "Preprint" and r.get("arm") == "other methods":   # eligibility: preprints only via other methods (flagged)
         dt = "Article"
-    if dt not in ("Article", "Review", "Conference Paper"):
-        return "Excluded (record type)", f"Record type not eligible ({dt})"
+    if dt not in doc_types:
+        return "Excluded (record type)", f"Record type not eligible ({dt})", "", False
     if pd.notna(r["year"]) and not (years[0] <= int(r["year"]) <= years[1]):
-        return "Excluded (record type)", "Outside publication years"
-    if dt == "Review":
-        return "Review (umbrella)", "Review article - context/umbrella evidence"
+        return "Excluded (record type)", "Outside publication years", "", False
+    if dt == "Review" or has(REVIEW_TITLE, tl):
+        return "Review (umbrella)", "Review article - context/umbrella evidence", "", False
+    if not has(BUILT, ta):
+        return "Excluded (T/A)", "No building or building stock", "", False
     if not has(EFF, ta):
         if has(OUTDOOR, ta) or "thermal comfort" in ta:
-            return "Excluded (T/A)", "Outcome is thermal comfort, not energy efficiency"
-        return "Excluded (T/A)", "Outcome not related to building energy efficiency"
+            return "Excluded (T/A)", "Outcome is thermal comfort, not energy efficiency", "", False
+        return "Excluded (T/A)", "Outcome not related to building energy efficiency", "", False
     if has(PV, tl) and not has(EFF, tl):
-        return "Excluded (T/A)", "Renewable/solar potential only"
-    if has(INDOOR, ta) and not has(STOCK_WORDS, ta):
-        return "Excluded (T/A)", "Indoor sensing/positioning or laboratory, no geospatial component"
-    if not has(GEO, t):
-        return "Excluded (T/A)", "No geospatial or remote-sensing data/method"
-    if has(UAV_CLOSE, ta) and not has(STOCK_WORDS, ta):
-        return "Excluded (T/A)", "UAV/close-range thermography of single buildings (covered by existing reviews)"
-    return INCLUDED, ""
+        return "Excluded (T/A)", "Renewable/solar potential only", "", False
+    if (has(RATING, ta) and has(ML, ta)) or has(RATING_EST, ta):
+        return INCLUDED, "", ROUTE_RATING, not has(BUILT, tl)
+    tak = ta + " . " + str(r.get("author_keywords", "") or "").lower()    # the authors' own keywords count; index keywords do not
+    if not has(GEO, tak):
+        if has(INDOOR, ta):
+            return "Excluded (T/A)", "Indoor sensing/positioning or laboratory, no geospatial component", "", False
+        if has(GEO, t):
+            return "Excluded (T/A)", "Geospatial term in index keywords only", "", True
+        if has(CONTEXT, t):
+            return "Excluded (T/A)", "Urban climate or urban form context without geospatial data or method", "", False
+        return "Excluded (T/A)", "No geospatial or remote-sensing data/method", "", False
+    if not has(WIDE, tak) and not has(MANY, ta):
+        return "Excluded (T/A)", "Single building or component, not stock scale", "", False
+    # buildings have to be the subject of the study, not a passing mention
+    if not has(BUILT, tl) and len(re.findall(BUILT, ta)) < 2:
+        return "Excluded (T/A)", "Buildings mentioned in passing, not the subject of the study", "", True
+    return INCLUDED, "", ROUTE_GEO, has(CLOSE, ta) and not has(MANY, ta)
 
 
 def abstract_metrics(s):
@@ -96,10 +120,11 @@ def run(cfg, P):
     df["text"] = (df["title"] + " . " + df["abstract"] + " . " + df["author_keywords"] + " . " + df["index_keywords"]).str.lower()
     df["ta"] = (df["title"] + " . " + df["abstract"]).str.lower()
     df["tl"] = df["title"].str.lower()
-    res = df.apply(lambda r: rule_decision(r, cfg.SEARCH["years"]), axis=1, result_type="expand")
-    df["rule_decision"], df["rule_reason"] = res[0], res[1]
+    res = df.apply(lambda r: rule_decision(r, cfg.SEARCH["years"], tuple(cfg.SEARCH["doc_types"])), axis=1, result_type="expand")
+    df["rule_decision"], df["rule_reason"], df["route"], df["to_verify"] = res[0], res[1], res[2], res[3].astype(bool)
     # decisions made without an abstract are marked, so that they are verified first
     df["title_only"] = df["abstract"].str.len().lt(100) & df["rule_decision"].isin([INCLUDED, "Excluded (T/A)"])
+    df["to_verify"] = df["to_verify"] | df["title_only"]
     df["decision"], df["reason"], df["decided_by"] = df["rule_decision"], df["rule_reason"], "rules"
 
     # ---- human overrides (first reviewer verification)
@@ -152,7 +177,7 @@ def run(cfg, P):
     for c in ("searches", "prior_sources"):
         df[c] = df.get(c, pd.Series("", index=df.index)).fillna("")
     keep = ["rid", "arm", "db", "found_in", "searches", "prior_sources", "doi", "authors", "title", "year", "source_title", "doc_type",
-            "cited_by", "rule_decision", "rule_reason", "decision", "reason", "decided_by", "title_only", "rating_ml", "study_country", "country_source",
+            "cited_by", "rule_decision", "rule_reason", "decision", "reason", "decided_by", "route", "title_only", "to_verify", "rating_ml", "study_country", "country_source",
             "modality", "target", "method", "validation", "accuracy_pct", "r2", "f1", "cvrmse_pct", "auc"]
     df[keep].to_csv(P["out"] / "screening_decisions.csv", index=False, encoding="utf-8-sig")
     # the authors' previous literature: decision for every prior work
@@ -177,6 +202,8 @@ def run(cfg, P):
           "n_core_other": int((O["decision"] == INCLUDED).sum()),
           "n_other_scoping": int(O["prior_sources"].str.startswith("earlier scoping").sum()),
           "n_core_other_scoping": int(((O["decision"] == INCLUDED) & O["prior_sources"].str.startswith("earlier scoping")).sum()),
+          "n_core_route_rating": int((C["route"] == ROUTE_RATING).sum()), "n_core_route_geo": int((C["route"] == ROUTE_GEO).sum()),
+          "n_to_verify": int(df["to_verify"].sum()), "n_to_verify_excluded": int((df["to_verify"] & df["decision"].eq("Excluded (T/A)")).sum()),
           "n_prior_core": int((C["prior_sources"] != "").sum()), "n_title_only": int(df["title_only"].sum()),
           "n_title_only_other": int(O["title_only"].sum()),
           "n_reviews_total": int((df["decision"] == "Review (umbrella)").sum()),
