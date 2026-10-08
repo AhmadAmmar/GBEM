@@ -29,27 +29,33 @@ TEMPLATE = _setting("TEMPLATE_DIR", REVIEW / "pipeline" / "template")   # manusc
 # Search metadata (PRISMA-S). Update after running the queries.
 # ---------------------------------------------------------------------------
 SEARCH = {
-    "query_file": LIT / "Scopus" / "2026-09-30_query_v2.txt",
-    "search_date": "2026-09-30",            # date the database searches were run
-    "field": "TITLE-ABS-KEY",
+    "query_file": LIT / "Scopus" / "2026-10-08_query_v3.txt",
+    "search_date": "2026-10-08",            # date the database search was run
+    "field": "TITLE-ABS-KEY OR TITLE",      # union of a title-abstract-keyword search and a title search
     "years": (2000, 2026),
     "doc_types": ["Article", "Review", "Conference Paper"],
     # database exports (glob patterns); multi-part exports are concatenated
-    "scopus_glob": str(LIT / "Scopus" / "2026-09-30_scopus_v2*.csv"),
-    "wos_glob": str(LIT / "WoS" / "2026-09-30_wos_v2*.txt"),
+    "scopus_glob": str(LIT / "Scopus" / "2026-10-08_scopus_v3*.csv"),
+    "wos_glob": str(LIT / "WoS" / "2026-10-08_wos_v3*.txt"),
     # hit counts shown by the database interfaces (for the PRISMA box); None = use export size
-    "scopus_hits": 3989,                  # Scopus, run 2026-09-30, exported 17:24 (export v2)
+    "scopus_hits": None,                  # export v3: 4,615 records (see Lit/Scopus/EXPORT_LOG.md)
     "wos_hits": None,
-    "recall_benchmark": {"n": 17, "retrieved": 15},     # Step 2 of the query file; see Lit/Scopus/EXPORT_LOG.md
+    "recall_benchmark": {"n": 17, "retrieved": 15},     # Step 2 of the query file
 }
 
 # Supplementary evidence (citation searching / expert suggestion)
 OTHER_METHODS_DIRS = [LIT / "New Lit", LIT / "New Lit 1", LIT / "Relevant", LIT / "Review"]
 
-# Earlier documented database searches, combined with the current one (each: label, date, query file, export glob)
-EARLIER_SEARCHES = [
-    {"label": "Scopus title search", "date": "2025-10-07", "field": "TITLE",
-     "query_file": LIT / "Scopus" / "2025-10-07_query_v1.txt", "glob": str(LIT / "Scopus" / "2025-10-07_scopus.csv")},
+# Earlier documented database searches, combined with the current one (each: label, date, field, query file, glob).
+# Only searches whose string is preserved and reproduces the export belong here.
+EARLIER_SEARCHES = []
+
+# Exports of earlier scoping searches whose search string was not preserved. Their records that the current
+# search does not return are screened as records identified by other methods (not part of the bibliometric corpus).
+SCOPING_EXPORTS = [
+    {"label": "earlier scoping search", "date": "2025-10-07", "glob": str(LIT / "Scopus" / "2025-10-07_scopus.csv")},
+    {"label": "earlier scoping search", "date": "2025-07-14", "glob": str(LIT / "Scopus" / "2025-07-14_scopus.csv")},
+    {"label": "earlier scoping search", "date": "2025-07-02", "glob": str(LIT / "Scopus" / "2025-07-02_scopus.csv")},
 ]
 
 # The authors' previous work: literature cited in assessment reports and presentations, the reference library

@@ -51,6 +51,13 @@ def main():
         shutil.copy(tpl / "tools" / "make_docx.py", new / "latex" / "tools" / "make_docx.py")
     if prev and (prev / "analysis" / "inputs").exists():
         shutil.copytree(prev / "analysis" / "inputs", new / "analysis" / "inputs")
+        # the second reviewer's sample is redrawn for the new record set unless decisions have been entered
+        samp = new / "analysis" / "inputs" / cfg.HUMAN["second_screener"]
+        if samp.exists():
+            import pandas as pd
+            d = pd.read_csv(samp, dtype=str, encoding="utf-8-sig")
+            if d.get("decision_reviewer2", pd.Series(dtype=str)).fillna("").str.strip().eq("").all():
+                samp.unlink()
     args = ["--iteration", str(new)] + (["--scopus", *a.scopus] if a.scopus else []) + (["--wos", *a.wos] if a.wos else [])
     run_all.main(args + (["--skip-fulltext"] if a.skip_fulltext else []))
     if a.no_build:

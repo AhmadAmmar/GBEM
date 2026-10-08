@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.7.0] - 2026-10-08
+
+### Added
+- `SCOPING_EXPORTS` in `review/config.py`: exports of earlier scoping searches whose search string was not preserved. Records in them that the current search does not return are screened as records identified by other methods and stay out of the bibliometric corpus.
+- Manuscript macros `\IfScoping`, `\NScopingOther`, `\NCoreScoping` and `\IfPeakLast` (wording when the incomplete last year already has the highest output).
+
+### Changed
+- Search metadata set for the single combined Scopus search of 2026-10-08 (title-abstract-keyword component OR title component; 4,615 records). `EARLIER_SEARCHES` is now empty and reserved for searches whose preserved string reproduces their export.
+- `new_iteration.py` does not carry an unfilled second-reviewer sample forward: it is redrawn for the new record set.
+- PRISMA diagram wording for a single search.
+
+### Fixed
+- The 2025 export was previously combined as a documented title search; its string does not reproduce the export, so it is now treated as a scoping export.
+
 ## [0.6.0] - 2026-10-01
 
 ### Added
