@@ -30,8 +30,82 @@ def canvas(w, h):
     return fig, ax
 
 
+def screening_flow(cfg, P, I, S, Fs):
+    """Decision sequence from the database search to the core set and focused subset (database records), with counts.
+
+    The order of the steps is the order of the rules in s01_screen.rule_decision; each excluded record is counted at
+    the first criterion it does not meet. The description of the search components has to follow the query file.
+    """
+    dec = read_csv(P["out"] / "screening_decisions.csv")
+    D = dec[dec["arm"].fillna("database") == "database"]
+    rr, rd = D["rule_reason"].fillna(""), D["rule_decision"]
+    n = lambda *keys: int(sum(rr.str.startswith(k).sum() for k in keys))
+    n_type, n_rev = int((rd == "Excluded (record type)").sum()), int((rd == "Review (umbrella)").sum())
+    n_rating = int(((rd == "Included (core)") & (D["route"] == "rating estimation")).sum())
+    n_geo = int(((rd == "Included (core)") & (D["route"] != "rating estimation")).sum())
+    yrs, types = cfg.SEARCH["years"], ", ".join(t.lower() for t in cfg.SEARCH["doc_types"])
+    steps = [   # question, text of the side box, records leaving here, kind of side box
+        ("Unique record?", "Duplicates removed\n(record identifier, DOI, title and year)", I["n_duplicates"], "out"),
+        ("Eligible record type and year?", "Excluded: retracted, erratum, other type or year", n_type, "out"),
+        ("Primary study?\n(not a review by document type or title)", "Reviews set aside as context (umbrella evidence)", n_rev, "aside"),
+        ("Building or building stock\nin title or abstract?", "Excluded: no building or building stock", n("No building"), "out"),
+        ("Energy-efficiency outcome\nin title or abstract?", f"Excluded: outcome not related to building energy efficiency {n('Outcome not related'):,}; "
+         f"thermal comfort only {n('Outcome is thermal comfort'):,}; renewable or solar potential only {n('Renewable'):,}",
+         n("Outcome not related", "Outcome is thermal comfort", "Renewable"), "out"),
+        ("Energy rating, label or class estimated?", "Included: rating-estimation route\n(no geospatial term required)", n_rating, "in"),
+        ("Geospatial or remote-sensing data or method named\nin title, abstract or author keywords?",
+         f"Excluded: urban climate or urban form named only as setting {n('Urban climate'):,}; no geospatial term {n('No geospatial'):,}; "
+         f"indoor sensing or laboratory {n('Indoor'):,}; term in index keywords only {n('Geospatial term in'):,}",
+         n("Urban climate", "No geospatial", "Indoor", "Geospatial term in"), "out"),
+        ("Wide-area data source,\nor close-range sensing of many buildings?", "Excluded: single building or component", n("Single building"), "out"),
+        ("Buildings the subject of the study?", "Excluded: buildings mentioned only in passing", n("Buildings mentioned"), "out"),
+    ]
+    fig, ax = canvas(7.2, 9.4)
+    LX, LW, RX, RW, H, DY = 0.035, 0.43, 0.555, 0.41, 0.046, 0.070
+    box(ax, LX, 0.898, RX + RW - LX, 0.094,
+        f"Scopus search of {I['search_date']}, four components joined by OR:\n"
+        "(1) built object AND energy outcome AND remote-sensing or geospatial term, in titles, abstracts and keywords; "
+        "(2) the same three blocks with broader terms, in titles only; (3) urban building energy modelling named; "
+        "(4) built object AND rating or certificate term AND data-analysis method term.\n"
+        f"Limits: {yrs[0]}-{yrs[1]}; {types}; English.   Records identified: n = {I['n_identified']:,}", fc="#f4f8fc", fs=6.0, wrap=118)
+    left, y, top = I["n_identified"], 0.898, 0.898
+    for i, (q, side, k, kind) in enumerate(steps):
+        y = 0.835 - i * DY
+        box(ax, LX, y, LW, H, q, fc="#ffffff", fs=6.0, wrap=58)
+        arrow(ax, LX + LW / 2, top, LX + LW / 2, y + H)
+        fc = {"out": "#fbeeee", "aside": "#fff8e6", "in": "#e6f2e6"}[kind]
+        box(ax, RX, y - 0.003, RW, H + 0.006, f"{side}\nn = {k:,}", fc=fc, fs=5.2, wrap=66)
+        arrow(ax, LX + LW, y + H / 2, RX, y + H / 2)
+        ax.text((LX + LW + RX) / 2, y + H / 2 + 0.006, "yes" if kind == "in" else "no", ha="center", fontsize=5.4, color="#444")
+        left -= k
+        ax.text(LX + LW / 2 + 0.008, y - (DY - H) / 2, ("no" if kind == "in" else "yes") + f"   {left:,} remain", ha="left", va="center", fontsize=5.4, color="#444")
+        top = y
+    y = top - DY
+    box(ax, LX, y, LW, H, f"Included: geospatial data or method route\nn = {n_geo:,}", fc="#e6f2e6", fs=6.0, wrap=58)
+    arrow(ax, LX + LW / 2, top, LX + LW / 2, y + H)
+    ver = (f"{S['n_verified_by_reviewer']:,} decisions verified by the first reviewer" if S["n_verified_by_reviewer"]
+           else "verification of every rule decision by the first reviewer is in progress")
+    box(ax, LX, y - 0.10, RX + RW - LX, 0.078,
+        f"Core systematic set: {n_geo:,} + {n_rating:,} = {S.get('n_core_db', n_geo + n_rating):,} database records, plus {S.get('n_core_other', 0):,} records "
+        f"identified by other methods and screened with the same rules: n = {S['n_core']:,}\n"
+        f"{ver[0].upper() + ver[1:]}, starting with decisions that rest on weak evidence (n = {S.get('n_to_verify', 0):,}); "
+        f"a second reviewer screens a random sample (n = {S.get('n_dual_sample', 0):,}) and Cohen's kappa is reported",
+        fc="#e6f2e6", fs=5.8, wrap=124)
+    arrow(ax, LX + LW / 2, y, LX + LW / 2, y - 0.022)
+    box(ax, LX, y - 0.195, RX + RW - LX, 0.066,
+        f"Focused subset: core studies coded with a rating or label target are candidates; inclusion is decided on the full text "
+        f"(building-level estimation of an energy rating, label or score, or data designed for it): n = {Fs['n_focused']} "
+        f"({Fs['n_pending']:,} candidates awaiting a decision)", fc="#dcebdc", fs=5.8, wrap=124)
+    arrow(ax, LX + LW / 2, y - 0.10, LX + LW / 2, y - 0.129)
+    for ext in ("png", "pdf"):
+        fig.savefig(P["fig"] / f"figS_screening_rules.{ext}")
+    plt.close(fig)
+    return left
+
+
 def run(cfg, P):
     I, S, B, Fs = (load(P["out"] / f) for f in ["stats_ingest.json", "stats_screening.json", "stats_biblio.json", "stats_focused.json"])
+    screening_flow(cfg, P, I, S, Fs)
     F = read_csv(P["out"] / "focused_final.csv")
     supp = read_csv(P["inputs"] / cfg.HUMAN["supplementary_studies"])
     fig_ = P["fig"]
