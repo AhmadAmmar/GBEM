@@ -78,7 +78,7 @@ HUMAN = {
     "supplementary_studies": "supplementary_studies.csv",  # studies found by other methods
 }
 
-DUAL_SAMPLE_FRACTION = 0.20
+DUAL_SAMPLE_FRACTION = 0.0   # share of records screened independently by a second reviewer; 0 = screening by a single reviewer
 RANDOM_SEED = 20260930
 MIN_KEYWORD_OCC = 8          # co-occurrence network threshold
 PERIODS = [(2000, 2014), (2015, 2019), (2020, 2026)]

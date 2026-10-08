@@ -84,12 +84,13 @@ def screening_flow(cfg, P, I, S, Fs):
     box(ax, LX, y, LW, H, f"Included: geospatial data or method route\nn = {n_geo:,}", fc="#e6f2e6", fs=6.0, wrap=58)
     arrow(ax, LX + LW / 2, top, LX + LW / 2, y + H)
     ver = (f"{S['n_verified_by_reviewer']:,} decisions verified by the first reviewer" if S["n_verified_by_reviewer"]
-           else "verification of every rule decision by the first reviewer is in progress")
+           else "every rule decision is to be verified by the reviewer")
     box(ax, LX, y - 0.10, RX + RW - LX, 0.078,
         f"Core systematic set: {n_geo:,} + {n_rating:,} = {S.get('n_core_db', n_geo + n_rating):,} database records, plus {S.get('n_core_other', 0):,} records "
         f"identified by other methods and screened with the same rules: n = {S['n_core']:,}\n"
         f"{ver[0].upper() + ver[1:]}, starting with decisions that rest on weak evidence (n = {S.get('n_to_verify', 0):,}); "
-        f"a second reviewer screens a random sample (n = {S.get('n_dual_sample', 0):,}) and Cohen's kappa is reported",
+        + (f"a second reviewer screens a random sample (n = {S.get('n_dual_sample', 0):,}) and Cohen's kappa is reported"
+           if S.get("dual_screening", True) else "screening is by a single reviewer, without independent second screening"),
         fc="#e6f2e6", fs=5.8, wrap=124)
     arrow(ax, LX + LW / 2, y, LX + LW / 2, y - 0.022)
     box(ax, LX, y - 0.195, RX + RW - LX, 0.066,
@@ -138,7 +139,7 @@ def run(cfg, P):
     arrow(ax, L + W, 0.71, M, 0.66)
     box(ax, L, 0.51, W, 0.09, f"Review articles set aside for umbrella/context use\nn = {S['n_reviews']:,}", fc="#fff8e6", fs=6.0, wrap=48)
     arrow(ax, L + W / 2, 0.66, L + W / 2, 0.60)
-    ver = f"verified by reviewer: {S['n_verified_by_reviewer']:,}" if S["n_verified_by_reviewer"] else "reviewer verification in progress"
+    ver = f"verified by reviewer: {S['n_verified_by_reviewer']:,}" if S["n_verified_by_reviewer"] else "reviewer verification pending"
     box(ax, L, 0.34, W, 0.11, f"Primary studies eligible at title/abstract stage\nn = {S.get('n_core_db', S['n_core']):,}\n({ver})", fc="#f4f8fc", fs=6.0, wrap=48)
     arrow(ax, L + W / 2, 0.51, L + W / 2, 0.45)
     box(ax, R, 0.66, W + 0.04, 0.10, f"Records screened with the same criteria\nn = {S.get('n_other_screened', 0):,}", fc="#f4f8fc", fs=6.0, wrap=50)

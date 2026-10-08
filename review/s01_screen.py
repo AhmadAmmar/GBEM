@@ -3,8 +3,9 @@
 Pass 1: transparent keyword rules (first screener) -> decision, reason, inclusion route and a flag for
         decisions that rest on weak evidence. Every criterion has to be met in the title or abstract.
 Pass 2: human decisions in inputs/screening_overrides.csv replace rule decisions.
-Dual screening: a seeded random sample is written to inputs/ for the second reviewer;
-Cohen's kappa is computed once their file is filled in.
+The reviewer works through outputs/verification_queue.csv (decisions resting on weak evidence first).
+Dual screening (only if config.DUAL_SAMPLE_FRACTION > 0): a seeded random sample is written to inputs/ for a second
+reviewer and Cohen's kappa is computed once their file is filled in.
 
 Output: outputs/screening_decisions.csv, outputs/stats_screening.json
 Feeds : PRISMA screening boxes, Table 7 (modalities), Fig. 10 (evidence map), Fig. 5 (map), Section 4.1-4.5.
@@ -149,10 +150,11 @@ def run(cfg, P):
     # ---- dual screening sample + kappa
     elig = df[df["rule_decision"].isin(["Included (core)", "Excluded (T/A)"])]
     samp_path = P["inputs"] / cfg.HUMAN["second_screener"]
-    if not samp_path.exists():
+    dual = cfg.DUAL_SAMPLE_FRACTION > 0 or samp_path.exists()
+    if cfg.DUAL_SAMPLE_FRACTION > 0 and not samp_path.exists():
         s = elig.sample(frac=cfg.DUAL_SAMPLE_FRACTION, random_state=cfg.RANDOM_SEED)
         s[["rid", "title", "abstract"]].assign(decision_reviewer2="", reason_reviewer2="").to_csv(samp_path, index=False, encoding="utf-8-sig")
-    s2 = read_csv(samp_path)
+    s2 = read_csv(samp_path) if samp_path.exists() else pd.DataFrame(columns=["rid", "decision_reviewer2"])
     n_dual_sample = int(len(s2))
     s2 = s2[s2["decision_reviewer2"].fillna("").astype(str).str.strip().ne("")]
     kappa = None
@@ -161,6 +163,14 @@ def run(cfg, P):
         simp = lambda x: "include" if str(x).lower().startswith("incl") else "exclude"
         kappa = {"n": int(len(mm)), "kappa": round(cohen_kappa(mm["decision"].map(simp), mm["decision_reviewer2"].map(simp)), 3),
                  "agreement_pct": round(100 * (mm["decision"].map(simp) == mm["decision_reviewer2"].map(simp)).mean(), 1)}
+
+    # ---- work list for the reviewer: weak-evidence decisions first, then included, then excluded records
+    q = df[df["rule_decision"].isin([INCLUDED, "Excluded (T/A)"])].copy()
+    q["verified"] = q["decided_by"].eq("reviewer")
+    q["order"] = (~q["to_verify"]).astype(int) * 2 + q["rule_decision"].ne(INCLUDED).astype(int)
+    q.sort_values(["verified", "order", "rule_reason", "year"], ascending=[True, True, True, False])[
+        ["rid", "verified", "to_verify", "rule_decision", "rule_reason", "route", "decision", "title", "abstract", "year", "source_title", "doi"]
+    ].to_csv(P["out"] / "verification_queue.csv", index=False, encoding="utf-8-sig")
 
     # ---- coding
     core = df["decision"].eq(INCLUDED)
@@ -208,7 +218,7 @@ def run(cfg, P):
           "n_title_only_other": int(O["title_only"].sum()),
           "n_reviews_total": int((df["decision"] == "Review (umbrella)").sum()),
           "n_core": int(core.sum()), "n_core_conference": int((C["doc_type"] == "Conference Paper").sum()),
-          "n_verified_by_reviewer": n_over, "n_rule_decisions_changed": changed, "kappa": kappa, "n_dual_sample": n_dual_sample,
+          "n_verified_by_reviewer": n_over, "n_rule_decisions_changed": changed, "kappa": kappa, "n_dual_sample": n_dual_sample, "dual_screening": bool(dual),
           "n_core_title_abstract_country": int(C["country_source"].str.startswith("title").sum()),
           "core_n_countries": int(C["study_country"].replace("", np.nan).nunique()),
           "core_countries": C["study_country"].replace("", np.nan).dropna().value_counts().to_dict(),
