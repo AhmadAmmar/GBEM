@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.10.0] - 2026-10-08
+
+### Added
+- `review/new_iteration.py` exports every table of the manuscript as printed (one CSV per table, a workbook with one sheet per table and an index of captions, and a PDF of all tables) when the manuscript template provides `tools/make_tables.py`, and copies the workbook and the PDF to `DOC/` and `PDF/` with the time stamp.
+
 ## [0.9.0] - 2026-10-08
 
 ### Added

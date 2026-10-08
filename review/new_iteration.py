@@ -94,6 +94,14 @@ def build(new, version, stamp):
         tmp.unlink()
     if docx.exists():
         shutil.copy(docx, cfg.PHD / "DOC" / f"{stamp}_Review_Paper_v{version}.docx")
+        # every table as printed: one CSV per table, a workbook and a PDF, if the template provides the tool
+        mt = new / "latex" / "tools" / "make_tables.py"
+        if mt.exists():
+            subprocess.run([sys.executable, str(mt), version], cwd=new / "latex")
+            for src, dst in ((new / "build" / f"{job}_Tables.xlsx", cfg.PHD / "DOC" / f"{stamp}_Review_Paper_v{version}_Tables.xlsx"),
+                             (new / "build" / f"{job}_Tables.pdf", cfg.PHD / "PDF" / f"{stamp}_Review_Paper_v{version}_Tables.pdf")):
+                if src.exists():
+                    shutil.copy(src, dst)
     # version the iteration in the (internal) manuscript repository, if there is one
     if (cfg.REVIEW / ".git").exists():
         git = lambda *a: subprocess.run(["git", *a], cwd=cfg.REVIEW, capture_output=True, text=True)
