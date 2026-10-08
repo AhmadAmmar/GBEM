@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.12.0] - 2026-10-09
+
+### Added
+- `review/s08_triage.py` (new pipeline stage): sorts the candidates for the focused subset into likely, unclear and unlikely with keyword rules that test whether the rating is the estimated target, whether estimates are made for individual buildings, and whether a method and a metric are reported. It reads titles and abstracts and, where a PDF is in the literature library, the full text. Outputs: `focused_triage.csv` (with reasons and the sentences that triggered them), `focused_triage_check.csv` (the same rules applied to studies already decided), `fulltext_to_download.csv` and `stats_triage.json`. The stage never changes a reviewer decision.
+- `review/fetch_open_access.py`: retrieves open-access full texts of the candidates from the locations listed in OpenAlex (no account or e-mail address is sent), keeps a file only if its first pages match the DOI or title, and logs every attempt. PDFs are stored in the private literature folder, outside the repository.
+- Manuscript macros `\NTriageLikely`, `\NTriageUnclear`, `\NTriageUnlikely`, `\NTriageFullText`, `\NTriageCheck...` and `\IfPending`.
+
 ## [0.11.0] - 2026-10-08
 
 ### Changed

@@ -8,7 +8,7 @@ manuscript elements they feed.
 import argparse, datetime, pathlib, sys, time
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import config as cfg
-import s00_ingest, s01_screen, s02_bibliometrics, s03_focused, s04_fulltext, s05_figures, s06_tex_outputs, s07_maps_textmining
+import s00_ingest, s01_screen, s02_bibliometrics, s03_focused, s04_fulltext, s05_figures, s06_tex_outputs, s07_maps_textmining, s08_triage
 
 STAGES = [
     ("s00_ingest", s00_ingest, "records.csv, duplicates.csv, stats_ingest.json", "PRISMA identification; all later stages"),
@@ -16,6 +16,7 @@ STAGES = [
     ("s02_bibliometrics", s02_bibliometrics, "stats_biblio.json, top_sources/countries/keywords/thematic CSVs; fig04-fig08", "Section 3; Table 6; Figs 4-8; Appendix F"),
     ("s03_focused", s03_focused, "focused_final.csv, focused_candidates_pending.csv, stats_focused.json", "Sections 4.2-4.8; Tables 8, 9, D, E; Figs 11-12"),
     ("s04_fulltext", s04_fulltext, "pdf_doi_index.csv, fulltext_snippets.csv, fulltext_missing.csv", "Support for the extraction sheet and appraisal (Appendix D)"),
+    ("s08_triage", s08_triage, "focused_triage.csv, focused_triage_check.csv, fulltext_to_download.csv, stats_triage.json", "Section 2.3 (candidates for the focused subset); work list for full-text screening"),
     ("s05_figures", s05_figures, "fig01-03, fig09-13, ga", "Figs 1-3, 9-13; graphical abstract"),
     ("s07_maps_textmining", s07_maps_textmining, "figS1-figS9 (word clouds, minimal maps, country profiles, collaboration, trends); review_tables.xlsx; top_authors.csv", "Appendix H (supplementary figures); tables workbook for supervisors"),
     ("s06_tex_outputs", s06_tex_outputs, "latex/generated/numbers.tex, tab_*.tex; references.bib additions", "All numbers and generated tables in the manuscript"),
