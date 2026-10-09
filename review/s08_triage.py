@@ -112,6 +112,19 @@ def run(cfg, P):
     need = pend[(pend["pdf"] == "") & (pend["triage"] != "Unlikely")]
     need[["triage", "study", "year", "title", "doi_link", "open_access", "open_access_pdf", "retrieval"]].to_csv(
         P["out"] / "fulltext_to_download.csv", index=False, encoding="utf-8-sig")
+    # the same list as a RIS file: imported into a reference manager, the full texts can be retrieved there
+    # through the reader's own library access
+    ris = []
+    for r in need.itertuples():
+        d = norm_doi(r.doi_link); tn = norm_title(r.title)
+        rec = by_d.loc[d] if d and d in by_d.index else (by_t.loc[tn] if tn in by_t.index else None)
+        g = lambda c: str(rec[c]) if rec is not None and isinstance(rec[c], str) else ""
+        ris += ["TY  - " + ("CONF" if g("doc_type") == "Conference Paper" else "JOUR")]
+        ris += ["AU  - " + a.strip() for a in g("authors").split(";") if a.strip()]
+        ris += ["TI  - " + str(r.title), "PY  - " + (str(int(r.year)) if pd.notna(r.year) else ""), "JO  - " + g("source_title")]
+        ris += (["DO  - " + d] if d and "/" in d else []) + ["N1  - Focused-subset candidate; triage: " + r.triage, "ER  - ", ""]
+    (P["out"] / "fulltext_to_download.ris").write_text("\n".join(ris), encoding="utf-8")
+
     # abstract-level evidence for every pending candidate: what can be said before the full text is read
     dec = read_csv(P["out"] / "screening_decisions.csv")
     dec["d"], dec["tn"] = dec["doi"].map(norm_doi), dec["title"].map(norm_title)
