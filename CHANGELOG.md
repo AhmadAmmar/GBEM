@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.15.0] - 2026-10-09
+
+### Added
+- `review/new_iteration.py` collects every figure of the manuscript with its caption in one PDF when the manuscript template provides `tools/make_figures.py`, and copies it to `PDF/` with the time stamp.
+- The PRISMA diagram is also saved as PDF.
+- `review/s08_triage.py` writes `fulltext_to_download.ris` for import into a reference manager.
+
 ## [0.14.0] - 2026-10-09
 
 ### Added
