@@ -102,6 +102,13 @@ def build(new, version, stamp):
                              (new / "build" / f"{job}_Tables.pdf", cfg.PHD / "PDF" / f"{stamp}_Review_Paper_v{version}_Tables.pdf")):
                 if src.exists():
                     shutil.copy(src, dst)
+        # every figure with its caption in one PDF, if the template provides the tool
+        mf = new / "latex" / "tools" / "make_figures.py"
+        if mf.exists():
+            subprocess.run([sys.executable, str(mf), version], cwd=new / "latex")
+            fp = new / "build" / f"{job}_Figures.pdf"
+            if fp.exists():
+                shutil.copy(fp, cfg.PHD / "PDF" / f"{stamp}_Review_Paper_v{version}_Figures.pdf")
     # version the iteration in the (internal) manuscript repository, if there is one
     if (cfg.REVIEW / ".git").exists():
         git = lambda *a: subprocess.run(["git", *a], cwd=cfg.REVIEW, capture_output=True, text=True)
