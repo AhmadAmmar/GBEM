@@ -161,7 +161,7 @@ def run(cfg, P):
     box(ax, R, 0.03, W + 0.04, 0.14, f"Focused subset: building-level estimation of energy-efficiency ratings, labels or scores\n"
         f"n = {Fs['n_focused']} ({Fs['n_focused_db']} database + {Fs['n_focused_other']} other methods)", fc="#e6f2e6", fs=6.0, wrap=52)
     arrow(ax, L + W, 0.18, R, 0.10)
-    fig.savefig(fig_ / "fig02_prisma.png"); plt.close(fig)
+    fig.savefig(fig_ / "fig02_prisma.png"); fig.savefig(fig_ / "fig02_prisma.pdf"); plt.close(fig)
 
     # ---------------- Fig 1 framework
     fig, ax = canvas(7.2, 3.4)
