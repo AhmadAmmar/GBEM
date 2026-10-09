@@ -112,6 +112,33 @@ def run(cfg, P):
     need = pend[(pend["pdf"] == "") & (pend["triage"] != "Unlikely")]
     need[["triage", "study", "year", "title", "doi_link", "open_access", "open_access_pdf", "retrieval"]].to_csv(
         P["out"] / "fulltext_to_download.csv", index=False, encoding="utf-8-sig")
+    # abstract-level evidence for every pending candidate: what can be said before the full text is read
+    dec = read_csv(P["out"] / "screening_decisions.csv")
+    dec["d"], dec["tn"] = dec["doi"].map(norm_doi), dec["title"].map(norm_title)
+    cod = ["source_title", "doc_type", "route", "study_country", "modality", "target", "method", "validation", "accuracy_pct", "r2", "f1", "cvrmse_pct", "auc"]
+    cd, ct = dec[dec["d"] != ""].drop_duplicates("d").set_index("d")[cod], dec.drop_duplicates("tn").set_index("tn")[cod]
+    ev = pend.copy()
+    k_d, k_t = ev["doi"].map(norm_doi), ev["title"].map(norm_title)
+    for c in cod:
+        ev[c] = [cd.at[a, c] if a and a in cd.index else (ct.at[b, c] if b in ct.index else None) for a, b in zip(k_d, k_t)]
+    ev["abstract"] = [str(by_d.at[a, "abstract"]) if a and a in by_d.index else (str(by_t.at[b, "abstract"]) if b in by_t.index else "") for a, b in zip(k_d, k_t)]
+    ev["provisional_decision"] = ev["triage"].map({"Likely": "Include (provisional, abstract level)", "Unclear": "Needs the full text",
+                                                   "Unlikely": "Exclude (provisional, abstract level)"})
+    ev = ev.rename(columns={"study_country": "country", "modality": "data_modality", "target": "target_coded", "method": "method_family",
+                            "validation": "validation_terms", "source_title": "source"})
+    ev = ev[["provisional_decision", "triage", "basis", "supports", "against", "study", "year", "title", "source", "doc_type", "country", "data_modality",
+             "target_coded", "method_family", "validation_terms", "accuracy_pct", "r2", "f1", "auc", "cvrmse_pct", "evidence_target", "evidence_level",
+             "abstract", "doi_link", "pdf"]]
+    for c in ev.columns:     # control characters from PDF text cannot be written to a workbook
+        ev[c] = ev[c].map(lambda v: re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", " ", v) if isinstance(v, str) else v)
+    ev.to_csv(P["out"] / "focused_candidates_evidence.csv", index=False, encoding="utf-8-sig")
+    with pd.ExcelWriter(P["out"] / "focused_candidates_evidence.xlsx", engine="openpyxl") as xw:
+        for name in ("Likely", "Unclear", "Unlikely"):
+            ev[ev["triage"] == name].to_excel(xw, sheet_name=name, index=False)
+        for ws in xw.book.worksheets:
+            ws.freeze_panes = "A2"
+            for col in ws.columns:
+                ws.column_dimensions[col[0].column_letter].width = min(max(12, max(len(str(c.value or "")) for c in col[:40]) * 0.8), 60)
     # test of the rules on the studies the reviewer has decided
     Y, N = T[T["decision_so_far"].str.upper() == "Y"], T[T["decision_so_far"].str.upper() == "N"]
     st = {"n_candidates": int(len(pend)), "triage": {k: int((pend["triage"] == k).sum()) for k in order},

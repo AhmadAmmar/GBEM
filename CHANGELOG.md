@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.13.0] - 2026-10-09
+
+### Added
+- `review/s08_triage.py` writes `focused_candidates_evidence.csv` and `.xlsx` (one sheet per triage class): for every pending candidate, a provisional abstract-level decision, the reasons, the abstract, and the abstract-level coding (country, data modality, target, method family, validation terms, metric values).
+
 ## [0.12.1] - 2026-10-09
 
 ### Changed
