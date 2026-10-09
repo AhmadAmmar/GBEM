@@ -257,4 +257,24 @@ def run(cfg, P):
     rows = [f"{cite(r, keys)} ({arm(r['arm_now'])}) & {esc(r['area'])} & {esc(r['data'])} & {esc(r['target'])} & {esc(r['model_family'])}; {esc(r['validation']).lower() if pd.notna(r['validation']) else '--'} \\\\"
             for _, r in F.sort_values("year").iterrows()]
     (G / "tab_studies.tex").write_text("\n".join(rows) + "\n", encoding="utf-8")
+
+    # ---------------- candidates provisionally included at abstract level (triage class Likely, not yet read in full)
+    evp = P["out"] / "focused_candidates_evidence.csv"
+    cand = []
+    if evp.exists():
+        E = read_csv(evp)
+        E = E[E["triage"] == "Likely"].sort_values(["year", "study"])
+        # database records sometimes carry Greek or Cyrillic look-alike letters in names; pdfLaTeX needs Latin ones
+        alike = str.maketrans("ΑΒΕΖΗΙΚΜΝΟΡΤΥΧАВЕКМНОРСТХ", "ABEZHIKMNOPTYXABEKMHOPCTX")
+        lat = lambda s: "".join(c if ord(c) < 256 or c in "–—‘’“”" else (unicodedata.normalize("NFKD", c).encode("ascii", "ignore").decode() or "?")
+                                for c in str(s).translate(alike))
+        ns = lambda v: esc(lat(v)) if isinstance(v, str) and v.strip() else "not stated"
+        for _, r in E.iterrows():
+            yr = str(int(r["year"])) if pd.notna(r["year"]) else "n.d."
+            link = (" \\url{" + r["doi_link"] + "}") if isinstance(r["doi_link"], str) and r["doi_link"] and not re.search(r"[%#{}\\ ]", r["doi_link"]) else ""
+            cand.append(f"{esc(lat(r['study']))} ({yr}) & {esc(lat(r['title']).rstrip('.'))}.{link} & {ns(r['country'])} & {ns(r['data_modality'])} & {ns(r['method_family'])} \\\\")
+    (G / "tab_candidates.tex").write_text("\n".join(cand) + "\n", encoding="utf-8")
+    with open(G / "numbers.tex", "a", encoding="utf-8") as fh:
+        fh.write("\\providecommand{\\IfTier}[2]{}\\renewcommand{\\IfTier}[2]{" + ("#1" if cand else "#2") + "}\n")
+        fh.write("\\providecommand{\\NTier}{}\\renewcommand{\\NTier}{" + str(len(cand)) + "}\n")
     return {"macros": len(n), "bib_added": added}

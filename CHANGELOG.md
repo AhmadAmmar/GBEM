@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.14.0] - 2026-10-09
+
+### Added
+- `review/s06_tex_outputs.py` writes `tab_candidates.tex`: the candidates that the triage rules rate as likely, with country, data and method coded from the abstract, for a separate appendix table of studies provisionally included at abstract level. Macros `\IfTier` and `\NTier`.
+- `review/fetch_open_access.py` also uses the open-access addresses recorded by Semantic Scholar.
+
 ## [0.13.0] - 2026-10-09
 
 ### Added
