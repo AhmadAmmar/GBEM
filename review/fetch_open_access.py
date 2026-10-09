@@ -3,7 +3,7 @@
     python fetch_open_access.py [--iteration <iteration folder>] [--all-core] [--limit N]
 
 For every candidate with a DOI that has no PDF in the literature library yet, the open-access locations of the
-work are looked up in OpenAlex (no account or e-mail address is sent) and the first location that returns a PDF
+work are looked up in OpenAlex and Semantic Scholar (no account or e-mail address is sent) and the first location that returns a PDF
 is saved to <Lit>/Review_fulltexts/. Only locations that OpenAlex marks as open access are used; nothing behind
 a paywall is requested. A file is kept only if its first pages contain the DOI or the title of the work;
 otherwise it is moved to <Lit>/Review_fulltexts/_unverified/.
@@ -48,6 +48,26 @@ def openalex(dois):
             except Exception as e:
                 time.sleep(6 + 6 * attempt)
         time.sleep(1.5)
+    return out
+
+
+def semantic_scholar(dois):
+    """Open-access PDF addresses recorded by Semantic Scholar (one batch request, no account), keyed by DOI."""
+    out = {}
+    for i in range(0, len(dois), 400):
+        part = [d for d in dois[i:i + 400] if d.startswith("10.")]
+        req = urllib.request.Request("https://api.semanticscholar.org/graph/v1/paper/batch?fields=externalIds,openAccessPdf",
+                                     data=json.dumps({"ids": ["DOI:" + d for d in part]}).encode(), headers={**UA, "Content-Type": "application/json"})
+        for attempt in range(5):
+            try:
+                with urllib.request.urlopen(req, timeout=90) as r:
+                    for d, w in zip(part, json.loads(r.read())):
+                        u = ((w or {}).get("openAccessPdf") or {}).get("url")
+                        if u:
+                            out[d] = u
+                break
+            except Exception:
+                time.sleep(10 + 10 * attempt)
     return out
 
 
@@ -98,6 +118,8 @@ def main():
     if a.limit:
         todo = todo.head(a.limit)
     meta = openalex(list(todo["d"]))
+    s2 = semantic_scholar(list(todo["d"]))
+    print(f"OpenAlex records: {len(meta)}; further open-access addresses from Semantic Scholar: {len(s2)}")
     log_path = dest / "download_log.csv"
     log = read_csv(log_path).to_dict("records") if log_path.exists() else []
     done = {r["doi"] for r in log if r.get("status") == "saved"}
@@ -109,6 +131,9 @@ def main():
                "oa_status": ((w or {}).get("open_access") or {}).get("oa_status", "") if w else "not in OpenAlex",
                "licence": ((w or {}).get("best_oa_location") or {}).get("license") or "", "url": "", "file": "", "status": ""}
         urls = pdf_urls(w) if w else []
+        if s2.get(r.d) and s2[r.d] not in urls:
+            m = re.search(r"arxiv\.org/(?:abs|pdf)/([\w.\-/]+?)(?:\.pdf)?$", s2[r.d])
+            urls.append("https://arxiv.org/pdf/" + m.group(1) if m else s2[r.d])
         ax = re.match(r"(?:arxiv:|10\.48550/arxiv\.)(\d{4}\.\d{4,5})", r.d)     # arXiv preprints: the PDF address follows from the identifier
         if ax:
             urls.insert(0, "https://arxiv.org/pdf/" + ax.group(1)); row["oa_status"] = "green (arXiv)"
