@@ -12,7 +12,7 @@ The PDFs stay in the private literature folder and are not part of the repositor
 <Lit>/Review_fulltexts/download_log.csv, so the run can be repeated and audited. Stage s04 then indexes the new
 files like any other PDF of the library.
 """
-import argparse, json, os, pathlib, re, sys, time, urllib.parse, urllib.request
+import argparse, json, os, pathlib, re, subprocess, sys, tempfile, time, urllib.parse, urllib.request
 import pandas as pd
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
@@ -110,7 +110,11 @@ def elsevier_pdf(doi):
         return None, "publisher API: " + str(e)[:60]
     if not data.startswith(b"%PDF"):
         return None, "publisher API did not return a PDF"
-    if len(re.findall(rb"/Type\s*/Page[^s]", data)) <= 1:
+    with tempfile.TemporaryDirectory() as tmp:      # page count of the returned file
+        t = pathlib.Path(tmp) / "a.pdf"; t.write_bytes(data)
+        info = subprocess.run(["pdfinfo", str(t)], capture_output=True, text=True).stdout
+    pages = re.search(r"Pages:\s+(\d+)", info)
+    if not pages or int(pages.group(1)) <= 1:
         return None, "publisher API returned the first page only (no entitlement from this network)"
     return data, "publisher API"
 
