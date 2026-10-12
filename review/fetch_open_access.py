@@ -12,7 +12,7 @@ The PDFs stay in the private literature folder and are not part of the repositor
 <Lit>/Review_fulltexts/download_log.csv, so the run can be repeated and audited. Stage s04 then indexes the new
 files like any other PDF of the library.
 """
-import argparse, json, pathlib, re, sys, time, urllib.parse, urllib.request
+import argparse, json, os, pathlib, re, sys, time, urllib.parse, urllib.request
 import pandas as pd
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
@@ -89,6 +89,32 @@ def pdf_urls(w):
     return urls
 
 
+def elsevier_pdf(doi):
+    """Full text of an Elsevier article through the publisher's Article Retrieval API (text and data mining).
+
+    Used only if an API key is configured (ELSEVIER_API_KEY in local_settings.py or GBEM_ELSEVIER_API_KEY in the
+    environment; optionally ELSEVIER_INSTTOKEN). The API serves the full text to subscribers and for open-access
+    articles; without entitlement it returns the first page only, which is discarded here.
+    """
+    key = os.environ.get("GBEM_ELSEVIER_API_KEY") or (getattr(cfg._ls, "ELSEVIER_API_KEY", None) if cfg._ls else None)
+    if not key:
+        return None, "no API key"
+    h = {**UA, "X-ELS-APIKey": key, "Accept": "application/pdf"}
+    tok = os.environ.get("GBEM_ELSEVIER_INSTTOKEN") or (getattr(cfg._ls, "ELSEVIER_INSTTOKEN", None) if cfg._ls else None)
+    if tok:
+        h["X-ELS-Insttoken"] = tok
+    try:
+        with urllib.request.urlopen(urllib.request.Request("https://api.elsevier.com/content/article/doi/" + urllib.parse.quote(doi, safe="/"), headers=h), timeout=90) as r:
+            data = r.read(MAX_BYTES + 1)
+    except Exception as e:
+        return None, "publisher API: " + str(e)[:60]
+    if not data.startswith(b"%PDF"):
+        return None, "publisher API did not return a PDF"
+    if len(re.findall(rb"/Type\s*/Page[^s]", data)) <= 1:
+        return None, "publisher API returned the first page only (no entitlement from this network)"
+    return data, "publisher API"
+
+
 def matches(pdf, doi, title):
     t = pdf_text(pdf, 1, 3)
     if doi and doi.lower() in re.sub(r"\s+", "", t).lower():
@@ -137,7 +163,19 @@ def main():
         ax = re.match(r"(?:arxiv:|10\.48550/arxiv\.)(\d{4}\.\d{4,5})", r.d)     # arXiv preprints: the PDF address follows from the identifier
         if ax:
             urls.insert(0, "https://arxiv.org/pdf/" + ax.group(1)); row["oa_status"] = "green (arXiv)"
-        if not urls:
+        if r.d.startswith("10.1016/"):
+            data, note = elsevier_pdf(r.d)
+            if data:
+                f = dest / (re.sub(r"[^A-Za-z0-9._-]+", "_", r.d) + ".pdf")
+                if not f.exists():
+                    f.write_bytes(data)
+                row.update(status="saved", url="https://api.elsevier.com/content/article/doi/" + r.d, file=f.name)
+                urls = []
+            elif note != "no API key":
+                row["status"] = note
+        if row["status"] == "saved":
+            pass
+        elif not urls and not row["status"]:
             row["status"] = "no open-access PDF location"
         for u in urls:
             try:

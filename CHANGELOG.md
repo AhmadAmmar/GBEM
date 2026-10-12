@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.16.0] - 2026-10-12
+
+### Added
+- `review/collect_fulltexts.py`: copies the PDF attachments of a Zotero library that belong to records of the review (matched by DOI, or by title where there is no DOI, through a copy of the Zotero database) into the full-text folder, and writes `fulltext_manifest.csv` (DOI, status in the review, origin, SHA-256, date first recorded) and `collect_log.csv`. Files are only copied; nothing is moved, renamed or deleted.
+- `ZOTERO_DIR` setting (machine-specific, in `local_settings.py`).
+- `review/fetch_open_access.py` can use the Elsevier Article Retrieval API when an API key is configured locally. This path has not been run yet.
+
 ## [0.15.0] - 2026-10-09
 
 ### Added

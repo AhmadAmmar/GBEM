@@ -24,6 +24,7 @@ PHD = _setting("PROJECT_ROOT", pathlib.Path(__file__).resolve().parents[2])
 LIT = _setting("LIT_DIR", PHD / "Lit")
 REVIEW = _setting("REVIEW_DIR", PHD / "Manuscripts" / "01_Review")
 TEMPLATE = _setting("TEMPLATE_DIR", REVIEW / "pipeline" / "template")   # manuscript template (kept private until publication)
+ZOTERO = _setting("ZOTERO_DIR", None)   # Zotero data folder (contains zotero.sqlite and storage/); optional, read by collect_fulltexts.py
 
 # ---------------------------------------------------------------------------
 # Search metadata (PRISMA-S). Update after running the queries.
