@@ -132,6 +132,13 @@ def run(cfg, P):
         for k, v in S[grp].items():
             nm = pre + re.sub(r"[^A-Za-z]", "", k.title())
             n["N" + nm] = fmt(v["n"]); n["Pct" + nm] = fmt(v["pct"], 1)
+    # data modalities of the core set, most frequent first, as a phrase for the text (the order follows the data)
+    phrase = {"GIS / cadastral": "GIS and cadastral data", "Climate / LCZ / UHI": "climate-oriented data", "LiDAR / 3D": "LiDAR and 3D models",
+              "Thermal / LST": "thermal or LST data", "Aerial / UAV": "aerial and UAV imagery", "Optical satellite": "optical satellite imagery",
+              "Street-level imagery": "street-level imagery", "SAR": "synthetic aperture radar data"}
+    rk = sorted(S["core_modality"].items(), key=lambda kv: -kv[1]["n"])
+    parts = [f"{phrase.get(k, k)} ({fmt(v['n'])}{' studies' if i == 0 else ''}; {fmt(v['pct'], 1)}%)" for i, (k, v) in enumerate(rk)]
+    n["ModalityRanking"] = ", ".join(parts[:-1]) + " and " + parts[-1] if len(parts) > 1 else "".join(parts)
     ml_recent = sum(v for k, v in S["core_ml_by_year"].items() if int(k) >= B["last_year"] - 2)
     n["NMLRecent"] = fmt(ml_recent)
     top_c = list(S["core_countries"].items())[:4]

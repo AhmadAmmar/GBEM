@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.18.1] - 2026-10-14
+
+### Changed
+- `review/s06_tex_outputs.py` writes the macro `\ModalityRanking`: the data modalities of the core set from the most to the least frequent, with counts and shares, so that the sentence in the text follows the data.
+
 ## [0.18.0] - 2026-10-14
 
 ### Added
