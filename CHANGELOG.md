@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.20.0] - 2026-10-14
+
+### Added
+- `review/new_iteration.py` builds a two-column print preview of the manuscript in the journal layout when the manuscript template provides `tools/make_print.py`, and copies it to `PDF/` with the time stamp. The submission manuscript keeps its single-column review format.
+
 ## [0.19.0] - 2026-10-14
 
 ### Changed
