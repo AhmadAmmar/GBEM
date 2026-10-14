@@ -258,14 +258,19 @@ def main():
     write_page(dest, L)
     print(f"Checklist: {len(L)} works from {P['it'].name}; page {dest / 'remaining_to_download.html'}")
     while True:
-        if not a.no_collect:
-            log = collect(P, dest, manifest="if changed", only_new_in_log=True, say=lambda *x: None)
-            n = int((log["action"] == "copied").sum()) if len(log) else 0
-        else:
-            n = 0
-        z = 0 if a.no_zotero else push_to_zotero(dest)
-        c = write_status(dest, status(L, dest))
-        print(f"{datetime.datetime.now():%H:%M:%S}  copied {n} new PDF(s); gave {z} to Zotero; " + ", ".join(f"{LABEL[k].split(':')[0].split(' (')[0]}: {v}" for k, v in c.items()), flush=True)
+        try:
+            if not a.no_collect:
+                log = collect(P, dest, manifest="if changed", only_new_in_log=True, say=lambda *x: None)
+                n = int((log["action"] == "copied").sum()) if len(log) else 0
+            else:
+                n = 0
+            z = 0 if a.no_zotero else push_to_zotero(dest)
+            c = write_status(dest, status(L, dest))
+            print(f"{datetime.datetime.now():%H:%M:%S}  copied {n} new PDF(s); gave {z} to Zotero; " + ", ".join(f"{LABEL[k].split(':')[0].split(' (')[0]}: {v}" for k, v in c.items()), flush=True)
+        except Exception as e:      # in watch mode a failed pass (for example a file renamed by Zotero mid-pass) is retried
+            if not a.watch:
+                raise
+            print(f"{datetime.datetime.now():%H:%M:%S}  pass failed, retried in {a.watch} s: {type(e).__name__}: {str(e)[:160]}", flush=True)
         if not a.watch:
             break
         time.sleep(a.watch)

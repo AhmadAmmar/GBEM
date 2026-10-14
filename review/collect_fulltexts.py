@@ -173,7 +173,10 @@ def collect(P, dest, dry_run=False, manifest="always", only_new_in_log=False, sa
             hit = hit or (by_t.get(r.tn) if len(r.tn) > 25 else None)
             if not hit or hit[0] == "screened, not included":
                 continue
-            h = sha256(r.file)
+            try:
+                h = sha256(r.file)
+            except FileNotFoundError:      # Zotero renamed or moved the file after the database was read; next pass
+                continue
             name = (re.sub(r"[^A-Za-z0-9._-]+", "_", r.d) if r.d else "title_" + re.sub(r"\s+", "_", r.tn)[:80]) + ".pdf"
             row = {"date": today, "doi": r.d, "title": hit[1], "status": hit[0], "zotero_key": r.att_key, "zotero_collections": r.collections,
                    "source_file": str(r.file), "sha256": h}
@@ -183,7 +186,10 @@ def collect(P, dest, dry_run=False, manifest="always", only_new_in_log=False, sa
                 if (dest / name).exists():
                     name = name[:-4] + "__zotero-" + r.att_key + ".pdf"
                 if not dry_run:
-                    shutil.copy2(r.file, dest / name)
+                    try:
+                        shutil.copy2(r.file, dest / name)
+                    except FileNotFoundError:
+                        continue
                 have[h] = name
                 row.update(action="copied" if not dry_run else "would be copied", file=name)
             log.append(row)
