@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.18.0] - 2026-10-14
+
+### Added
+- `review/collect_fulltexts.py` also reads the PDFs in the download folders (`DOWNLOAD_DIRS` in `local_settings.py`): a file whose DOI, or failing that title, belongs to a record of the review is copied to the full-text folder. The originals stay where they are; first-page text is cached.
+- `review/fulltext_status.py` gives Zotero the review PDFs it does not hold yet, through Zotero's own connector service on the local machine (as the browser Connector does): Zotero stores the file, recognises the paper and files it in the collection `fulltext_to_download`. Each file is offered once (`zotero_push_log.csv`); nothing happens when Zotero is not running. `zotero_to_attach.csv` lists PDFs that remain to be attached by hand. Option `--no-zotero` turns this off.
+
 ## [0.17.0] - 2026-10-14
 
 ### Added

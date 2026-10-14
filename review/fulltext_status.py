@@ -5,15 +5,18 @@
 
 The checklist (<Lit>/Review_fulltexts/remaining_to_download.html) lists the candidates for the focused subset that
 the triage rates likely or unclear and that had no PDF when the list was made. Each pass of this script
-  1. copies newly saved, review-relevant Zotero PDFs to <Lit>/Review_fulltexts/ (collect_fulltexts.collect: copy only,
-     manifest and log updated),
+  1. copies newly saved, review-relevant PDFs from Zotero and from the download folders (DOWNLOAD_DIRS) to
+     <Lit>/Review_fulltexts/ (collect_fulltexts.collect: copy only, manifest and log updated),
   2. looks every listed work up in a copy of the Zotero database and in the review folder,
-  3. writes remaining_status.js next to the page. The page reads that file when it is opened and again every
+  3. gives Zotero the review PDFs it does not hold yet (saved by hand or downloaded) through Zotero's own connector
+     service, as the browser Connector does; Zotero recognises each paper and files it in the collection
+     fulltext_to_download (each file once; zotero_push_log.csv). Zotero has to be running.
+  4. writes remaining_status.js next to the page. The page reads that file when it is opened and again every
      30 seconds, so the status of each row (PDF in the review folder; PDF in Zotero; record in Zotero without a PDF;
      not in Zotero) updates without reloading, while this script runs in watch mode.
 A row whose PDF has reached the review folder is ticked automatically. Manual ticks are kept in the browser.
 """
-import argparse, datetime, html, json, pathlib, re, shutil, sqlite3, sys, tempfile, time
+import argparse, datetime, html, json, pathlib, re, shutil, sqlite3, sys, tempfile, time, urllib.request, uuid
 import pandas as pd
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
@@ -84,8 +87,66 @@ def status(L, dest):
         f = f or ft.get(r.tn)
         s = "folder" if f else ("zotero_pdf" if len(z) and z["has_pdf"].any() else ("zotero_record" if len(z) else "missing"))
         out[r.id] = {"status": s, "label": LABEL[s], "file": f or "", "zotero": "; ".join(sorted(set("; ".join(z["collections"]).split("; ")) - {""}))[:120],
-                     "records": int(len(z))}
+                     "records": int(len(z)), "in_zotero_with_pdf": bool(len(z) and z["has_pdf"].any()),
+                     "zotero_keys": "; ".join(z["key"]) if "key" in z else "", "title": r.title, "doi": r.d}
+    # PDFs that reached the review folder outside Zotero (saved by hand): their Zotero records still lack the file
+    todo = [{"title": v["title"], "doi": v["doi"], "pdf": str(dest / v["file"]), "zotero_records": v["zotero_keys"]}
+            for v in out.values() if v["status"] == "folder" and not v["in_zotero_with_pdf"]]
+    pd.DataFrame(todo, columns=["title", "doi", "pdf", "zotero_records"]).to_csv(dest / "zotero_to_attach.csv", index=False, encoding="utf-8-sig")
     return out
+
+
+CONNECTOR = "http://127.0.0.1:23119/connector/"
+
+
+def connector(endpoint, data, headers):
+    req = urllib.request.Request(CONNECTOR + endpoint, data=data, method="POST", headers=headers)
+    with urllib.request.urlopen(req, timeout=180) as r:
+        return r.status, r.read()
+
+
+def push_to_zotero(dest, collection="fulltext_to_download", say=print):
+    """Give Zotero the review PDFs that it does not hold yet (saved by hand or downloaded), through Zotero's own
+    connector service, as the browser Connector does: Zotero stores the file, recognises the paper and files it in the
+    collection. Each file is offered once (zotero_push_log.csv). Nothing happens if Zotero is not running."""
+    zdir = getattr(cfg, "ZOTERO", None)
+    man = dest / "fulltext_manifest.csv"
+    if not zdir or not man.exists():
+        return 0
+    try:
+        urllib.request.urlopen(CONNECTOR + "ping", timeout=5).read()
+    except Exception:
+        say("Zotero is not running: PDFs not offered to Zotero in this pass"); return 0
+    M = read_csv(man).fillna("")
+    M = M[~M["origin"].str.startswith("Zotero attachment") & M["review_status"].ne("not matched to a record of the review")]
+    Z = zotero_items(zdir)
+    in_z = set(Z.loc[Z["has_pdf"], "d"]) - {""}
+    lp = dest / "zotero_push_log.csv"
+    done = set(read_csv(lp)["sha256"]) if lp.exists() else set()
+    todo = M[~M["doi"].map(norm_doi).isin(in_z) & ~M["sha256"].isin(done)]
+    if not len(todo):
+        return 0
+    try:
+        _, b = connector("getSelectedCollection", b"{}", {"Content-Type": "application/json"})
+        target = next((t["id"] for t in json.loads(b).get("targets", []) if t.get("name") == collection), None)
+    except Exception:
+        target = None
+    log = []
+    for r in todo.itertuples():
+        sid = uuid.uuid4().hex
+        meta = {"sessionID": sid, "title": r.title or r.file, "url": ("https://doi.org/" + r.doi) if r.doi else ""}
+        row = {"date": datetime.date.today().isoformat(), "file": r.file, "doi": r.doi, "sha256": r.sha256, "collection": collection if target else "(selected collection)"}
+        try:
+            st, b = connector("saveStandaloneAttachment", (dest / r.file).read_bytes(), {"Content-Type": "application/pdf", "X-Metadata": json.dumps(meta)})
+            if target:
+                connector("updateSession", json.dumps({"sessionID": sid, "target": target}).encode(), {"Content-Type": "application/json"})
+            row["result"] = f"saved in Zotero (HTTP {st})"
+        except Exception as e:
+            row["result"] = "failed: " + str(e)[:80]
+        log.append(row)
+        time.sleep(3)          # Zotero recognises each PDF in turn
+    pd.concat([read_csv(lp), pd.DataFrame(log)] if lp.exists() else [pd.DataFrame(log)], ignore_index=True).to_csv(lp, index=False, encoding="utf-8-sig")
+    return sum(x["result"].startswith("saved") for x in log)
 
 
 def write_status(dest, st):
@@ -159,7 +220,8 @@ function apply() {
     var s = S.rows[tr.id]; if (!s) return;
     tr.className = tr.className.replace(/\\bs-\\S+/g, '').trim() + ' s-' + s.status;
     tr.querySelector('.lab').textContent = s.label;
-    tr.querySelector('.sub').textContent = s.status === 'folder' ? s.file : (s.zotero ? 'Zotero: ' + s.zotero : '');
+    tr.querySelector('.sub').textContent = s.status === 'folder' ? (s.in_zotero_with_pdf ? s.file : s.file + ' (not attached in Zotero yet)')
+                                         : (s.zotero ? 'Zotero: ' + s.zotero : '');
     if (s.status === 'folder') tr.querySelector('input').checked = true;
   });
   var c = S.counts, L = S.labels, el = document.getElementById('summary'); el.textContent = '';
@@ -187,6 +249,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--iteration"); ap.add_argument("--watch", type=int, default=0, help="seconds between passes; 0 = one pass")
     ap.add_argument("--no-collect", action="store_true", help="only report the status, do not copy PDFs")
+    ap.add_argument("--no-zotero", action="store_true", help="do not offer hand-saved PDFs to Zotero")
     a = ap.parse_args()
     its = sorted(p for p in (cfg.REVIEW / "iterations").glob("*_v*") if p.is_dir())
     P = cfg.paths(a.iteration or max(its, key=lambda p: p.stat().st_mtime))
@@ -200,8 +263,9 @@ def main():
             n = int((log["action"] == "copied").sum()) if len(log) else 0
         else:
             n = 0
+        z = 0 if a.no_zotero else push_to_zotero(dest)
         c = write_status(dest, status(L, dest))
-        print(f"{datetime.datetime.now():%H:%M:%S}  copied {n} new PDF(s); " + ", ".join(f"{LABEL[k].split(':')[0].split(' (')[0]}: {v}" for k, v in c.items()), flush=True)
+        print(f"{datetime.datetime.now():%H:%M:%S}  copied {n} new PDF(s); gave {z} to Zotero; " + ", ".join(f"{LABEL[k].split(':')[0].split(' (')[0]}: {v}" for k, v in c.items()), flush=True)
         if not a.watch:
             break
         time.sleep(a.watch)
