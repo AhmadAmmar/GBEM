@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.17.0] - 2026-10-14
+
+### Added
+- `review/fulltext_status.py`: checklist page of the full texts still to retrieve, with a live status for each work (PDF in the review folder; PDF in Zotero; record in Zotero without a PDF; not in Zotero). Each pass collects new Zotero PDFs and writes `remaining_status.js` and `remaining_status.csv`; with `--watch N` it repeats every N seconds and the open page refreshes its status every 30 seconds. Works whose PDF has reached the review folder are ticked automatically.
+
+### Changed
+- `review/collect_fulltexts.py`: the collection step is a function (`collect`) that other tools call; checksums are cached between passes.
+
 ## [0.16.0] - 2026-10-12
 
 ### Added

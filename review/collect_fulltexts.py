@@ -25,12 +25,19 @@ from common import norm_doi, norm_title, read_csv
 KEEP = ("Included (core)", "Review (umbrella)")
 
 
+_SHA = {}
+
+
 def sha256(p):
+    s = pathlib.Path(p).stat(); k = (str(p), s.st_mtime, s.st_size)
+    if k in _SHA:
+        return _SHA[k]
     h = hashlib.sha256()
     with open(p, "rb") as f:
         for b in iter(lambda: f.read(1 << 20), b""):
             h.update(b)
-    return h.hexdigest()
+    _SHA[k] = h.hexdigest()
+    return _SHA[k]
 
 
 def zotero_attachments(zdir):
@@ -90,19 +97,15 @@ def review_status(P):
     return by_d, by_t
 
 
-def main():
-    ap = argparse.ArgumentParser(); ap.add_argument("--iteration"); ap.add_argument("--dry-run", action="store_true")
-    a = ap.parse_args()
-    its = sorted(p for p in (cfg.REVIEW / "iterations").glob("*_v*") if p.is_dir())
-    P = cfg.paths(a.iteration or max(its, key=lambda p: p.stat().st_mtime))
-    dest = cfg.LIT / "Review_fulltexts"; dest.mkdir(parents=True, exist_ok=True)
+def collect(P, dest, dry_run=False, manifest="always", only_new_in_log=False, say=print):
+    """Copy the review-relevant Zotero PDFs to dest and rebuild the manifest; returns the log of this run."""
     by_d, by_t = review_status(P)
     today = datetime.date.today().isoformat()
     log = []
     zdir = getattr(cfg, "ZOTERO", None)
     if zdir and (zdir / "zotero.sqlite").exists():
         att = zotero_attachments(zdir)
-        print(f"Zotero: {len(att)} PDF attachments in {zdir}")
+        say(f"Zotero: {len(att)} PDF attachments in {zdir}")
         have = {}                                              # checksums already in the destination folder
         for f in dest.glob("*.pdf"):
             have.setdefault(sha256(f), f.name)
@@ -120,22 +123,26 @@ def main():
             else:
                 if (dest / name).exists():
                     name = name[:-4] + "__zotero-" + r.att_key + ".pdf"
-                if not a.dry_run:
+                if not dry_run:
                     shutil.copy2(r.file, dest / name)
                 have[h] = name
-                row.update(action="copied" if not a.dry_run else "would be copied", file=name)
+                row.update(action="copied" if not dry_run else "would be copied", file=name)
             log.append(row)
     else:
-        print("Zotero: no data folder configured (ZOTERO_DIR in local_settings.py); only the manifest is rebuilt")
+        say("Zotero: no data folder configured (ZOTERO_DIR in local_settings.py); only the manifest is rebuilt")
     L = pd.DataFrame(log)
     if len(L):
-        print(L["action"].value_counts().to_string()); print(L[L["action"].str.contains("copied")]["status"].value_counts().to_string())
-    if a.dry_run:
-        return
+        say(L["action"].value_counts().to_string()); say(L[L["action"].str.contains("copied")]["status"].value_counts().to_string())
+    if dry_run:
+        return L
     lp = dest / "collect_log.csv"
+    if len(L):
+        L = L[L["action"] == "copied"] if only_new_in_log else L
     if len(L):
         pd.concat([read_csv(lp), L] if lp.exists() else [L], ignore_index=True).to_csv(lp, index=False, encoding="utf-8-sig")
 
+    if manifest == "if changed" and (dest / "fulltext_manifest.csv").exists() and not (len(L) and (L["action"] == "copied").any()):
+        return L
     # ---- manifest of the folder
     dl = read_csv(dest / "download_log.csv") if (dest / "download_log.csv").exists() else pd.DataFrame(columns=["doi", "file", "status", "url"])
     dl = dl[dl["status"] == "saved"].drop_duplicates("file", keep="last").set_index("file")
@@ -161,6 +168,16 @@ def main():
     M.to_csv(dest / "fulltext_manifest.csv", index=False, encoding="utf-8-sig")
     print(f"\nManifest: {len(M)} PDFs in {dest}"); print(M["review_status"].str.replace(r":.*", "", regex=True).value_counts().to_string())
 
+    return L
+
+
+def main():
+    ap = argparse.ArgumentParser(); ap.add_argument("--iteration"); ap.add_argument("--dry-run", action="store_true")
+    a = ap.parse_args()
+    its = sorted(p for p in (cfg.REVIEW / "iterations").glob("*_v*") if p.is_dir())
+    P = cfg.paths(a.iteration or max(its, key=lambda p: p.stat().st_mtime))
+    dest = cfg.LIT / "Review_fulltexts"; dest.mkdir(parents=True, exist_ok=True)
+    collect(P, dest, dry_run=a.dry_run)
 
 if __name__ == "__main__":
     main()
