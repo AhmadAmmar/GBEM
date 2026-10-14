@@ -9,6 +9,7 @@ import collections, itertools, re
 import numpy as np, pandas as pd, networkx as nx
 import matplotlib; matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import matplotlib.ticker
 from common import BLOCKS, CNORM, norm_kw, dump, read_csv
 
 plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 8, "axes.spines.top": False, "axes.spines.right": False})
@@ -133,7 +134,11 @@ def run(cfg, P):
         for a, b in itertools.combinations(l, 2):
             G.add_edge(a, b, weight=G[a][b]["weight"] + 1 if G.has_edge(a, b) else 1)
     G.remove_nodes_from([n for n in list(G) if G.degree(n) == 0])
-    comms = sorted(nx.community.louvain_communities(G, weight="weight", seed=7), key=lambda c: -sum(kwc[k] for k in c))
+    # clusters on association-strength weights (co-occurrences relative to the expected number, as in VOSviewer), so that
+    # very frequent keywords do not pull everything into one or two clusters; raw co-occurrence counts stay on the edges
+    for a, b, d in G.edges(data=True):
+        d["assoc"] = d["weight"] * len(df) / (kwc[a] * kwc[b])
+    comms = sorted(nx.community.louvain_communities(G, weight="assoc", seed=7), key=lambda c: -sum(kwc[k] for k in c))
     cid = {k: i for i, c in enumerate(comms) for k in c}
     S["network"] = {"min_occ": thr, "nodes": G.number_of_nodes(), "edges": G.number_of_edges(), "n_clusters": len(comms),
                     "clusters": [sorted(c, key=lambda k: -kwc[k])[:10] for c in comms]}
@@ -165,31 +170,41 @@ def run(cfg, P):
         c = collections.Counter(k for l in sub["kw"] for k in l)
         ev[f"{a}-{min(b, last_year)}"] = {"n": int(len(sub)), "top": c.most_common(12)}
     S["evolution"] = ev
-    fig, axes = plt.subplots(1, 2, figsize=(7.2, 3.9), dpi=300, gridspec_kw={"width_ratios": [1, 1.25]})
-    ax = axes[0]
+    # (a) on top, (b) across the full width below, so that no keyword is cut off
+    fig = plt.figure(figsize=(7.2, 7.6), dpi=300)
+    gs = fig.add_gridspec(2, 1, height_ratios=[1, 1.15], hspace=0.28)
+    ax = fig.add_subplot(gs[0])
     ax.axhline(tm["density"].median(), color="#999", lw=0.6, ls="--"); ax.axvline(tm["centrality"].median(), color="#999", lw=0.6, ls="--")
-    ax.scatter(tm["centrality"], tm["density"], s=tm["size"] / tm["size"].max() * 900 + 30, color=[COLS[i % 10] for i in range(len(tm))], alpha=0.75)
-    for _, r in tm.iterrows():
-        ax.text(r["centrality"], r["density"], r["label"].replace(", ", "\n"), fontsize=4.6, ha="center", va="center")
+    sizes = tm["size"] / tm["size"].max() * 1400 + 60
+    ax.scatter(tm["centrality"], tm["density"], s=sizes, color=[COLS[i % 10] for i in range(len(tm))], alpha=0.75, zorder=2)
     xr = max(tm["centrality"].max() - tm["centrality"].min(), 1); yr_ = max(tm["density"].max() - tm["density"].min(), 1)
-    ax.set_xlim(tm["centrality"].min() - 0.6 * xr, tm["centrality"].max() + 0.45 * xr)
-    ax.set_ylim(tm["density"].min() - 0.3 * yr_, tm["density"].max() + 0.3 * yr_)
-    ax.set_xlabel("Centrality (external link strength)"); ax.set_ylabel("Density (internal link strength)")
-    for (x, y, t) in [(0.98, 0.98, "Motor themes"), (0.02, 0.98, "Niche themes"), (0.02, 0.02, "Emerging or\ndeclining"), (0.98, 0.02, "Basic themes")]:
-        ax.text(x, y, t, transform=ax.transAxes, ha="right" if x > 0.5 else "left", va="top" if y > 0.5 else "bottom", fontsize=6, color="#555", style="italic")
-    ax.set_title("(a) Thematic map (clusters of Fig. 6)", fontsize=7, loc="left")
-    ax = axes[1]; ax.axis("off"); ax.set_title("(b) Most frequent author keywords by period", fontsize=7, loc="left", pad=22)
+    for i, r in tm.reset_index(drop=True).iterrows():
+        # labels beside the bubbles, with a white background, so that they never sit on top of each other
+        ax.annotate(r["label"].replace(", ", "\n"), (r["centrality"], r["density"]), xytext=(18, 0), textcoords="offset points",
+                    fontsize=6, ha="left", va="center", zorder=3, bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="#bbb", lw=0.4))
+    ax.set_xlim(tm["centrality"].min() - 0.45 * xr, tm["centrality"].max() + 0.75 * xr)
+    ax.set_ylim(tm["density"].min() - 0.35 * yr_, tm["density"].max() + 0.35 * yr_)
+    ax.ticklabel_format(axis="both", style="plain", useOffset=False)
+    ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:,.0f}"))
+    ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:,.0f}"))
+    ax.tick_params(labelsize=6.5)
+    ax.set_xlabel("Centrality (external link strength)", fontsize=7); ax.set_ylabel("Density (internal link strength)", fontsize=7)
+    for (x, y, tx) in [(0.98, 0.98, "Motor themes"), (0.02, 0.98, "Niche themes"), (0.02, 0.02, "Emerging or declining"), (0.98, 0.02, "Basic themes")]:
+        ax.text(x, y, tx, transform=ax.transAxes, ha="right" if x > 0.5 else "left", va="top" if y > 0.5 else "bottom", fontsize=6, color="#555", style="italic")
+    ax.set_title("(a) Thematic map of the keyword clusters (Fig. 5)", fontsize=7.5, loc="left")
+    ax = fig.add_subplot(gs[1]); ax.axis("off"); ax.set_xlim(0, 1); ax.set_ylim(0, 1)
+    ax.set_title("(b) Most frequent author keywords by period", fontsize=7.5, loc="left")
     allk = {}
     for j, (per, d) in enumerate(ev.items()):
-        ax.text(j / 3 + 0.02, 0.97, f"{per}\n(n = {d['n']:,})", fontsize=6.3, weight="bold", va="top")
+        ax.text(j / 3 + 0.01, 0.99, f"{per}\n(n = {d['n']:,})", fontsize=6.6, weight="bold", va="top")
         for i, (k, v) in enumerate(d["top"][:12]):
-            y = 0.86 - i * 0.07; allk.setdefault(k, []).append((j, y))
-            ax.text(j / 3 + 0.02, y, f"{k} ({v})", fontsize=5.2, va="center")
+            y = 0.86 - i * 0.072; allk.setdefault(k, []).append((j, y))
+            ax.text(j / 3 + 0.01, y, f"{k} ({v})", fontsize=5.8, va="center")
     for k, pts in allk.items():
         for (j1, y1), (j2, y2) in zip(pts, pts[1:]):
             if j2 == j1 + 1:
-                ax.plot([j1 / 3 + 0.30, j2 / 3 + 0.015], [y1, y2], color="#9aa", lw=0.5)
-    fig.tight_layout(); fig.savefig(P["fig"] / "fig08_thematic.png"); plt.close(fig)
+                ax.plot([j1 / 3 + 0.285, j2 / 3 + 0.005], [y1, y2], color="#9aa", lw=0.5)
+    fig.savefig(P["fig"] / "fig08_thematic.png", bbox_inches="tight"); plt.close(fig)
 
     # ---------- map of core study areas
     # all included studies (database and other methods), as in the synthesis

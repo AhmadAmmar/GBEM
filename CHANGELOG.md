@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.19.0] - 2026-10-14
+
+### Changed
+- Keyword clusters are formed on association-strength weights (co-occurrences relative to the number expected from the two keyword frequencies, as in VOSviewer). With raw counts the network split into two clusters whose centralities are equal by construction, which made the thematic map uninformative.
+- Thematic-map figure: panel (b) below panel (a) at full width, so that no keyword is cut off; cluster labels beside the bubbles; plain axis numbers without an offset.
+
 ## [0.18.1] - 2026-10-14
 
 ### Changed
