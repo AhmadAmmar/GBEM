@@ -25,6 +25,8 @@ LIT = _setting("LIT_DIR", PHD / "Lit")
 REVIEW = _setting("REVIEW_DIR", PHD / "Manuscripts" / "01_Review")
 TEMPLATE = _setting("TEMPLATE_DIR", REVIEW / "pipeline" / "template")   # manuscript template (kept private until publication)
 ZOTERO = _setting("ZOTERO_DIR", None)   # Zotero data folder (contains zotero.sqlite and storage/); optional, read by collect_fulltexts.py
+# folders where PDFs saved by hand from the browser end up (for example the Downloads folder); scanned, never changed
+DOWNLOAD_DIRS = [pathlib.Path(p) for p in (getattr(_ls, "DOWNLOAD_DIRS", []) if _ls else [])]
 
 # ---------------------------------------------------------------------------
 # Search metadata (PRISMA-S). Update after running the queries.

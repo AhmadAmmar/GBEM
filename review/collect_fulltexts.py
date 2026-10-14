@@ -6,7 +6,10 @@
    storage/<8-character key>/<file>.pdf and links it to its bibliographic record in zotero.sqlite. A copy of the
    database is read (the live file is never opened), every PDF attachment is matched to the records of the review
    by DOI, or by title where there is no DOI, and the matching PDFs are copied to <Lit>/Review_fulltexts/.
-2. Manifest. <Lit>/Review_fulltexts/fulltext_manifest.csv lists every PDF in that folder with its DOI, its status
+2. Download folders. PDFs saved by hand from a browser (DOWNLOAD_DIRS in local_settings.py, for example the
+   Downloads folder) are read on their first pages; a file whose DOI, or failing that title, belongs to a record
+   of the review is copied in the same way. The files in the download folders are left where they are.
+3. Manifest. <Lit>/Review_fulltexts/fulltext_manifest.csv lists every PDF in that folder with its DOI, its status
    in the review, its origin (open-access download, Zotero attachment, or placed by hand), its SHA-256 and the
    date it was first recorded. Each run adds to <Lit>/Review_fulltexts/collect_log.csv.
 
@@ -15,7 +18,7 @@ different file already has the target name, the new copy gets the Zotero key app
 Only works that the review screened as included, as a review article, or as a candidate are collected; the rest of
 the Zotero library is left alone.
 """
-import argparse, datetime, hashlib, pathlib, re, shutil, sqlite3, sys, tempfile
+import argparse, datetime, hashlib, json, pathlib, re, shutil, sqlite3, sys, tempfile
 import pandas as pd
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
@@ -97,18 +100,74 @@ def review_status(P):
     return by_d, by_t
 
 
+def pdf_head(f, cache):
+    """DOI and normalised text of the first two pages of a PDF (cached by path, time and size)."""
+    from s04_fulltext import pdf_text
+    s = f.stat(); k = f"{f}|{s.st_mtime}|{s.st_size}"
+    if k not in cache:
+        t = pdf_text(f, 1, 2)
+        m = re.search(r"10\.\d{4,9}/[^\s\"<>]+", t)
+        cache[k] = {"doi": norm_doi(m.group(0).rstrip(".,;)")) if m else "", "head": norm_title(t[:8000])}
+    return cache[k]
+
+
+def from_download_dirs(dest, by_d, by_t, have, today, dry_run, say):
+    """Copy review PDFs saved by hand in the download folders; the originals stay where they are."""
+    dirs = [d for d in getattr(cfg, "DOWNLOAD_DIRS", []) if d.exists()]
+    if not dirs:
+        return []
+    cp = dest / ".pdf_head_cache.json"
+    try:
+        cache = json.loads(cp.read_text(encoding="utf-8")) if cp.exists() else {}
+    except Exception:
+        cache = {}
+    titles = [(tn, v) for tn, v in by_t.items() if len(tn) > 30 and v[0] != "screened, not included"]
+    log = []
+    for d in dirs:
+        for f in sorted({x for x in d.iterdir() if x.is_file() and x.suffix.lower() == ".pdf"}):
+            try:
+                h0 = pdf_head(f, cache)
+            except Exception:
+                continue
+            hit, doi = (by_d.get(h0["doi"]), h0["doi"]) if h0["doi"] else (None, "")
+            if not hit or hit[0] == "screened, not included":
+                hit = next((v for tn, v in titles if tn in h0["head"]), None)
+                doi = next((k for k, v in by_d.items() if v is hit), doi) if hit else doi
+            if not hit or hit[0] == "screened, not included":
+                continue
+            h = sha256(f)
+            row = {"date": today, "doi": doi, "title": hit[1], "status": hit[0], "zotero_key": "", "zotero_collections": "", "source_file": str(f), "sha256": h}
+            if h in have:
+                row.update(action="already in the folder (same content)", file=have[h])
+            else:
+                name = (re.sub(r"[^A-Za-z0-9._-]+", "_", doi) if doi else "title_" + re.sub(r"\s+", "_", norm_title(hit[1]))[:80]) + ".pdf"
+                if (dest / name).exists():
+                    name = name[:-4] + "__download-" + h[:8] + ".pdf"
+                if not dry_run:
+                    shutil.copy2(f, dest / name)
+                have[h] = name
+                row.update(action="copied" if not dry_run else "would be copied", file=name)
+            log.append(row)
+    try:
+        cp.write_text(json.dumps(cache), encoding="utf-8")
+    except Exception:
+        pass
+    say(f"Download folders: {len(log)} review PDFs found in {', '.join(map(str, dirs))}")
+    return log
+
+
 def collect(P, dest, dry_run=False, manifest="always", only_new_in_log=False, say=print):
     """Copy the review-relevant Zotero PDFs to dest and rebuild the manifest; returns the log of this run."""
     by_d, by_t = review_status(P)
     today = datetime.date.today().isoformat()
     log = []
+    have = {}                                                  # checksums already in the destination folder
+    for f in dest.glob("*.pdf"):
+        have.setdefault(sha256(f), f.name)
     zdir = getattr(cfg, "ZOTERO", None)
     if zdir and (zdir / "zotero.sqlite").exists():
         att = zotero_attachments(zdir)
         say(f"Zotero: {len(att)} PDF attachments in {zdir}")
-        have = {}                                              # checksums already in the destination folder
-        for f in dest.glob("*.pdf"):
-            have.setdefault(sha256(f), f.name)
         for r in att.itertuples():
             hit = by_d.get(r.d) if r.d else None
             hit = hit or (by_t.get(r.tn) if len(r.tn) > 25 else None)
@@ -129,7 +188,8 @@ def collect(P, dest, dry_run=False, manifest="always", only_new_in_log=False, sa
                 row.update(action="copied" if not dry_run else "would be copied", file=name)
             log.append(row)
     else:
-        say("Zotero: no data folder configured (ZOTERO_DIR in local_settings.py); only the manifest is rebuilt")
+        say("Zotero: no data folder configured (ZOTERO_DIR in local_settings.py)")
+    log += from_download_dirs(dest, by_d, by_t, have, today, dry_run, say)
     L = pd.DataFrame(log)
     if len(L):
         say(L["action"].value_counts().to_string()); say(L[L["action"].str.contains("copied")]["status"].value_counts().to_string())
@@ -155,7 +215,9 @@ def collect(P, dest, dry_run=False, manifest="always", only_new_in_log=False, sa
             d, origin = norm_doi(dl.at[f.name, "doi"]), "open-access download: " + str(dl.at[f.name, "url"])
         elif len(cl) and f.name in cl.index:
             d = norm_doi(cl.at[f.name, "doi"]) if isinstance(cl.at[f.name, "doi"], str) else ""
-            origin = f"Zotero attachment {cl.at[f.name, 'zotero_key']} ({cl.at[f.name, 'source_file']})"
+            zk = cl.at[f.name, "zotero_key"]
+            origin = (f"Zotero attachment {zk} ({cl.at[f.name, 'source_file']})" if isinstance(zk, str) and zk
+                      else f"saved by hand, copied from {cl.at[f.name, 'source_file']}")
         else:
             m = re.search(r"10\.\d{4,9}/[^\s\"<>]+", pdf_text(f, 1, 2)); d = norm_doi(m.group(0).rstrip(".,;)")) if m else ""
             origin = "placed in the folder by hand"
@@ -166,7 +228,7 @@ def collect(P, dest, dry_run=False, manifest="always", only_new_in_log=False, sa
                      "first_recorded": old.at[f.name, "first_recorded"] if len(old) and f.name in old.index else today})
     M = pd.DataFrame(rows)
     M.to_csv(dest / "fulltext_manifest.csv", index=False, encoding="utf-8-sig")
-    print(f"\nManifest: {len(M)} PDFs in {dest}"); print(M["review_status"].str.replace(r":.*", "", regex=True).value_counts().to_string())
+    say(f"\nManifest: {len(M)} PDFs in {dest}"); say(M["review_status"].str.replace(r":.*", "", regex=True).value_counts().to_string())
 
     return L
 

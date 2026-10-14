@@ -8,5 +8,6 @@ Environment variables GBEM_PROJECT_ROOT, GBEM_LIT_DIR, GBEM_REVIEW_DIR, GBEM_TEM
 # REVIEW_DIR = r"D:\path\to\project\Manuscripts\01_Review"   # iterations/ are created here
 # TEMPLATE_DIR = r"D:\path\to\project\Manuscripts\01_Review\pipeline\template"   # LaTeX manuscript template
 # ZOTERO_DIR = r"D:\path\to\Zotero"                 # Zotero data folder (zotero.sqlite, storage/); used by collect_fulltexts.py
+# DOWNLOAD_DIRS = [r"C:\Users\you\Downloads"]       # folders where PDFs saved from the browser end up; used by collect_fulltexts.py
 # ELSEVIER_API_KEY = "..."                            # optional: key from dev.elsevier.com for fetch_open_access.py (never commit a key)
 # ELSEVIER_INSTTOKEN = "..."                          # optional: institutional token from the library, for use off campus
