@@ -102,6 +102,13 @@ def build(new, version, stamp):
                              (new / "build" / f"{job}_Tables.pdf", cfg.PHD / "PDF" / f"{stamp}_Review_Paper_v{version}_Tables.pdf")):
                 if src.exists():
                     shutil.copy(src, dst)
+        # two-column print preview in the journal layout, if the template provides the tool
+        mp = new / "latex" / "tools" / "make_print.py"
+        if mp.exists():
+            subprocess.run([sys.executable, str(mp), version], cwd=new / "latex")
+            pp = new / "build" / f"{job}_Print.pdf"
+            if pp.exists():
+                shutil.copy(pp, cfg.PHD / "PDF" / f"{stamp}_Review_Paper_v{version}_Print.pdf")
         # every figure with its caption in one PDF, if the template provides the tool
         mf = new / "latex" / "tools" / "make_figures.py"
         if mf.exists():
