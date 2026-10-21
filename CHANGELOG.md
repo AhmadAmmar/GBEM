@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.26.0] - 2026-10-21
+
+### Added
+- `qgis/s1_maps.py` (PyQGIS, run inside QGIS 4): derives four Sentinel-1 bands in dB from the Earth Engine composite:
+  VV, VH, the VV−VH polarisation ratio (same definition as the earlier `s1_VV_minus_VH_dB`) and the total power
+  (span). It styles them as a layer group: a false-colour composite (R VV, G VH, B VV−VH); VV and VH in grey; the
+  ratio in viridis; the span in magma, each stretched between the 2nd and 98th percentiles. Observation count and
+  incidence angle are added for quality checks. Each style is saved as QML. The script exports A4 maps (PNG, 200 dpi) of
+  Greater London and of central London.
+- Not derived, with the reason recorded in the script: VH−VV, VV/VH, the normalised difference and the dual-polarisation
+  RVI. In the earlier Belfast samples, all four have a rank correlation of ±1.000 with VV−VH, so they add no information.
+  VV+VH taken on dB values has no physical meaning.
+
 ## [0.25.1] - 2026-10-21
 
 ### Added
