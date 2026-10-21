@@ -2,6 +2,24 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.25.0] - 2026-10-21
+
+### Added
+- `gee/gbem_composites.js` (version 2.0.0): Earth Engine composites for Greater London and Greater Belfast. It exports
+  multi-band GeoTIFFs to Drive, one per area, product and year, with the time windows (annual, summer, winter, and the
+  2022 heatwave and cold-spell events) as bands. The products are:
+  - Sentinel-2 L2A with Cloud Score+;
+  - Sentinel-1 VV/VH;
+  - Landsat 8/9 and MODIS land surface temperature;
+  - ERA5-Land climate with heating and cooling degree days;
+  - VIIRS night lights;
+  - WorldCover, Copernicus DEM and GHSL building height and volume.
+
+  The extents are in the national grids, snapped to 3 km so that all resolutions nest. The script has a dry-run plan
+  with size estimates and a provenance table of input scenes. Indices and the per-building extraction move to local
+  processing.
+- `gee/extents.py` (export extents from the local boundaries) and `gee/README.md`.
+
 ## [0.24.0] - 2026-10-21
 
 ### Added
