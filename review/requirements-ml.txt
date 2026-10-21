@@ -1,0 +1,8 @@
+# Packages for stages 10 (OCR, sentence embeddings) and 11 (language-model extraction).
+# Kept in a separate environment from the main pipeline, for example:
+#   conda create -n review-ml python=3.11 pandas openpyxl poppler -c conda-forge
+#   conda activate review-ml && pip install -r requirements-ml.txt
+torch                      # CPU build is enough: pip install torch --index-url https://download.pytorch.org/whl/cpu
+sentence-transformers
+rapidocr-onnxruntime
+anthropic

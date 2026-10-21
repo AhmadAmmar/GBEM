@@ -65,6 +65,20 @@ def main():
     build(new, a.version, stamp)
 
 
+def track_changes_on(src, dst):
+    """Copy of a Word file with Track Changes switched on."""
+    import zipfile
+    with zipfile.ZipFile(src) as zi, zipfile.ZipFile(dst, "w", zipfile.ZIP_DEFLATED) as zo:
+        for item in zi.infolist():
+            data = zi.read(item.filename)
+            if item.filename == "word/settings.xml":
+                s = data.decode("utf-8")
+                if "<w:trackRevisions" not in s:
+                    s = re.sub(r"(<w:settings[^>]*>)", r"\1<w:trackRevisions/>", s, count=1)
+                data = s.encode("utf-8")
+            zo.writestr(item, data)
+
+
 def build(new, version, stamp):
     job = f"Review_v{version}"
     subprocess.run(["latexmk", "-pdf", f"-jobname={job}", "-interaction=nonstopmode", "main.tex"], cwd=new / "latex")
@@ -103,6 +117,10 @@ def build(new, version, stamp):
         tmp.unlink()
     if docx.exists():
         shutil.copy(docx, cfg.PHD / "DOC" / f"{stamp}_Review_Paper_v{version}.docx")
+        # copy for the supervisors with Track Changes switched on, so that every edit is recorded
+        review = new / "build" / f"{job}_for_review.docx"
+        track_changes_on(docx, review)
+        shutil.copy(review, cfg.PHD / "DOC" / f"{stamp}_Review_Paper_v{version}_for_review.docx")
         # every table as printed: one CSV per table, a workbook and a PDF, if the template provides the tool
         mt = new / "latex" / "tools" / "make_tables.py"
         if mt.exists():
