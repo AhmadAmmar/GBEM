@@ -1,6 +1,6 @@
 /*******************************************************************************
  GBEM - Earth Engine composites for Greater London and Greater Belfast
- Version 2.2.0 (21 October 2026)          https://github.com/AhmadAmmar/GBEM
+ Version 2.2.1 (21 October 2026)          https://github.com/AhmadAmmar/GBEM
 
  Purpose
    Builds the image composites that need the full satellite archives (cloud masking, temporal reduction) and exports
@@ -53,7 +53,9 @@ var BATCHES = {
   b2: {years: [2020, 2021], products: YEARLY, folder: 'GBEM_GEE_v2_b2'},
   b3: {years: [2022, 2023], products: YEARLY, folder: 'GBEM_GEE_v2_b3'},             // 2022 includes the event windows
   b4: {years: [2025], products: YEARLY, folder: 'GBEM_GEE_v2_b4'},
-  b5: {years: [], products: ['landsat_multi', 'modis_multi'], folder: 'GBEM_GEE_v2_b5'}     // multi-year thermal, 2020-2025
+  b5: {years: [], products: ['landsat_multi', 'modis_multi'], folder: 'GBEM_GEE_v2_b5'},
+  // rerun of the one failed b3 export (Belfast Landsat 2022: no scene in the cold-spell window; fixed in 2.2.1)
+  b3fix: {years: [2022], products: ['landsat'], folder: 'GBEM_GEE_v2_b3', areas: ['belfast']}     // multi-year thermal, 2020-2025
 };
 var BATCH = 'b2';                       // choose the batch to run
 
@@ -61,7 +63,7 @@ var CONFIG = {
   version: 'v2_0_1',                    // method version: change only when a composite is defined differently
   driveFolder: BATCHES[BATCH].folder,
   dryRun: true,                         // true: plan and preview only; false: create the export tasks
-  areas: ['london', 'belfast'],
+  areas: BATCHES[BATCH].areas || ['london', 'belfast'],
   years: BATCHES[BATCH].years,
   products: BATCHES[BATCH].products,
   windows: {                            // time windows exported per product (bands of the same image)
@@ -191,6 +193,13 @@ function landsatLST(img) {
     .rename('LST').updateMask(clear).copyProperties(img, ['system:time_start']);
 }
 
+// A window without any scene (e.g. no Landsat scene over Belfast in the December 2022 cold spell) would give a
+// composite without bands, and the export would fail. One fully masked image is added to every thermal collection,
+// so an empty window exports as a missing band with a count of 0; windows with scenes are unchanged.
+function padded(col, band) {
+  return col.merge(ee.ImageCollection([ee.Image.constant(0).float().rename(band).updateMask(ee.Image.constant(0))]));
+}
+
 function landsat(area, year) {
   var region = rect(area, 'context'), bands = [];
   windowsFor('landsat', year).forEach(function (win) {
@@ -198,7 +207,8 @@ function landsat(area, year) {
     var col = ee.ImageCollection('LANDSAT/LC08/C02/T1_L2')
       .merge(ee.ImageCollection('LANDSAT/LC09/C02/T1_L2'))
       .filterBounds(region).filterDate(d[0], d[1]).map(landsatLST);
-    provenance(area, 'landsat', year, win, col, d);
+    provenance(area, 'landsat', year, win, col, d);           // counts the real scenes, before padding
+    col = padded(col, 'LST');
     bands.push(suffix(col.median().multiply(SCALE.degC).addBands(col.count().rename('n')), win));
   });
   return {img: ee.Image.cat(bands), nBands: bands.length * 2};
@@ -207,11 +217,11 @@ function landsat(area, year) {
 function modisLST(id, prefix, d, region, preset) {
   var col = preset || ee.ImageCollection(id).filterBounds(region).filterDate(d[0], d[1]);
   var q = function (band, qc) {
-    return col.map(function (img) {
+    return padded(col.map(function (img) {
       var flags = img.select(qc);
       var good = flags.bitwiseAnd(3).lte(1).and(flags.rightShift(6).bitwiseAnd(3).lte(1));   // produced; error <= 2 K
       return img.select(band).multiply(0.02).subtract(273.15).updateMask(good);
-    });
+    }), band);
   };
   var day = q('LST_Day_1km', 'QC_Day'), night = q('LST_Night_1km', 'QC_Night');
   return {col: col, img: day.median().multiply(SCALE.degC).rename(prefix + '_day')
@@ -312,6 +322,7 @@ function landsatMulti(area) {
   Object.keys(SEASONS).forEach(function (s) {
     var col = seasonal(all, s);
     provenance(area, 'landsat_multi', MULTI_YEARS.join('-'), s, col, d);
+    col = padded(col, 'LST');
     bands.push(suffix(col.median().multiply(SCALE.degC).addBands(col.count().rename('n')), s));
   });
   return {img: ee.Image.cat(bands), nBands: bands.length * 2};
