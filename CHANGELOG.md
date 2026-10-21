@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.22.0] - 2026-10-21
+
+### Added
+- Full-text extraction as pipeline stage `review/s09_fulltext_extract.py`: reads every PDF of the review page by page and extracts study area, named datasets, sample sizes, target and classes, methods and interpretability, validation design and split ratios, metric values, code and data availability, and uncertainty, each with the page and sentence it came from. Sentences that cite other work are not used for validation, metrics or sample size. Outputs: `fulltext_extraction_auto.csv`, `fulltext_evidence.csv`, `focused_prefill.xlsx` (reviewer's values next to the suggestions) and `stats_fulltext_extract.json`, which reports agreement with the reviewer's extraction. The extraction sheet is never changed by this stage.
+
 ## [0.21.0] - 2026-10-21
 
 ### Added
