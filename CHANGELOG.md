@@ -2,6 +2,23 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.30.0] - 2026-10-21
+
+### Added
+- `gee/stability.py`: year-to-year stability of each feature on the same certificates (Spearman correlation per
+  pair of years).
+- Batch b2 (2020–2021) ingested: 24 files, all checks passed. Preprocessed and extracted for the 2024 certificate set.
+
+### Findings (2024 certificates, imagery of 2020, 2021 and 2024)
+- Stable features (worst pair ρ ≥ 0.82): night lights, heating degree days, Sentinel-1 VV and VV−VH, NDVI, NDBI,
+  SWIR reflectance.
+- Unstable features (ρ 0.07–0.31): Landsat and MODIS land surface temperature and the surface urban heat island.
+  Subtracting the rural reference removes the shift in level between years, but not the change in pattern. A
+  single-year thermal composite mostly reflects that year's few clear days. A multi-year thermal composite is
+  proposed.
+- Absolute Landsat temperatures depend on the clear days of the year: the rural summer median in Belfast is
+  20.7 °C in 2020 and 31.1 °C in 2021.
+
 ## [0.29.0] - 2026-10-21
 
 ### Added
