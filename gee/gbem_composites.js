@@ -1,6 +1,6 @@
 /*******************************************************************************
  GBEM - Earth Engine composites for Greater London and Greater Belfast
- Version 2.0.1 (21 October 2026)          https://github.com/AhmadAmmar/GBEM
+ Version 2.1.0 (21 October 2026)          https://github.com/AhmadAmmar/GBEM
 
  Purpose
    Builds the image composites that need the full satellite archives (cloud masking, temporal reduction) and exports
@@ -38,18 +38,30 @@
  How to run
    1. Paste into the Earth Engine Code Editor and press Run with CONFIG.dryRun = true: the console lists the planned
       exports with an upper bound of their size, and preview layers are added to the map.
-   2. Set CONFIG.dryRun = false, choose the batch in CONFIG.areas / CONFIG.years / CONFIG.products, press Run, and
+   2. Choose the batch (BATCH = b1 ... b4, see BATCHES), set CONFIG.dryRun = false, press Run, and
       start the tasks in the Tasks tab. Exports go to the Drive folder CONFIG.driveFolder.
    3. A provenance table (number of input scenes per composite and window) is exported with each batch.
 *******************************************************************************/
 
+// Export batches. Each batch goes to its own Drive folder, so it can be downloaded and cleared before the next one;
+// at most about 2.5 GB per year before compression. The method version (CONFIG.version, part of every file name) is
+// the same for all batches, so the years can be combined.
+var YEARLY = ['s2', 's1', 'landsat', 'modis', 'era5', 'viirs'];
+var BATCHES = {
+  b1: {years: [2024], products: ['static'].concat(YEARLY), folder: 'GBEM_GEE_v2'},    // exported 21 Oct 2026
+  b2: {years: [2020, 2021], products: YEARLY, folder: 'GBEM_GEE_v2_b2'},
+  b3: {years: [2022, 2023], products: YEARLY, folder: 'GBEM_GEE_v2_b3'},             // 2022 includes the event windows
+  b4: {years: [2025], products: YEARLY, folder: 'GBEM_GEE_v2_b4'}
+};
+var BATCH = 'b2';                       // choose the batch to run
+
 var CONFIG = {
-  version: 'v2_0_1',
-  driveFolder: 'GBEM_GEE_v2',
+  version: 'v2_0_1',                    // method version: change only when a composite is defined differently
+  driveFolder: BATCHES[BATCH].folder,
   dryRun: true,                         // true: plan and preview only; false: create the export tasks
   areas: ['london', 'belfast'],
-  years: [2024],                        // first batch reproduces the 2024 samples; then e.g. [2018, ..., 2025]
-  products: ['static', 's2', 's1', 'landsat', 'modis', 'era5', 'viirs'],
+  years: BATCHES[BATCH].years,
+  products: BATCHES[BATCH].products,
   windows: {                            // time windows exported per product (bands of the same image)
     s2: ['annual', 'summer'],
     s1: ['annual'],
