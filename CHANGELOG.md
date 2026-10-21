@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.29.0] - 2026-10-21
+
+### Added
+- `viz/meeting_pack_gee.py`: builds a meeting pack from the outputs of the `gee/` pipeline, in
+  `Outputs/<date>_GEE_data_v2/`. It contains:
+  - map panels per area;
+  - a chart of agreement with the earlier 2024 samples;
+  - a chart of feature coverage;
+  - the Sentinel-1 maps;
+  - a one-page `dashboard.html` with the headline numbers and tables.
+
 ## [0.28.0] - 2026-10-21
 
 ### Added
