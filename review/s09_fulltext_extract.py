@@ -129,15 +129,87 @@ def extract(pdf):
                 if re.search(r"\b" + re.escape(c) + r"\b", s): hit("country", CNORM.get(c, c), pno, s)
             for city, c in CITY2C.items():
                 if city in low: hit("place", city.title(), pno, s)
+    ev += table_metrics(pdf)
     return len(pages_of(text)), ev
+
+
+HEADER = (r"macro[- ]?(?:averaged )?f1(?:[- ]score)?|weighted[- ]?f1|micro[- ]?f1|f1[- ]?score|\bf1\b|balanced accuracy|overall accuracy|"
+          r"\baccuracy\b|\bacc\.?(?=\s|$)|\bprecision\b|\bprec\.?(?=\s|$)|\brecall\b|\brec\.?(?=\s|$)|\bkappa\b|\bauc\b|\br2\b|r²|r-squared|"
+          r"\bmae\b|\brmse\b|\bmape\b|\boa\b")
+NUMBER = r"^[-+]?\d+(?:\.\d+)?\s?%?"
+
+
+def table_metrics(pdf):
+    """Metric values read from the results tables of a PDF.
+
+    The PDF is converted with its column layout kept (pdftotext -layout). A line that names at least two metrics is
+    taken as a table header; in the lines below it, each number is assigned to the header column whose position is
+    closest, and the text at the start of the line is taken as the row label (model or configuration). Reading stops
+    at the next caption, the next header or after three lines without numbers. Values given as mean ± deviation keep
+    the mean. Values are percentages when the header, the caption or the value itself says so.
+    """
+    import subprocess, shutil
+    exe = shutil.which("pdftotext")
+    if not exe:
+        return []
+    try:
+        text = subprocess.run([exe, "-q", "-layout", "-enc", "UTF-8", str(pdf), "-"], capture_output=True, timeout=180).stdout.decode("utf-8", "ignore")
+    except Exception:
+        return []
+    out = []
+    for pno, page in enumerate(text.split("\f"), 1):
+        if re.search(r"^\s*(References|REFERENCES|Bibliography)\s*$", page, flags=re.M) and pno > 2 and not re.search(HEADER, page.lower()):
+            continue
+        lines = page.split("\n")
+        i = 0
+        while i < len(lines):
+            low = lines[i].lower()
+            heads = [(m.start(), m.end(), canon_metric(m.group(0).rstrip("."))) for m in re.finditer(HEADER, low)]
+            cells = [c.strip() for c in re.split(r"\s{2,}", low.strip()) if c.strip()]
+            # a header is a line of separate cells, at least two of which are metric names (not a sentence naming two metrics)
+            if len({h[2] for h in heads}) < 2 or sum(bool(re.fullmatch(r"(?:" + HEADER + r")\s?(?:\(%\)|\[%\]|%)?", c)) for c in cells) < 2:
+                i += 1; continue
+            above = " ".join(lines[max(0, i - 8):i])
+            cap = re.search(r"(Table\s+[A-Z]?\.?\d+[^\n]{0,160})", above)
+            pct_hint = "%" in low or "%" in above
+            j, empty, rows = i + 1, 0, 0
+            while j < len(lines) and empty < 3:
+                ln = lines[j]
+                if re.search(r"^\s*(Table|Fig\.?|Figure)\s+[A-Z]?\.?\d", ln) or len({canon_metric(m.group(0)) for m in re.finditer(HEADER, ln.lower())}) >= 2:
+                    break
+                # mean ± deviation: keep the mean; the deviation is blanked, not removed, so that columns stay aligned
+                ln = re.sub(r"\s*(?:±|±|�|\+/-)\s*\d+(?:\.\d+)?%?", lambda m: " " * len(m.group(0)), ln)
+                toks = [(m.start(), m.group(0).strip()) for m in re.finditer(r"\S+(?: \S+)*", ln)]
+                nums = [(s, re.match(NUMBER, tk).group(0).replace(" ", "")) for s, tk in toks if re.match(NUMBER, tk)]
+                label = " ".join(tk for s, tk in toks if not re.match(NUMBER, tk) and s < (nums[0][0] if nums else 10 ** 6))[:60]
+                if not nums:
+                    empty += 1 if not ln.strip() or rows else 1; j += 1; continue
+                empty = 0; rows += 1
+                for s, v in nums:
+                    h = min(heads, key=lambda hh: abs(s - hh[0]))
+                    if abs(s - h[0]) > 30:
+                        continue
+                    x = float(v.rstrip("%"))
+                    pct = v.endswith("%") or (pct_hint and x > 1.5) or x > 1.5
+                    if h[2] in ("MAE", "RMSE", "MAPE"):
+                        val = v
+                    else:
+                        val = (f"{x}%" if pct else f"{x}")
+                    out.append({"field": "table_metric", "value": f"{h[2]}={val}", "page": pno,
+                                "sentence": f"{cap.group(1).strip() if cap else 'Table (no caption found)'} | row: {label or '(unlabelled)'} | column: {h[2]}"})
+                j += 1
+            i = j
+    return out
 
 
 def canon_metric(m):
     m = m.lower()
     if "f1" in m:
         return "Macro-F1" if "macro" in m else ("Weighted F1" if "weighted" in m else ("Micro-F1" if "micro" in m else "F1"))
-    return {"balanced accuracy": "Balanced accuracy", "overall accuracy": "Accuracy", "accuracy": "Accuracy", "precision": "Precision",
-            "recall": "Recall", "auc": "AUC", "mae": "MAE", "rmse": "RMSE", "mape": "MAPE"}.get(m, "Kappa" if "kappa" in m else ("R2" if m.startswith(("r", "coef")) else m))
+    m = m.strip().rstrip(".")
+    return {"balanced accuracy": "Balanced accuracy", "overall accuracy": "Accuracy", "accuracy": "Accuracy", "acc": "Accuracy", "oa": "Accuracy",
+            "precision": "Precision", "prec": "Precision", "recall": "Recall", "rec": "Recall", "auc": "AUC", "mae": "MAE", "rmse": "RMSE",
+            "mape": "MAPE"}.get(m, "Kappa" if "kappa" in m else ("R2" if m.startswith(("r2", "r²", "r-squared", "r^2", "coef")) else m))
 
 
 def summarise(ev):
@@ -153,7 +225,9 @@ def summarise(ev):
     mets = E[E["field"] == "metric"]["value"]
     return {"countries": top("country", 4), "places": top("place", 5), "data": top("data", 10), "methods": top("method", 8),
             "interpretability": top("interpretability", 4), "validation_suggested": val, "validation_found": top("validation", 6),
-            "metrics": "; ".join(mets.value_counts().head(12).index), "sample_mentions": top("sample", 4), "target_mentions": top("target", 4),
+            "metrics": "; ".join(mets.value_counts().head(12).index),
+            "table_metrics": "; ".join(f"{r.value} [{r.sentence.split(' | row: ')[-1].split(' | ')[0][:40]}, {r.sentence.split(' | ')[0][:12]}]"
+                                       for r in E[E["field"] == "table_metric"].head(60).itertuples()), "sample_mentions": top("sample", 4), "target_mentions": top("target", 4),
             "uncertainty": top("uncertainty", 3), "open": top("open", 5)}
 
 
@@ -169,8 +243,9 @@ def value_matches(human_metric, human_value, metrics):
     for item in str(metrics).split("; "):
         if "=" not in item:
             continue
-        name, v = item.split("=", 1)
-        x = float(v.rstrip("%")) / (100 if v.endswith("%") else 1)
+        name, v = item.split("=", 1); name = name.strip()
+        v = v.split(" [")[0].strip()
+        x = float(v.rstrip("%")) / (100 if v.endswith("%") or (name == "MAPE" and float(v.rstrip("%")) > 1) else 1)   # MAPE is a percentage even without the sign
         y = hv if hv <= 1.5 else hv / 100
         if (name == fam or fam in name or name in fam) and abs(x - y) <= 0.006:
             return True
@@ -218,10 +293,11 @@ def run(cfg, P):
                                (a == h or (a in ("Held-out city", "Held-out area") and h in ("Held-out city", "Held-out area"))
                                 or (a == "Not found" and h in ("Not reported", "Internal (not specified)"))))
                               for a, h in zip(F["validation_suggested"], F["validation"])]
-    F["metric_value_found"] = [value_matches(m, v, x) if isinstance(x, str) else None for m, v, x in zip(F["metric"], F["value"], F["metrics"])]
+    both = [";".join(str(a) for a in (x, y) if isinstance(a, str) and a) for x, y in zip(F["metrics"], F.get("table_metrics", F["metrics"]))]
+    F["metric_value_found"] = [value_matches(m, v, x) if x else None for m, v, x in zip(F["metric"], F["value"], [b.replace(";", "; ") if b else "" for b in both])]
     cols = ["include_focused", "key", "study", "year", "title", "pdf", "country", "countries", "area", "places", "data", "data_auto", "target", "target_mentions",
             "model_family", "methods", "validation", "validation_suggested", "validation_agrees", "validation_found", "metric", "value", "metrics",
-            "metric_value_found", "code_data_open", "open", "uncertainty", "interpretability", "sample_mentions"]
+            "metric_value_found", "table_metrics", "code_data_open", "open", "uncertainty", "interpretability", "sample_mentions"]
     F = F.rename(columns={"data_auto": "data_auto"}) if "data_auto" in F else F.rename(columns={})
     if "data_auto" not in F and "data" in A:
         F["data_auto"] = F["d"].map(dict(zip(A["doi"], A["data"])))
