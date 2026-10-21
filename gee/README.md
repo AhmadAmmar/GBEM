@@ -95,3 +95,69 @@ step is still to be written):
 - the Sentinel-2 indices (NDVI, NDBI, NDWI, NDMI, EVI, SAVI, MSAVI2, BSI, UI, IBI, NDRE, NIRv, albedo);
 - VIIRS radiance;
 - WorldCover built-up share.
+
+Two of these are not carried over (see the reproduction check below):
+- The earlier **UI** was B11/B8, which carries the same information as NDBI. The new UI is (B12−B8)/(B12+B8).
+- **IBI** is not derived, because its denominator can be close to zero.
+
+Albedo is pending a sourced Sentinel-2 formula.
+
+## Local processing (Python, `eo` environment)
+
+Every step reads the output of the step before and writes to its own folder. The raw exports are never changed.
+`spec.py` holds the grids, products, band names and scale factors for all steps; it checks that the extents equal
+those in the Earth Engine script.
+
+| Step | Code | Output |
+|---|---|---|
+| 1. Ingest | `ingest.py <batch> <zips>` | Extracts the files to `data/<area>/gee_v2/raw/` (zips kept). Checks grid, band names, data type, missing values and plausible ranges at full resolution. Writes `data/gee_v2/manifest.csv` (with checksums) and `data/gee_v2/qa/ingest_<batch>.csv` |
+| 2. Preprocess | `preprocess.py --years ...` | `derived/`: terrain (DEM below −5 m masked), WorldCover shares at 100 m, ERA5 wind speed and direction, rural reference temperatures for the surface urban heat island |
+| 3. Extract | `extract.py --area --year --buildings --id [--lon --lat \| --points] --tag` | `features/<tag>_<year>.parquet/.csv`, one row per certificate (details below) |
+| 4. Reproduction check | `compare_old.py --area --new --old --id` | `features/compare_old_<area>.csv`: agreement with the earlier samples |
+| 5. Maps and visual QA | `../qgis/load_gee_layers.py`, `../qgis/s1_maps.py` (inside QGIS) | `data/<area>/gee_v2/<area>_gee_v2_<year>.qgz`, `qa/quicklooks/*.png`, A4 maps in `Maps/gee_v2/` |
+
+What `extract.py` produces for each certificate:
+- **Point value:** at the certificate's coordinates.
+- **Footprint mean:** over pixels whose centre lies in the building footprint. Identical footprints, such as flats in
+  one building, are rasterised once.
+- **Neighbourhood mean:** over about 100 m.
+
+How the values are computed:
+- Sentinel-2 indices are computed per pixel and then averaged.
+- Sentinel-1 is averaged in linear power and then converted to dB.
+- MODIS, ERA5, VIIRS, GHSL, land cover and terrain get point values only.
+- Landsat gets point and neighbourhood values only.
+
+### Results for 2024 (21 October 2026)
+
+| | Greater London | Greater Belfast |
+|---|---|---|
+| Certificates / unique footprints | 109,955 / 67,726 | 6,685 / 5,970 |
+| Features per certificate | 270 | 270 |
+| Footprints without a 10 m pixel centre (footprint value = point value) | 18% | 45% |
+| Missing: Landsat LST summer / winter | 0% / 27.6% | 15.8% / 14.4% |
+| Missing: MODIS night LST winter | 0.2% | 0.5% |
+
+Annual Landsat LST and winter MODIS night LST are complete in both areas, so they are the dependable thermal
+features. Seasonal Landsat values have gaps where no clear scene exists.
+
+### Reproduction of the earlier 2024 samples
+
+The table shows the Spearman correlation of the point values, on the same certificates.
+
+| Variables | Belfast | London |
+|---|---|---|
+| Sentinel-1 VV, VH, VV−VH | 0.96–0.97 | 0.78 |
+| Elevation; VIIRS | 0.99; 0.95 | – |
+| NDVI, NDWI, EVI, NIRv, GNDVI | 0.89–0.90 | 0.80–0.85 |
+| Sentinel-2 bands | – | 0.70–0.80 |
+| NDBI, BSI, Landsat LST | 0.69–0.71 | 0.61; 0.56 |
+| ERA5 temperature and wind | 0.88 | – |
+| Slope and aspect; MODIS night LST | 0.39–0.54; 0.44 | – |
+
+In both areas, point values match better than footprint or neighbourhood means, so the earlier scripts sampled at
+the certificate points. The earlier formulas for NDBI, NDWI and EVI are identical to the new ones.
+
+The earlier scripts are not available, so their composite windows and cloud masking are not known. Differences in
+these probably explain the lower agreement for the optical and thermal variables. The lower agreement for slope and
+aspect is consistent with a different DEM or resolution.

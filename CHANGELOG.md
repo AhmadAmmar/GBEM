@@ -2,6 +2,32 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.28.0] - 2026-10-21
+
+### Added
+- Local processing of the Earth Engine exports (`gee/`), all sharing `spec.py` (grids, products, band names, scale
+  factors; checked against the Earth Engine script):
+  - `ingest.py`: extracts the exports to `data/<area>/gee_v2/raw/`. It checks grid, band names, data type, missing
+    values and plausible ranges at full resolution. Reading the GeoTIFF overviews would give values that are not in
+    the data. It writes a manifest with checksums.
+  - `preprocess.py`: terrain from the DEM (water artefacts below −5 m masked), WorldCover shares at 100 m, ERA5 wind
+    speed and direction, and rural reference temperatures for the surface urban heat island.
+  - `extract.py`: values per certificate:
+    - at the certificate point;
+    - as the footprint mean (footprints rasterised once, so flats in one building share it);
+    - as the mean over about 100 m.
+
+    Sentinel-2 indices are computed per pixel; Sentinel-1 is averaged in linear power. 2024 has been extracted for
+    109,955 London and 6,685 Belfast certificates, with 270 features each.
+  - `compare_old.py`: agreement with the earlier 2024 samples.
+- `qgis/load_gee_layers.py`: a QGIS project per area and year with all products styled (WorldCover in the ESA class
+  colours, DEM hillshade) and a quick-look PNG per layer.
+
+### Changed
+- The urban index is (B12−B8)/(B12+B8). The earlier UI was B11/B8, which carries the same information as NDBI.
+- IBI is not derived: its denominator can be close to zero (earlier values reached ±30,000).
+- `qgis/s1_maps.py` reads the Sentinel-1 composite from `data/london/gee_v2/raw/`.
+
 ## [0.27.0] - 2026-10-21
 
 ### Added

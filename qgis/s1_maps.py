@@ -28,7 +28,7 @@ from qgis.core import (QgsProject, QgsRasterLayer, QgsVectorLayer, QgsFillSymbol
                        QgsCoordinateReferenceSystem, QgsLegendRenderer, QgsLegendStyle, QgsMapLayerLegendUtils, Qgis)
 from qgis.PyQt.QtGui import QFont, QColor
 
-S1 = r"C:\Users\Owner\Downloads\gbem_v2_0_1_london_s1_10m_2024.tif"
+S1 = r"D:\OneDrive - Ulster University\PhD\data\london\gee_v2\raw\gbem_v2_0_1_london_s1_10m_2024.tif"
 BOUNDARY = r"D:\OneDrive - Ulster University\PhD\data\london\SHP\london.shp"
 OUT = r"D:\OneDrive - Ulster University\PhD\data\london\gee_v2\derived"
 MAPS = r"D:\OneDrive - Ulster University\PhD\Maps\gee_v2"
