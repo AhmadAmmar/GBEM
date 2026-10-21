@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.27.0] - 2026-10-21
+
+### Added
+- `gee/gbem_composites.js` 2.1.0: export batches for the remaining years, each with its own Drive folder:
+  - `b2`: 2020–2021;
+  - `b3`: 2022–2023, with the heatwave and cold-spell windows;
+  - `b4`: 2025.
+
+  Each batch is at most 5 GB before compression. The method version in the file names stays `v2_0_1`, because the
+  composites are defined as before, so all years can be combined.
+- `gee/README.md`: batch table, the meaning of the method and script versions, and data availability by year. Landsat 9
+  data start in late 2021, so 2020–2021 surface temperature comes from Landsat 8 alone.
+
 ## [0.26.0] - 2026-10-21
 
 ### Added

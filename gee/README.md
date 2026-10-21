@@ -1,6 +1,6 @@
 # Earth Engine composites (Greater London, Greater Belfast)
 
-`gbem_composites.js` (version 2.0.1) builds the satellite and climate composites for the two study areas in Google
+`gbem_composites.js` (version 2.1.0) builds the satellite and climate composites for the two study areas in Google
 Earth Engine and exports them to Google Drive as GeoTIFFs. Earth Engine is used only for the steps that need the full
 archives: cloud masking and reduction over time. Everything else is done locally in Python from the exported rasters:
 - spectral and SAR indices;
@@ -53,13 +53,34 @@ The extents are snapped to 3 km, so the rasters of all resolutions nest exactly.
 1. Paste `gbem_composites.js` into the Earth Engine Code Editor and press **Run**. With `CONFIG.dryRun = true`, the
    console lists the planned images with an upper bound on their size and the number of input scenes for each window.
    Preview layers are added to the map.
-2. Choose the batch with `CONFIG.areas`, `CONFIG.years` and `CONFIG.products`. Set `dryRun: false`, press **Run**, and
-   start the tasks in the **Tasks** tab.
+2. Choose the batch with `BATCH` (see the table below). Set `dryRun: false`, press **Run**, and start the tasks in the
+   **Tasks** tab.
 3. Each batch also exports a provenance table: the number of input scenes per area, product, year and window.
 
-The first batch is 2024 for both areas (18 images plus the provenance table). It reproduces the 2024 samples used so
-far before more years are added. The 2024 batch is at most about 2.5 GB before compression; the 10 m Sentinel-2
-composites make up most of it. Check the free space on Google Drive before running several years.
+## Batches and versions
+
+| Batch | Years | Products | Drive folder | Images | Size before compression |
+|---|---|---|---|---|---|
+| `b1` | 2024 | static and yearly | `GBEM_GEE_v2` | 18 | at most 2.5 GB (exported 21 Oct 2026) |
+| `b2` | 2020, 2021 | yearly | `GBEM_GEE_v2_b2` | 24 | at most 4.8 GB |
+| `b3` | 2022, 2023 | yearly, plus the 2022 heatwave and cold-spell windows | `GBEM_GEE_v2_b3` | 24 | at most 4.9 GB |
+| `b4` | 2025 | yearly | `GBEM_GEE_v2_b4` | 12 | at most 2.4 GB |
+
+The 2024 batch came first, to reproduce the 2024 samples used so far before other years were added. Each batch has its
+own folder, so one batch can be downloaded and cleared from Drive before the next is run.
+
+The two version numbers mean different things:
+- The **method version** (`CONFIG.version`, currently `v2_0_1`) is part of every file name. It changes only when a
+  composite is defined differently, so files with the same method version can be combined across years.
+- The **script version** in the header (currently 2.1.0) also changes for changes that do not affect the outputs, such
+  as the batch presets.
+
+## Data availability by year
+
+Landsat 9 data start in late 2021. Land surface temperature for 2020 and most of 2021 therefore comes from Landsat 8
+alone, with about half the scenes of later years. The per-pixel count band `n` records this. All other sources cover
+2020–2025 for both areas (`check_sources.py`, 21 Oct 2026). One exception: no Landsat scene covers Greater Belfast in
+the December 2022 cold-spell window, so that band is empty.
 
 ## Earlier extractions
 
