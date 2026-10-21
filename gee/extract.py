@@ -40,6 +40,9 @@ from scipy.ndimage import uniform_filter
 import shapely
 from shapely import force_2d
 import spec
+import sys as _sys, pathlib as _pl
+_sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[1]))
+from safeio import keep                      # existing outputs are archived, never overwritten
 
 STRIP = 256                                          # rows per strip
 SUB = 5                                              # sub-grid factor for the footprint coverage
@@ -304,15 +307,15 @@ def run(a):
     out = pd.DataFrame(cols)
     d = spec.features_dir(a.area); d.mkdir(parents=True, exist_ok=True)
     base = d / f"{tag}_{y}"
-    out.to_parquet(base.with_suffix(".parquet"), index=False)
+    out.to_parquet(keep(base.with_suffix(".parquet")), index=False)
     if not a.no_csv:
-        out.to_csv(base.with_suffix(".csv"), index=False)
+        out.to_csv(keep(base.with_suffix(".csv")), index=False)
     meta = {"rec_id", "year", "pt_source", "UPRN", "fp_id", "link_method", "fp_px_10m", "fp_px_30m"}
     log.update({"n_features": int(sum(c not in meta for c in out.columns)),
                 "fp_px_10m_median": float(np.median(out["fp_px_10m"])),
                 "records_without_footprint": int((lab == 0).sum()),
                 "missing_share": {c: round(float(out[c].isna().mean()), 4) for c in out.columns if out[c].isna().any()}})
-    base.with_name(base.name + "_log.json").write_text(json.dumps(log, indent=1, default=str), encoding="utf-8")
+    keep(base.with_name(base.name + "_log.json")).write_text(json.dumps(log, indent=1, default=str), encoding="utf-8")
     print(f"written {base}.parquet: {len(out)} records, {log['n_features']} features")
     return out
 

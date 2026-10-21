@@ -23,6 +23,9 @@ import pandas as pd
 import rasterio
 from rasterio.transform import rowcol
 import spec
+import sys as _sys, pathlib as _pl
+_sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[1]))
+from safeio import keep                      # existing outputs are archived, never overwritten
 
 PROFILE = {"driver": "GTiff", "dtype": "float32", "nodata": spec.NODATA_FLOAT, "compress": "deflate", "predictor": 3,
            "tiled": True, "blockxsize": 256, "blockysize": 256}
@@ -40,7 +43,7 @@ def read(path, band=None):
 
 def write(path, bands, profile):
     p = {**profile, **PROFILE, "count": len(bands)}
-    with rasterio.open(path, "w", **p) as dst:
+    with rasterio.open(keep(path), "w", **p) as dst:
         for i, (name, a) in enumerate(bands.items(), 1):
             dst.write(np.where(np.isnan(a), spec.NODATA_FLOAT, a).astype("float32"), i)
             dst.set_band_description(i, name)
@@ -127,7 +130,7 @@ def uhi_reference(area, year):
                          "rural_iqr_C": round(float(np.subtract(*np.percentile(v, [75, 25]))), 3) if v.size else None})
     df = pd.DataFrame(rows)
     out = spec.derived_dir(area) / f"uhi_reference_{year}.csv"
-    df.to_csv(out, index=False)
+    df.to_csv(keep(out), index=False)
     print("written", out)
     return df
 
@@ -146,7 +149,7 @@ def main():
         log = {"run": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), "method": spec.METHOD, "years": a.years,
                "dem_min_m": DEM_MIN, "worldcover_classes": WC_CLASSES,
                "rural_reference": "context extent outside core extent, GHSL built volume 2020 = 0, elevation > 2 m; median"}
-        (spec.derived_dir(area) / "preprocess_log.json").write_text(json.dumps(log, indent=1), encoding="utf-8")
+        keep((spec.derived_dir(area) / "preprocess_log.json")).write_text(json.dumps(log, indent=1), encoding="utf-8")
 
 
 if __name__ == "__main__":

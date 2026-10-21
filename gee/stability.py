@@ -12,6 +12,9 @@ Output: data/<area>/gee_v2/features/stability_<tag>.csv
 import argparse, itertools
 import pandas as pd
 import spec
+import sys as _sys, pathlib as _pl
+_sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[1]))
+from safeio import keep                      # existing outputs are archived, never overwritten
 
 
 def main():
@@ -33,7 +36,7 @@ def main():
     R = pd.DataFrame(rows)
     rho = [c for c in R if c.startswith("rho_")]
     R["rho_min"] = R[rho].min(axis=1)
-    R.sort_values("rho_min").to_csv(d / f"stability_{a.tag}.csv", index=False)
+    R.sort_values("rho_min").to_csv(keep(d / f"stability_{a.tag}.csv"), index=False)
     pd.set_option("display.width", 200)
     key = ["s2_NDVI_annual_pt", "s2_NDBI_annual_pt", "s2_B11_annual_pt", "s1_VV_dB_annual_pt", "s1_VVminusVH_dB_annual_pt",
            "landsat_LST_annual_pt", "landsat_LST_summer_pt", "landsat_sUHI_summer_pt", "modis_terra_night_winter_pt",

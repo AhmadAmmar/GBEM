@@ -11,7 +11,7 @@ Sources (snapshots, recorded in the output log):
            Certificates before 2020 have no UPRN and therefore no location.
 
 Rules (nothing is dropped silently; every rule is counted in the log):
-  dropped   rating not in A-G; no location; inspection date missing or before 2007; location outside the area
+  dropped   repeated certificate id (identical copies); rating not in A-G; no location; inspection date missing or before 2007; location outside the area
   kept with flags:
     year             year of the inspection date (the date the dwelling was assessed; used to match imagery years)
     new_dwelling     transaction type "new dwelling" (rated with full SAP, existing dwellings with RdSAP)
@@ -26,6 +26,9 @@ import argparse, datetime, json, pathlib
 import duckdb
 import numpy as np
 import pandas as pd
+import sys as _sys, pathlib as _pl
+_sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[1]))
+from safeio import keep                      # existing outputs are archived, never overwritten
 
 PHD = pathlib.Path(__file__).resolve().parents[2]
 DATA = PHD / "data"
@@ -36,6 +39,9 @@ RATINGS = list("ABCDEFG")
 
 
 def flags(d, log):
+    n0 = len(d)
+    d = d.drop_duplicates("cert_id")       # the same certificate twice (NI file: 1,298 certificates, identical copies)
+    log["dropped_repeated_certificate_id"] = n0 - len(d)
     n0 = len(d)
     d = d.assign(CURRENT_ENERGY_RATING=d["CURRENT_ENERGY_RATING"].str.strip().str.upper())   # NI register uses lower case
     d = d[d["CURRENT_ENERGY_RATING"].isin(RATINGS)]; log["dropped_rating_not_A_to_G"] = n0 - len(d)
@@ -74,7 +80,7 @@ def london():
                                                      store_rejects=true)
                         WHERE LOCAL_AUTHORITY LIKE 'E09%') TO '{stage.as_posix()}' (FORMAT parquet)""")
         rej = con.execute("SELECT count(*) FROM reject_errors").fetchone()[0]
-        (stage.parent / "_stage_rejected_rows.txt").write_text(f"rows of the register that could not be parsed: {rej}\n", encoding="utf-8")
+        keep((stage.parent / "_stage_rejected_rows.txt")).write_text(f"rows of the register that could not be parsed: {rej}\n", encoding="utf-8")
     d = pd.read_parquet(stage, dtype_backend="pyarrow")
     log = {"source": EW.name, "snapshot": "England and Wales register, downloaded January 2025", "rows_in_source_area": len(d)}
     n0 = len(d)
@@ -112,8 +118,8 @@ def main():
         d, log = london() if area == "london" else belfast()
         out = DATA / area / "epc"; out.mkdir(parents=True, exist_ok=True)
         log["run"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-        d.to_parquet(out / "certificates.parquet", index=False)
-        (out / "certificates_log.json").write_text(json.dumps(log, indent=1, default=int), encoding="utf-8")
+        d.to_parquet(keep(out / "certificates.parquet"), index=False)
+        keep((out / "certificates_log.json")).write_text(json.dumps(log, indent=1, default=int), encoding="utf-8")
         print(json.dumps({k: v for k, v in log.items() if k not in ("by_year",)}, indent=1, default=int))
         print(f"{area}: {len(d):,} certificates written to {out / 'certificates.parquet'}")
 
