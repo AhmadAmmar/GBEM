@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.31.1] - 2026-10-21
+
+### Fixed
+- `gee/gbem_composites.js` 2.2.1: a time window without any scene made the export fail. The case found was Belfast
+  Landsat 2022: no scene in the December 2022 cold-spell window ("Image.multiply: If one image has no bands...").
+  Thermal collections are now padded with one fully masked image, so an empty window exports as a missing band with
+  count 0. Scene counts in the provenance table are taken before the padding. Windows with scenes are unchanged, so
+  the method version stays v2_0_1. Batch `b3fix` reruns only the failed export. The fix was tested on the Earth
+  Engine server with the failing window.
+
 ## [0.31.0] - 2026-10-21
 
 ### Added
