@@ -185,8 +185,8 @@ def run(cfg, P):
     fig, ax = canvas(7.2, 3.3)
     dbs = "Scopus" + (" + Web of Science" if I["n_wos"] else "")
     tiers = [(f"Records identified  n = {I['n_identified']:,}", f"{dbs}; {I['field']}; concept blocks A-C (Table 2)", 0.92),
-             (f"Bibliometric corpus  n = {S['n_screened']:,}", "Performance analysis and science mapping (Section 3)", 0.74),
-             (f"Core systematic set  n = {S['n_core']:,}", "Screening rules + reviewer verification; abstract-level coding (Section 4)", 0.56),
+             (f"Bibliometric corpus  n = {S['n_screened']:,}", "Performance analysis and science mapping (Section 3.1)", 0.74),
+             (f"Core systematic set  n = {S['n_core']:,}", "Screening rules + reviewer verification; abstract-level coding (Section 3.2)", 0.56),
              (f"Focused subset  n = {Fs['n_focused']}", "Full-text extraction: data, target, validation, metrics", 0.38)]
     for i, (t, d, wdt) in enumerate(tiers):
         y = 0.78 - i * 0.2; x = (1 - wdt * 0.62) / 2 - 0.16

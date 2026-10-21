@@ -78,6 +78,15 @@ def build(new, version, stamp):
         print(f"BUILD NOT ACCEPTED: {n_err} LaTeX errors, {n_undef} undefined citations/references. See {log}")
         print("Fix the source (often a character in references.bib), then run again with --rebuild.")
         return
+    # every figure and table has to be referred to in the text
+    src = "".join(p.read_text(encoding="utf-8") for p in sorted((new / "latex" / "sections").glob("*.tex")))
+    displays = re.findall(r"\\label(?:\[[^\]]*\])?\{((?:fig|tab):[^}]+)\}", src)
+    cited = {k.strip() for m in re.findall(r"\\[cC]?ref\{([^}]+)\}", src) for k in m.split(",")}
+    unref = [d for d in displays if d not in cited]
+    (new / "build").mkdir(exist_ok=True)
+    (new / "build" / "checks.txt").write_text("Figures and tables not referred to in the text: " + (", ".join(unref) if unref else "none") + "\n", encoding="utf-8")
+    if unref:
+        print("CHECK: figures or tables not referred to in the text:", ", ".join(unref))
     if pdf.exists():
         shutil.copy(pdf, new / "build" / pdf.name); shutil.copy(pdf, cfg.PHD / "PDF" / f"{stamp}_Review_Paper_v{version}.pdf")
         # companion contents document (table of contents, lists of figures and tables), if the template provides it

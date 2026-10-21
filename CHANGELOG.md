@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.21.0] - 2026-10-21
+
+### Added
+- `review/new_iteration.py` checks that every figure and table of the manuscript is referred to in the text; any that are not are printed and listed in `build/checks.txt`.
+
+### Changed
+- Workflow figure refers to the merged Results section (Sections 3.1 and 3.2).
+
 ## [0.20.0] - 2026-10-14
 
 ### Added
