@@ -74,7 +74,7 @@ counts below were produced on 21 October 2026 from 253 works with full texts, no
 On its own, the zero-shot embedding classifier is weaker than the rules: it confuses general statements about testing
 with the design itself. Its value lies in finding evidence sentences that use wording the rules miss. The design and
 metric results above refer to these 14 studies only. In all, the rules and the embeddings suggest the same validation
-design for 109 of the 253 works.
+design for 107 of the 253 works (iteration v0.14).
 
 Stage 10 took 32 minutes on a laptop CPU for 253 works.
 
