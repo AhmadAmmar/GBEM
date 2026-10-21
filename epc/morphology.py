@@ -33,6 +33,9 @@ import geopandas as gpd
 import shapely
 from scipy.signal import fftconvolve
 from footprints import OSM, EXTENT
+import sys as _sys, pathlib as _pl
+_sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[1]))
+from safeio import keep                      # existing outputs are archived, never overwritten
 
 PHD = pathlib.Path(__file__).resolve().parents[2]
 DATA = PHD / "data"
@@ -145,10 +148,10 @@ def main():
                             **{k: np.round(np.asarray(v, dtype="float64"), 4) for k, v in m.items()}})
         if "height_m" in out:
             out["volume_m3"] = out["area_m2"] * pd.to_numeric(out["height_m"], errors="coerce")
-        out.to_parquet(d / "morphology.parquet", index=False)
+        out.to_parquet(keep(d / "morphology.parquet"), index=False)
         log = {"run": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), "footprints": len(out), **slog,
                "medians": {k: round(float(np.nanmedian(out[k])), 3) for k in m}}
-        (d / "morphology_log.json").write_text(json.dumps(log, indent=1), encoding="utf-8")
+        keep((d / "morphology_log.json")).write_text(json.dumps(log, indent=1), encoding="utf-8")
         print(area, json.dumps(log))
 
 

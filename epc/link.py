@@ -13,6 +13,9 @@ import argparse, datetime, json, pathlib
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+import sys as _sys, pathlib as _pl
+_sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[1]))
+from safeio import keep                      # existing outputs are archived, never overwritten
 
 PHD = pathlib.Path(__file__).resolve().parents[2]
 DATA = PHD / "data"
@@ -43,14 +46,14 @@ def main():
         w.loc[near.index, "link_dist_m"] = near["dist"].round(2)
         w["link_method"] = w["link_method"].fillna("none")
         out = cert.merge(w[["fp_id", "link_method", "link_dist_m"]], left_on="UPRN", right_index=True, how="left")
-        out.to_parquet(d / "certificates_linked.parquet", index=False)
+        out.to_parquet(keep(d / "certificates_linked.parquet"), index=False)
         per_fp = out.dropna(subset=["fp_id"]).groupby("fp_id")["UPRN"].nunique()
         log = {"run": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), "max_dist_m": a.max_dist,
                "uprns": int(len(w)), "uprns_by_link": w["link_method"].value_counts().to_dict(),
                "certificates_by_link": out["link_method"].value_counts().to_dict(),
                "footprints_with_certificates": int(len(per_fp)),
                "uprns_per_footprint": {"median": float(per_fp.median()), "p95": float(per_fp.quantile(0.95)), "max": int(per_fp.max())}}
-        (d / "link_log.json").write_text(json.dumps(log, indent=1), encoding="utf-8")
+        keep((d / "link_log.json")).write_text(json.dumps(log, indent=1), encoding="utf-8")
         print(area, json.dumps(log))
 
 

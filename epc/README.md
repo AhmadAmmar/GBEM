@@ -12,6 +12,12 @@ Run the steps in order, in the conda environment `eo`, from this folder.
 | 2 | `footprints.py` | `footprints.parquet`, `footprints_log.json` |
 | 3 | `link.py` | `certificates_linked.parquet`, `link_log.json` |
 | 4 | `morphology.py` | `morphology.parquet`, `morphology_log.json` |
+| 4b | `dwellings.py` | `dwellings_fp.parquet` (UPRNs and area per UPRN per footprint), `dwellings_cert.parquet` (position of the property in its block) |
+| 5 | `assemble.py` | `data/<area>/model/dataset_<year>.parquet`, `data_dictionary.csv` (feature groups for ablations) |
+
+**No output is ever overwritten.** Before a script writes a file, an existing file of the same name is moved to
+`_archive/<run time>/` in the same folder (`code/safeio.py`). Original data (registers, downloads, raw exports) is
+only read.
 
 ## Sources
 
@@ -30,6 +36,7 @@ unlinked share is 4.1% (Harrow and Hillingdon about 20%). In Belfast it is 0.6%.
 ## Rules for the certificates (`certificates.py`)
 
 **Dropped**, and counted in the log:
+- a repeated certificate id (identical copies; 1,298 in the Northern Ireland file, none in London);
 - the rating is not A–G (17 in London);
 - there is no location;
 - the inspection date is missing or before 2007 (207 in London);
@@ -54,7 +61,7 @@ unlinked share is 4.1% (Harrow and Hillingdon about 20%). In Belfast it is 0.6%.
 
 | | Greater London | Greater Belfast |
 |---|---|---|
-| Certificates / properties (UPRN) | 3,880,812 / 2,681,882 | 58,865 / 54,591 |
+| Certificates / properties (UPRN) | 3,880,812 / 2,681,882 | 57,567 / 54,591 |
 | Years | 2008–2024 (2024 partial: register downloaded January 2025) | 2020–January 2025 |
 | Footprints | 2,141,314 (956,508 with height) | 417,229 (190,709 OSNI) |
 | UPRNs inside a footprint / nearest within 5 m / unlinked | 92.7% / 3.2% / 4.1% | 98.8% / 0.6% / 0.6% |
@@ -74,6 +81,22 @@ For each footprint:
 **Check against the certificates' built form (Belfast).** The median shared-wall share is 0 for detached houses,
 about 0.30 for semi-detached and end-terrace houses, and 0.55 for mid-terraces. "Enclosed" terraces are near 0.
 These are probably mapped as one block with their neighbours, so they need a closer look.
+
+## Footprints that cover several dwellings (London)
+
+In London, terrace rows and semi-detached pairs are often mapped as one polygon:
+- 31% of houses lie in a footprint with more than two UPRNs;
+- Microsoft machine-learned footprints never separate houses.
+
+For those houses, footprint shape and shared walls describe the block, not the dwelling. `dwellings.py` adds
+measures that hold for blocks:
+- the number of UPRNs in the footprint (median 1 detached, 2 semi-detached, 3–4 terraced);
+- the footprint area per UPRN;
+- the position of the property along the block (`pos_in_block`). In blocks of three or more UPRNs, end-terraces have a
+  median of 0.76 and mid-terraces 0.34.
+
+The proper fix is to divide blocks into plots with HM Land Registry INSPIRE Index Polygons. That needs acceptance of
+the Land Registry licence terms.
 
 ## Still needed
 

@@ -2,7 +2,9 @@
 
     python ingest.py <batch> <zip> [<zip> ...]          e.g. python ingest.py b1 GBEM_GEE_v2-...-001.zip ...-002.zip
 
-- Each GeoTIFF is extracted to data/<area>/gee_v2/raw/ (the zips are kept where they are); the provenance table goes to
+- Each GeoTIFF is extracted to data/<area>/gee_v2/raw/ (the zips are kept where they are; an existing file is never
+  replaced: identical content is skipped, different content is written alongside as <name>__conflict<n>.tif and
+  reported); the provenance table goes to
   data/gee_v2/provenance/. A file that is already there with the same checksum is not extracted again.
 - Each GeoTIFF is checked against spec.py: grid (CRS, origin, pixel size, width, height), band names and order, data
   type and missing value, share of valid pixels per band, and values outside a plausible physical range.
@@ -14,6 +16,9 @@ import numpy as np
 import pandas as pd
 import rasterio
 import spec
+import sys as _sys, pathlib as _pl
+_sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[1]))
+from safeio import keep                      # existing outputs are archived, never overwritten
 
 GEE = spec.DATA / "gee_v2"
 
@@ -24,6 +29,15 @@ def sha256(path, chunk=1 << 22):
         for b in iter(lambda: f.read(chunk), b""):
             h.update(b)
     return h.hexdigest()
+
+
+def crc32(path, chunk=1 << 22):
+    import zlib
+    c = 0
+    with open(path, "rb") as f:
+        for b in iter(lambda: f.read(chunk), b""):
+            c = zlib.crc32(b, c)
+    return c & 0xFFFFFFFF
 
 
 def extract(zips):
@@ -40,15 +54,24 @@ def extract(zips):
                 else:
                     print("skipped (not an export of gbem_composites.js):", info.filename); continue
                 dest.parent.mkdir(parents=True, exist_ok=True)
-                if dest.exists() and dest.stat().st_size == info.file_size:
-                    print("already there:", dest.name)
-                else:
-                    tmp = dest.with_suffix(dest.suffix + ".part")
-                    with zf.open(info) as src, open(tmp, "wb") as dst:
-                        shutil.copyfileobj(src, dst, 1 << 22)
-                    tmp.replace(dest)
-                    print("extracted:", dest)
-                out.append(dest)
+                if dest.exists():
+                    # an existing raw file is never replaced: identical content (zip CRC) -> skip; different content
+                    # -> the new file is written alongside under a new name and reported
+                    if crc32(dest) == info.CRC:
+                        print("already there (identical):", dest.name); out.append(dest); continue
+                    n = 1
+                    alt = dest.with_name(f"{dest.stem}__conflict{n}{dest.suffix}")
+                    while alt.exists():
+                        n += 1; alt = dest.with_name(f"{dest.stem}__conflict{n}{dest.suffix}")
+                    print(f"CONFLICT: {dest.name} exists with different content; new file kept as {alt.name}")
+                    dest = alt
+                tmp = dest.with_suffix(dest.suffix + ".part")
+                with zf.open(info) as src, open(tmp, "wb") as dst:
+                    shutil.copyfileobj(src, dst, 1 << 22)
+                tmp.rename(dest)
+                print("extracted:", dest)
+                if "__conflict" not in dest.name:
+                    out.append(dest)
     return out
 
 
@@ -103,13 +126,13 @@ def main():
             band_rows += b
             print(f"{row['checks']:>4s}  {p.name}")
     (GEE / "qa").mkdir(parents=True, exist_ok=True)
-    pd.DataFrame(band_rows).to_csv(GEE / "qa" / f"ingest_{a.batch}.csv", index=False)
+    pd.DataFrame(band_rows).to_csv(keep(GEE / "qa" / f"ingest_{a.batch}.csv"), index=False)
     man = GEE / "manifest.csv"
     new = pd.DataFrame(rows)
     if man.exists():
         old = pd.read_csv(man)
         new = pd.concat([old[~old["file"].isin(new["file"])], new], ignore_index=True)
-    new.sort_values(["area", "product", "year"], na_position="first").to_csv(man, index=False)
+    new.sort_values(["area", "product", "year"], na_position="first").to_csv(keep(man), index=False)
     bad = [r for r in rows if r["checks"] != "ok"]
     print(f"\n{len(rows)} GeoTIFFs ingested, {len(bad)} with problems. Manifest: {man}")
     return 1 if bad else 0

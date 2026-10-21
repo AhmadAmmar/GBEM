@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.32.0] - 2026-10-21
+
+### Added
+- `safeio.py`: no output is overwritten. Every pipeline script moves an existing file to `_archive/<run time>/`
+  before writing. `gee/ingest.py` never replaces a raw file: identical content (zip CRC) is skipped, and different
+  content is written alongside as `<name>__conflict<n>.tif` and reported.
+- `epc/dwellings.py`: UPRNs per footprint and area per UPRN (OS Open UPRN for London, the OSNI UPRN list for
+  Belfast), and the position of each property along its block. It is needed because London footprints often cover
+  whole terrace rows.
+- `epc/assemble.py`: a modelling table per area and imagery year, with a data dictionary of feature groups.
+
+### Fixed
+- `epc/certificates.py`: repeated certificate ids (1,298 identical copies in the Northern Ireland file) are dropped
+  and counted. They would have put the same certificate in training and test data.
+
 ## [0.31.1] - 2026-10-21
 
 ### Fixed

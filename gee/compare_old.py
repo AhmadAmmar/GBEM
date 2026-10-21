@@ -12,6 +12,9 @@ import argparse
 import numpy as np
 import pandas as pd
 import spec
+import sys as _sys, pathlib as _pl
+_sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[1]))
+from safeio import keep                      # existing outputs are archived, never overwritten
 
 # earlier variable -> (new candidates, conversion applied to the earlier values)
 MAP = {
@@ -85,7 +88,7 @@ def main():
     R = pd.DataFrame(rows)
     R["best"] = R.groupby("old")["spearman"].transform("max") == R["spearman"]
     out = spec.features_dir(a.area) / f"compare_old_{a.area}.csv"
-    R.to_csv(out, index=False)
+    R.to_csv(keep(out), index=False)
     pd.set_option("display.width", 200)
     print(f"{len(m)} records in both. Best match per earlier variable:")
     print(R[R["best"]].drop(columns="best").to_string(index=False))

@@ -19,6 +19,9 @@ import geopandas as gpd
 import pandas as pd
 import shapely
 from shapely.geometry import box
+import sys as _sys, pathlib as _pl
+_sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[1]))
+from safeio import keep                      # existing outputs are archived, never overwritten
 
 PHD = pathlib.Path(__file__).resolve().parents[2]
 DATA = PHD / "data"
@@ -76,8 +79,8 @@ def main():
                     "with_height": int(g.get("height_m", pd.Series(dtype=float)).notna().sum()),
                     "overture_release": "2026-09-23.1"})
         out = DATA / area / "epc"; out.mkdir(parents=True, exist_ok=True)
-        g.to_parquet(out / "footprints.parquet", index=False)
-        (out / "footprints_log.json").write_text(json.dumps(log, indent=1), encoding="utf-8")
+        g.to_parquet(keep(out / "footprints.parquet"), index=False)
+        keep((out / "footprints_log.json")).write_text(json.dumps(log, indent=1), encoding="utf-8")
         print(area, json.dumps(log))
 
 
