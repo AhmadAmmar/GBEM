@@ -2,6 +2,23 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.33.0] - 2026-10-21
+
+### Added
+- `epc/certificates.py --source ew2026` (default): the England and Wales register of 13 October 2026
+  (`domestic-csv.zip`, certificates 2008–2026).
+  - The London rows of the 19 yearly files are streamed out of the 98 GB zip without extracting it.
+  - Coordinates come from OS Open UPRN by UPRN.
+  - The new format has lower-case columns, `certificate_number` instead of `LMK_KEY`, and no coordinates.
+  - London: 4,444,008 certificates at 2,890,924 UPRNs, 2007–2026. 196,138 have no location: 187,282 have no UPRN, and
+    8,856 have a UPRN not yet in OS Open UPRN 2025-07.
+  - `--source ew2025` rebuilds from the January 2025 snapshot.
+- Multi-year thermal composites (batch b5, 2020–2025):
+  - `gee/preprocess.py --multi` writes their rural references (`--no-static` skips terrain and land cover).
+  - `gee/extract.py` adds `landsatmulti_` (point and neighbourhoods) and `modismulti_` (point) LST and sUHI to every
+    certificate year.
+  - `epc/assemble.py` puts them in the feature group `thermal_multiyear`.
+
 ## [0.32.1] - 2026-10-21
 
 ### Fixed

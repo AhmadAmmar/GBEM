@@ -1,6 +1,6 @@
 """Step 2 - preprocess the ingested rasters: derived layers that do not depend on the buildings.
 
-    python preprocess.py [--areas london belfast] [--years 2024]
+    python preprocess.py [--areas london belfast] [--years 2024 ...] [--multi] [--no-static]
 
 Static (once per area), in data/<area>/gee_v2/derived/:
   terrain_30m.tif        elevation (DEM values below -5 m masked: water artefacts of the surface model), slope (deg),
@@ -114,22 +114,25 @@ def rural_mask(area, path):
     return outside_core & (vol == 0) & (dem > 2)
 
 
-def uhi_reference(area, year):
+def uhi_reference(area, year, multi=False):
+    """Rural reference per band; multi=True: the multi-year composites (batch b5), file uhi_reference_multi.csv."""
     rows = []
-    for prod, scale in (("landsat", 30), ("modis", 1000)):
+    prods = ("landsat_multi", "modis_multi") if multi else ("landsat", "modis")
+    for prod in prods:
         path = spec.raw_path(area, prod, year)
+        div = (spec.MULTI.get(prod) or spec.PRODUCTS[prod])["div"]
         mask = rural_mask(area, path)
         d, _ = read(path)
         for name, a in d.items():
             stem = name.rsplit("_", 1)[0]
             if stem.endswith("_n") or stem == "n":
                 continue
-            v = a[mask & ~np.isnan(a)] / spec.PRODUCTS[prod]["div"][stem]
+            v = a[mask & ~np.isnan(a)] / div[stem]
             rows.append({"area": area, "year": year, "product": prod, "band": name, "n_rural_pixels": int(v.size),
                          "rural_median_C": round(float(np.median(v)), 3) if v.size else None,
                          "rural_iqr_C": round(float(np.subtract(*np.percentile(v, [75, 25]))), 3) if v.size else None})
     df = pd.DataFrame(rows)
-    out = spec.derived_dir(area) / f"uhi_reference_{year}.csv"
+    out = spec.derived_dir(area) / ("uhi_reference_multi.csv" if multi else f"uhi_reference_{year}.csv")
     df.to_csv(keep(out), index=False)
     print("written", out)
     return df
@@ -137,15 +140,20 @@ def uhi_reference(area, year):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--areas", nargs="+", default=list(spec.AREAS)); ap.add_argument("--years", nargs="+", type=int, default=[2024])
+    ap.add_argument("--areas", nargs="+", default=list(spec.AREAS)); ap.add_argument("--years", nargs="+", type=int, default=[])
+    ap.add_argument("--multi", action="store_true", help="rural references of the multi-year thermal composites (b5)")
+    ap.add_argument("--no-static", action="store_true", help="do not recompute terrain and land cover")
     a = ap.parse_args()
     for area in a.areas:
         spec.derived_dir(area).mkdir(parents=True, exist_ok=True)
-        terrain(area)
-        landcover(area)
+        if not a.no_static:
+            terrain(area)
+            landcover(area)
         for y in a.years:
             era5(area, y)
             print(uhi_reference(area, y).to_string(index=False))
+        if a.multi:
+            print(uhi_reference(area, spec.MULTI_YEARS, multi=True).to_string(index=False))
         log = {"run": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"), "method": spec.METHOD, "years": a.years,
                "dem_min_m": DEM_MIN, "worldcover_classes": WC_CLASSES,
                "rural_reference": "context extent outside core extent, GHSL built volume 2020 = 0, elevation > 2 m; median"}

@@ -26,6 +26,7 @@ EPC_ATTR = ["PROPERTY_TYPE", "BUILT_FORM", "TOTAL_FLOOR_AREA", "CONSTRUCTION_AGE
             "MAINS_GAS_FLAG", "FLOOR_LEVEL", "FLAT_TOP_STOREY", "FLAT_STOREY_COUNT", "NUMBER_HABITABLE_ROOMS",
             "EXTENSION_COUNT", "TRANSACTION_TYPE"]
 GROUPS = {"s2_": "sentinel2", "s1_": "sentinel1", "landsat_": "thermal_landsat", "modis_": "thermal_modis",
+          "landsatmulti_": "thermal_multiyear", "modismulti_": "thermal_multiyear",
           "era5_": "climate", "viirs_": "night_lights", "ghsl_": "built_volume_ghsl", "lc_": "landcover",
           "terrain_": "terrain", "worldcover_": "landcover", "morph_": "morphology", "epc_": "certificate_attributes",
           "label_": "label", "id_": "identifier", "flag_": "flag"}
