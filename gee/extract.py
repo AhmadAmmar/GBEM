@@ -24,6 +24,8 @@ Products and variables:
   s1 (10 m)       VV and VH averaged in linear power, then in dB; VVminusVH_dB = 10 log10(VV/VH); span_dB = 10 log10(VV+VH);
                   neighbourhood SD of VV and VH in dB (texture)
   landsat (30 m)  LST (deg C) and sUHI = LST minus the rural reference of preprocess.py (point and neighbourhoods)
+  multi-year      landsatmulti_ (30 m, point and neighbourhoods) and modismulti_ (1 km, point): LST and sUHI of the
+                  2020-2025 composites (batch b5), the same for every certificate year; added when the files exist
   point only      modis day/night LST and sUHI (1 km); era5 climate, wind speed and direction (1 km grid); viirs night
                   lights (500 m); ghsl building height and volume (100 m); landcover shares (100 m); terrain (30 m);
                   WorldCover class at the point (10 m)
@@ -287,6 +289,27 @@ def run(a):
             if not s.endswith("sd"):
                 cols[f"landsat_sUHI_{w}_{s}"] = v - ref[f"LST_{w}"]
     print("landsat done", flush=True)
+
+    # multi-year thermal composites 2020-2025 (batch b5): the same for every certificate year; the stable thermal
+    # features (single-year composites rank buildings very differently from year to year)
+    pm = spec.raw_path(a.area, "landsat_multi")
+    if pm.exists():
+        refm = pd.read_csv(spec.derived_dir(a.area) / "uhi_reference_multi.csv").set_index("band")["rural_median_C"]
+
+        def lm_vars(b):
+            return {f"landsatmulti_LST_{w}": b[f"LST_{w}"] / 100 for w in spec.MULTI["landsat_multi"]["windows"]}
+        for name, st in zonal_strips(pm, g30, lm_vars, recs, SCALES[30]).items():
+            w = name.split("_")[-1]
+            for s, v in st.items():
+                cols[f"{name}_{s}"] = v
+                if not s.endswith("sd"):
+                    cols[f"landsatmulti_sUHI_{w}_{s}"] = v - refm[f"LST_{w}"]
+        for name, v in point_values(spec.raw_path(a.area, "modis_multi"), recs, spec.MULTI["modis_multi"]["div"]).items():
+            cols[f"modismulti_{name}_pt"] = v
+            if name in refm.index:
+                cols[f"modismulti_sUHI_{name}_pt"] = v - refm[name]
+        log["multi_year_thermal"] = spec.MULTI_YEARS
+        print("multi-year thermal done", flush=True)
 
     # point-only products
     for name, v in point_values(spec.raw_path(a.area, "modis", y), recs, spec.PRODUCTS["modis"]["div"]).items():
