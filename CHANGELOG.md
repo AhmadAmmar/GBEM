@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.32.1] - 2026-10-21
+
+### Fixed
+- `gee/gbem_composites.js` 2.2.2: the 2.2.1 padding made every thermal window with scenes fail ("Expected a
+  homogeneous image collection... Mismatched type for band 'LST'"). The masked placeholder was a plain float, the
+  scenes a bounded float. All images are now cast to float before the placeholder is added. Tested on the Earth Engine
+  server with a window with scenes (Belfast summer 2024) and an empty one (cold spell 2022). The 2.2.1 test had covered
+  only the empty window. Batches b1–b4 were exported with 2.1.0, before the padding, and are not affected; b3fix and b5
+  need to be run again.
+
 ## [0.32.0] - 2026-10-21
 
 ### Added

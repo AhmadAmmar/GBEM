@@ -1,6 +1,6 @@
 /*******************************************************************************
  GBEM - Earth Engine composites for Greater London and Greater Belfast
- Version 2.2.1 (21 October 2026)          https://github.com/AhmadAmmar/GBEM
+ Version 2.2.2 (21 October 2026)          https://github.com/AhmadAmmar/GBEM
 
  Purpose
    Builds the image composites that need the full satellite archives (cloud masking, temporal reduction) and exports
@@ -53,9 +53,9 @@ var BATCHES = {
   b2: {years: [2020, 2021], products: YEARLY, folder: 'GBEM_GEE_v2_b2'},
   b3: {years: [2022, 2023], products: YEARLY, folder: 'GBEM_GEE_v2_b3'},             // 2022 includes the event windows
   b4: {years: [2025], products: YEARLY, folder: 'GBEM_GEE_v2_b4'},
-  b5: {years: [], products: ['landsat_multi', 'modis_multi'], folder: 'GBEM_GEE_v2_b5'},
-  // rerun of the one failed b3 export (Belfast Landsat 2022: no scene in the cold-spell window; fixed in 2.2.1)
-  b3fix: {years: [2022], products: ['landsat'], folder: 'GBEM_GEE_v2_b3', areas: ['belfast']}     // multi-year thermal, 2020-2025
+  b5: {years: [], products: ['landsat_multi', 'modis_multi'], folder: 'GBEM_GEE_v2_b5'},     // multi-year thermal, 2020-2025
+  // rerun of the one failed b3 export (Belfast Landsat 2022: no scene in the cold-spell window; fixed in 2.2.2)
+  b3fix: {years: [2022], products: ['landsat'], folder: 'GBEM_GEE_v2_b3', areas: ['belfast']}
 };
 var BATCH = 'b2';                       // choose the batch to run
 
@@ -195,9 +195,12 @@ function landsatLST(img) {
 
 // A window without any scene (e.g. no Landsat scene over Belfast in the December 2022 cold spell) would give a
 // composite without bands, and the export would fail. One fully masked image is added to every thermal collection,
-// so an empty window exports as a missing band with a count of 0; windows with scenes are unchanged.
+// so an empty window exports as a missing band with a count of 0; windows with scenes are unchanged. All images are
+// cast to plain float first: the scenes carry a bounded float type (e.g. Float<-124.15, 99.85>) and a collection must
+// be homogeneous for median() (2.2.1 failed on every window with scenes; fixed in 2.2.2, tested on the server).
 function padded(col, band) {
-  return col.merge(ee.ImageCollection([ee.Image.constant(0).float().rename(band).updateMask(ee.Image.constant(0))]));
+  return col.map(function (img) { return img.toFloat(); })
+    .merge(ee.ImageCollection([ee.Image.constant(0).toFloat().rename(band).updateMask(ee.Image.constant(0))]));
 }
 
 function landsat(area, year) {
