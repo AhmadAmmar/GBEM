@@ -160,6 +160,11 @@ def run(cfg, P):
     n["NFocusedUK"] = fmt(Fs["n_uk"]); n["NPredictive"] = fmt(Fs["n_predictive"]); n["NHeldOut"] = fmt(Fs["n_heldout"])
     n["NRandom"] = fmt(Fs["n_random"]); n["NTemporal"] = fmt(Fs["n_temporal"]); n["NMetrics"] = fmt(Fs["n_metrics"])
     n["NFullText"] = fmt(Fs["n_fulltext"]); n["NPending"] = fmt(Fs["n_pending"])
+    # agreement of the automatic full-text extraction (stage 9) with the manual extraction
+    xp = P["out"] / "stats_fulltext_extract.json"
+    X = load(xp) if xp.exists() else {}
+    n["NExtrValN"] = fmt(X.get("validation_agreement", {}).get("n", 0)); n["NExtrValAgree"] = fmt(X.get("validation_agreement", {}).get("agree", 0))
+    n["NExtrMetN"] = fmt(X.get("metric_value_found", {}).get("n", 0)); n["NExtrMetFound"] = fmt(X.get("metric_value_found", {}).get("found", 0))
     if Fs["binary_f1_range"]:
         n["BinFOneMin"], n["BinFOneMax"] = fmt(Fs["binary_f1_range"][0], 2), fmt(Fs["binary_f1_range"][1], 2)
     n["NSupplementary"] = fmt(len(read_csv(P["inputs"] / cfg.HUMAN["supplementary_studies"])))

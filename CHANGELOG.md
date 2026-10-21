@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.24.0] - 2026-10-21
+
+### Added
+- `review/s10_ml_extract.py`: OCR of scanned PDFs (RapidOCR) and sentence-embedding retrieval (all-MiniLM-L6-v2) of evidence sentences per extraction field, with a zero-shot validation-design suggestion combined with the stage 9 rules (validation design agreement with the reviewer: 9 of 14, against 8 of 14 for the rules alone). Runs in `run_all.py` when the packages of `review/requirements-ml.txt` are installed, and is skipped otherwise.
+- `review/s11_llm_extract.py` (optional, run on its own): extraction with a language model through the Claude Messages API, using a JSON schema and a verbatim supporting quote per field; every quote is checked against the PDF text, and responses are cached and requests logged.
+- `review/requirements-ml.txt` and `docs/ml_extraction_method.md`.
+- `review/new_iteration.py` also writes a copy of the Word manuscript with Track Changes switched on (`*_for_review.docx`) for the supervisors.
+- `review/s06_tex_outputs.py` writes the agreement of the automatic extraction with the manual extraction as macros (`\NExtrValAgree`, `\NExtrValN`, `\NExtrMetFound`, `\NExtrMetN`).
+
+### Changed
+- `review/s09_fulltext_extract.py`: the matching of works to PDFs is a separate function (`works_with_pdfs`), shared with stages 10 and 11; results unchanged.
+
 ## [0.23.0] - 2026-10-21
 
 ### Added

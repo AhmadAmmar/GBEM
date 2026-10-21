@@ -252,7 +252,8 @@ def value_matches(human_metric, human_value, metrics):
     return False
 
 
-def run(cfg, P):
+def works_with_pdfs(cfg, P):
+    """(doi, title, status, key, pdf) for every work of the review that has a PDF in the library."""
     idx = build_index(cfg, P)
     by_doi = idx[idx["doi_n"].fillna("").ne("")].drop_duplicates("doi_n").set_index("doi_n")["pdf"]
     dec = read_csv(P["out"] / "screening_decisions.csv")
@@ -262,7 +263,7 @@ def run(cfg, P):
         works.append((norm_doi(r.doi), str(r.title) if isinstance(r.title, str) else "", "focused (included)" if str(r.include_focused).upper() == "Y" else "focused candidate", r.key if isinstance(r.key, str) else ""))
     for r in dec[dec["decision"].isin(["Included (core)", "Review (umbrella)"])].itertuples():
         works.append((norm_doi(r.doi), str(r.title), "core study" if r.decision == "Included (core)" else "review article", ""))
-    seen, rows, evid = set(), [], []
+    seen, out = set(), []
     for d, title, status, key in works:
         k = d or norm_title(title)
         if not k or k in seen:
@@ -274,8 +275,15 @@ def run(cfg, P):
             if len(tn) > 25:
                 hit = idx[idx["head_n"].fillna("").str.contains(re.escape(tn), regex=True)]
                 pdf = hit["pdf"].iloc[0] if len(hit) else None
-        if pdf is None:
-            continue
+        if pdf is not None:
+            out.append((d, title, status, key, pdf))
+    return out
+
+
+def run(cfg, P):
+    sheet = read_csv(P["inputs"] / cfg.HUMAN["focused_extraction"])
+    rows, evid = [], []
+    for d, title, status, key, pdf in works_with_pdfs(cfg, P):
         n_pages, ev = extract(pdf)
         if not ev:
             continue
