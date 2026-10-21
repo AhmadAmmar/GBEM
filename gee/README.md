@@ -1,6 +1,6 @@
 # Earth Engine composites (Greater London, Greater Belfast)
 
-`gbem_composites.js` (version 2.0.0) builds the satellite and climate composites for the two study areas in Google
+`gbem_composites.js` (version 2.0.1) builds the satellite and climate composites for the two study areas in Google
 Earth Engine and exports them to Google Drive as GeoTIFFs. Earth Engine is used only for the steps that need the full
 archives: cloud masking and reduction over time. Everything else is done locally in Python from the exported rasters:
 - spectral and SAR indices;
@@ -25,7 +25,7 @@ All time windows of a product are bands of one image per area and year.
 | `modis` | MOD11A1 (Terra) and MYD11A1 (Aqua), QC masked (produced, error <= 2 K) | 1 km | terra/aqua day/night LST median (deg C); counts | int16, deg C x 100 |
 | `era5` | ERA5-Land daily aggregates | 1 km grid (native 0.1 deg) | t2m, d2m, daily max/min, u10, v10, precip_mm, ssrd_MJm2, HDD (15.5 deg C), CDD (22 deg C) | float32 |
 | `viirs` | VIIRS DNB monthly (VCMSLCFG), months with cloud-free coverage | 500 m | avg_rad median; `n` | float32 |
-| `static` | ESA WorldCover v200 (2021); Copernicus DEM GLO-30; GHSL building height 2018 and built volume 2020 | 10, 30, 100 m | class; elevation; height, volume | int16 / float32 |
+| `static` | ESA WorldCover v200 (2021); Copernicus DEM GLO-30 (2024 release); GHSL building height 2018 and built volume 2020 | 10, 30, 100 m | class; elevation; height, volume | int16 / float32 |
 
 The time windows are:
 - `annual`: January to December;

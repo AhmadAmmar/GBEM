@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.25.1] - 2026-10-21
+
+### Added
+- `gee/check_sources.py`: checks, through the Earth Engine Python API, that every dataset used by
+  `gbem_composites.js` exists and has the bands used. It also reports the number of scenes per study area and time
+  window of a year. The 2024 and 2022 checks passed. Exception: no Landsat scene covers Greater Belfast in the December
+  2022 cold-spell window, so that band is empty.
+
+### Changed
+- `gee/gbem_composites.js` 2.0.1: Copernicus DEM `COPERNICUS/DEM/GLO30` (deprecated) replaced by its successor
+  `COPERNICUS/DEM/GLO30_2024_1` (same `DEM` band).
+
 ## [0.25.0] - 2026-10-21
 
 ### Added

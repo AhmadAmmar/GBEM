@@ -1,6 +1,6 @@
 /*******************************************************************************
  GBEM - Earth Engine composites for Greater London and Greater Belfast
- Version 2.0.0 (21 October 2026)          https://github.com/AhmadAmmar/GBEM
+ Version 2.0.1 (21 October 2026)          https://github.com/AhmadAmmar/GBEM
 
  Purpose
    Builds the image composites that need the full satellite archives (cloud masking, temporal reduction) and exports
@@ -44,7 +44,7 @@
 *******************************************************************************/
 
 var CONFIG = {
-  version: 'v2_0_0',
+  version: 'v2_0_1',
   driveFolder: 'GBEM_GEE_v2',
   dryRun: true,                         // true: plan and preview only; false: create the export tasks
   areas: ['london', 'belfast'],
@@ -255,7 +255,7 @@ function viirs(area, year) {
 
 function staticLayers(area) {
   var wc = ee.ImageCollection('ESA/WorldCover/v200').first().select('Map').rename('worldcover_2021');
-  var dem = ee.ImageCollection('COPERNICUS/DEM/GLO30').filterBounds(rect(area, 'context')).select('DEM').mosaic()
+  var dem = ee.ImageCollection('COPERNICUS/DEM/GLO30_2024_1').filterBounds(rect(area, 'context')).select('DEM').mosaic()
     .rename('elevation_m');
   var ghsl = ee.Image('JRC/GHSL/P2023A/GHS_BUILT_H/2018').select('built_height').rename('built_height_2018_m')
     .addBands(ee.Image('JRC/GHSL/P2023A/GHS_BUILT_V/2020').select('built_volume_total').rename('built_volume_2020_m3'));
