@@ -1,6 +1,6 @@
 # Code inventory
 
-Generated 2026-10-14 by `tools/make_inventory.py`. Dates: last commit that changed the file, and file modification date.
+Generated 2026-10-21 by `tools/make_inventory.py`. Dates: last commit that changed the file, and file modification date.
 
 ## `./`
 
@@ -12,23 +12,25 @@ Generated 2026-10-14 by `tools/make_inventory.py`. Dates: last commit that chang
 
 | File | Purpose | Last commit | Modified | Status |
 |---|---|---|---|---|
-| `collect_fulltexts.py` | Collect the full texts of the review in one folder, with a record of where every file came from. | 2026-10-12 | 2026-10-14 | current |
+| `collect_fulltexts.py` | Collect the full texts of the review in one folder, with a record of where every file came from. | 2026-10-14 | 2026-10-14 | current |
 | `common.py` | Shared dictionaries and helpers (coding rules, normalisation, I/O). | 2026-10-08 | 2026-10-08 | current |
-| `config.py` | Paths and search metadata for the review pipeline. | 2026-10-12 | 2026-10-12 | current |
+| `config.py` | Paths and search metadata for the review pipeline. | 2026-10-14 | 2026-10-14 | current |
 | `fetch_open_access.py` | Retrieve open-access full texts of the focused-subset candidates. | 2026-10-12 | 2026-10-12 | current |
-| `local_settings.example.py` | Copy to local_settings.py (git-ignored) and edit for your machine. | 2026-10-12 | 2026-10-12 | current |
-| `new_iteration.py` | Create the next time-stamped iteration, run the pipeline, build PDF and Word. | 2026-10-09 | 2026-10-09 | current |
+| `fulltext_status.py` | Live checklist of the full texts still to retrieve, with their status in Zotero and in the review folder. | 2026-10-14 | 2026-10-14 | current |
+| `local_settings.example.py` | Copy to local_settings.py (git-ignored) and edit for your machine. | 2026-10-14 | 2026-10-14 | current |
+| `new_iteration.py` | Create the next time-stamped iteration, run the pipeline, build PDF and Word. | 2026-10-21 | 2026-10-21 | current |
 | `prior_literature.py` | Harvest and verify the literature used in the authors' previous work. | 2026-10-01 | 2026-10-01 | current |
-| `run_all.py` | Run the full review pipeline for one iteration folder. | 2026-10-09 | 2026-10-09 | current |
+| `run_all.py` | Run the full review pipeline for one iteration folder. | 2026-10-21 | 2026-10-21 | current |
 | `s00_ingest.py` | Stage 0 - read Scopus CSV and Web of Science exports, harmonise, de-duplicate. | 2026-10-08 | 2026-10-08 | current |
 | `s01_screen.py` | Stage 1 - screening and abstract-level coding. | 2026-10-08 | 2026-10-08 | current |
-| `s02_bibliometrics.py` | Stage 2 - bibliometric (science-mapping) analysis of the screened corpus. | 2026-09-30 | 2026-09-30 | current |
+| `s02_bibliometrics.py` | Stage 2 - bibliometric (science-mapping) analysis of the screened corpus. | 2026-10-14 | 2026-10-14 | current |
 | `s03_focused.py` | Stage 3 - focused subset: candidate list + full-text extraction sheet. | 2026-10-01 | 2026-10-01 | current |
 | `s04_fulltext.py` | Stage 4 - full-text support for extraction. | 2026-09-30 | 2026-09-30 | current |
-| `s05_figures.py` | Stage 5 - PRISMA diagram, schematic and synthesis figures. | 2026-10-09 | 2026-10-09 | current |
-| `s06_tex_outputs.py` | Stage 6 - write LaTeX fragments that the manuscript \input{}s. | 2026-10-09 | 2026-10-09 | current |
+| `s05_figures.py` | Stage 5 - PRISMA diagram, schematic and synthesis figures. | 2026-10-21 | 2026-10-21 | current |
+| `s06_tex_outputs.py` | Stage 6 - write LaTeX fragments that the manuscript \input{}s. | 2026-10-14 | 2026-10-14 | current |
 | `s07_maps_textmining.py` | Stage 7 - supplementary bibliometrics: word clouds, minimal maps, country profiles, collaboration, table workb | 2026-09-30 | 2026-09-30 | current |
 | `s08_triage.py` | Stage 8 - triage of the candidates for the focused subset. | 2026-10-09 | 2026-10-09 | current |
+| `s09_fulltext_extract.py` | Stage 9 - structured extraction from the full texts. | 2026-10-21 | 2026-10-21 | current |
 
 ## `scripts/data_processing/`
 

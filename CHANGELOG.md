@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.23.0] - 2026-10-21
+
+### Added
+- `review/s09_fulltext_extract.py` reads metric values from the results tables of each PDF (layout-preserving text: header cells, column alignment, row labels; mean ± deviation keeps the mean), in addition to the sentences. Agreement with the reviewer's extraction rose from 8 to 11 of 13 headline metric values.
+- `docs/fulltext_extraction_method.md`: description of the extraction method, its outputs and its agreement with the reviewer.
+
+### Fixed
+- Error metrics written as plain numbers; values written before the metric name; MAPE given as a percentage without the sign; sentences citing other work are no longer used for validation, metrics or sample size.
+
 ## [0.22.0] - 2026-10-21
 
 ### Added
