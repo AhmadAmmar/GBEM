@@ -1,6 +1,6 @@
 /*******************************************************************************
  GBEM - Earth Engine composites for Greater London and Greater Belfast
- Version 2.1.0 (21 October 2026)          https://github.com/AhmadAmmar/GBEM
+ Version 2.2.0 (21 October 2026)          https://github.com/AhmadAmmar/GBEM
 
  Purpose
    Builds the image composites that need the full satellite archives (cloud masking, temporal reduction) and exports
@@ -19,6 +19,7 @@
    era5     ERA5-Land air and dew-point temperature, wind components, precipitation, solar radiation, heating and
             cooling degree days (1 km grid, native 0.1 deg)
    viirs    VIIRS monthly night-time light radiance, annual median (500 m)
+   landsat_multi, modis_multi   the thermal composites over all years 2020-2025 together (batch b5)
 
  Time windows per year: annual (Jan-Dec), summer (Jun-Aug), winter (Dec of the previous year to Feb), plus the event
  windows in CONFIG.events (heatwave and cold spell) for the thermal and climate products.
@@ -51,7 +52,8 @@ var BATCHES = {
   b1: {years: [2024], products: ['static'].concat(YEARLY), folder: 'GBEM_GEE_v2'},    // exported 21 Oct 2026
   b2: {years: [2020, 2021], products: YEARLY, folder: 'GBEM_GEE_v2_b2'},
   b3: {years: [2022, 2023], products: YEARLY, folder: 'GBEM_GEE_v2_b3'},             // 2022 includes the event windows
-  b4: {years: [2025], products: YEARLY, folder: 'GBEM_GEE_v2_b4'}
+  b4: {years: [2025], products: YEARLY, folder: 'GBEM_GEE_v2_b4'},
+  b5: {years: [], products: ['landsat_multi', 'modis_multi'], folder: 'GBEM_GEE_v2_b5'}     // multi-year thermal, 2020-2025
 };
 var BATCH = 'b2';                       // choose the batch to run
 
@@ -202,8 +204,8 @@ function landsat(area, year) {
   return {img: ee.Image.cat(bands), nBands: bands.length * 2};
 }
 
-function modisLST(id, prefix, d, region) {
-  var col = ee.ImageCollection(id).filterBounds(region).filterDate(d[0], d[1]);
+function modisLST(id, prefix, d, region, preset) {
+  var col = preset || ee.ImageCollection(id).filterBounds(region).filterDate(d[0], d[1]);
   var q = function (band, qc) {
     return col.map(function (img) {
       var flags = img.select(qc);
@@ -288,7 +290,58 @@ var BUILD = {
   viirs: {fn: viirs, scale: 500, extent: 'context', type: 'float'}
 };
 
+// multi-year thermal composites: one image per area for all MULTI_YEARS together (seasons as bands). Single-year
+// thermal composites rank buildings very differently from year to year (they sample the few clear days of a year),
+// so the median over several years is the stable thermal feature.
+var MULTI_YEARS = [2020, 2025];                           // first and last year
+var SEASONS = {annual: null, summer: [6, 8], winter: [12, 2]};
+
+function seasonal(col, season) {
+  var s = SEASONS[season];
+  return s ? col.filter(ee.Filter.calendarRange(s[0], s[1], 'month')) : col;
+}
+
+function multiDates() {
+  return [MULTI_YEARS[0] + '-01-01', (MULTI_YEARS[1] + 1) + '-01-01'];
+}
+
+function landsatMulti(area) {
+  var region = rect(area, 'context'), d = multiDates(), bands = [];
+  var all = ee.ImageCollection('LANDSAT/LC08/C02/T1_L2').merge(ee.ImageCollection('LANDSAT/LC09/C02/T1_L2'))
+    .filterBounds(region).filterDate(d[0], d[1]).map(landsatLST);
+  Object.keys(SEASONS).forEach(function (s) {
+    var col = seasonal(all, s);
+    provenance(area, 'landsat_multi', MULTI_YEARS.join('-'), s, col, d);
+    bands.push(suffix(col.median().multiply(SCALE.degC).addBands(col.count().rename('n')), s));
+  });
+  return {img: ee.Image.cat(bands), nBands: bands.length * 2};
+}
+
+function modisMulti(area) {
+  var region = rect(area, 'context'), d = multiDates(), bands = [];
+  Object.keys(SEASONS).forEach(function (s) {
+    var parts = [['MODIS/061/MOD11A1', 'terra'], ['MODIS/061/MYD11A1', 'aqua']].map(function (p) {
+      var col = seasonal(ee.ImageCollection(p[0]).filterBounds(region).filterDate(d[0], d[1]), s);
+      provenance(area, 'modis_multi_' + p[1], MULTI_YEARS.join('-'), s, col, d);
+      return modisLST(p[0], p[1], d, region, col).img;
+    });
+    bands.push(suffix(parts[0].addBands(parts[1]), s));
+  });
+  return {img: ee.Image.cat(bands), nBands: bands.length * 8};
+}
+
+var MULTI = {
+  landsat_multi: {fn: landsatMulti, scale: 30, extent: 'context', type: 'int16'},
+  modis_multi: {fn: modisMulti, scale: 1000, extent: 'context', type: 'int16'}
+};
+
 CONFIG.areas.forEach(function (area) {
+  Object.keys(MULTI).forEach(function (p) {
+    if (CONFIG.products.indexOf(p) < 0) return;
+    var b = MULTI[p], r = b.fn(area);
+    addExport(r.img, area, ['gbem', CONFIG.version, area, p, b.scale + 'm', MULTI_YEARS.join('-')].join('_'),
+              b.scale, b.extent, b.type, r.nBands);
+  });
   if (CONFIG.products.indexOf('static') >= 0) {
     staticLayers(area).forEach(function (s) {
       addExport(s.img, area, ['gbem', CONFIG.version, area, s.name].join('_'), s.scale, s.extent, s.type, s.nBands);
@@ -304,7 +357,7 @@ CONFIG.areas.forEach(function (area) {
   });
 });
 
-var tag = CONFIG.areas.join('-') + '_' + CONFIG.years.join('-');
+var tag = CONFIG.areas.join('-') + '_' + (CONFIG.years.length ? CONFIG.years.join('-') : 'multi-' + MULTI_YEARS.join('-'));
 print('GBEM ' + CONFIG.version + (CONFIG.dryRun ? ' - DRY RUN (no tasks created)' : ' - export tasks created') +
       ': ' + PLAN.length + ' images', PLAN);
 var prov = ee.FeatureCollection(PROVENANCE.slice());   // a copy: the preview below adds to PROVENANCE

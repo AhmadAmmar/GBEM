@@ -36,6 +36,12 @@ PRODUCTS = {
              "stems": ["t2m", "d2m", "u10", "v10", "t2m_max_daily", "t2m_min_daily", "precip_mm", "ssrd_MJm2", "HDD", "CDD"], "div": {}},
     "viirs": {"scale": 500, "extent": "context", "stems": ["avg_rad", "n"], "div": {}},
 }
+MULTI = {   # multi-year thermal composites (batch b5): seasons as windows, all years 2020-2025 together
+    "landsat_multi": {"scale": 30, "extent": "context", "stems": ["LST", "n"], "div": {"LST": 100}, "windows": ["annual", "summer", "winter"]},
+    "modis_multi": {"scale": 1000, "extent": "context", "stems": PRODUCTS["modis"]["stems"], "div": PRODUCTS["modis"]["div"],
+                    "windows": ["annual", "summer", "winter"]},
+}
+MULTI_YEARS = "2020-2025"
 STATIC = {
     "worldcover_10m": {"scale": 10, "extent": "core", "bands": ["worldcover_2021"]},
     "dem_30m": {"scale": 30, "extent": "context", "bands": ["elevation_m"]},
@@ -58,6 +64,8 @@ def windows(product, year):
 def expected_bands(product, year=None):
     if product in STATIC:
         return STATIC[product]["bands"]
+    if product in MULTI:
+        return [f"{s}_{w}" for w in MULTI[product]["windows"] for s in MULTI[product]["stems"]]
     if product == "modis":       # per window: terra (4 bands) then aqua (4 bands)
         return [f"{s}_{w}" for w in windows(product, year) for s in PRODUCTS[product]["stems"]]
     return [f"{s}_{w}" for w in windows(product, year) for s in PRODUCTS[product]["stems"]]
@@ -65,18 +73,19 @@ def expected_bands(product, year=None):
 
 def parse_name(name):
     """gbem_v2_0_1_london_s2_10m_2024.tif -> dict(method, area, product, scale, year)."""
-    m = re.match(r"gbem_(v\d+_\d+_\d+)_(london|belfast)_(.+?)(?:_(\d{4}))?\.tif$", name)
+    m = re.match(r"gbem_(v\d+_\d+_\d+)_(london|belfast)_(.+?)(?:_(\d{4}(?:-\d{4})?))?\.tif$", name)
     if not m:
         return None
     method, area, rest, year = m.groups()
     if rest in STATIC:
         return {"method": method, "area": area, "product": rest, "scale": STATIC[rest]["scale"], "year": None}
     prod, scale = rest.rsplit("_", 1)
-    return {"method": method, "area": area, "product": prod, "scale": int(scale.rstrip("m")), "year": int(year)}
+    return {"method": method, "area": area, "product": prod, "scale": int(scale.rstrip("m")),
+            "year": year if "-" in str(year) else int(year)}
 
 
 def grid(area, product):
-    spec = STATIC.get(product) or PRODUCTS[product]
+    spec = STATIC.get(product) or MULTI.get(product) or PRODUCTS[product]
     x0, y0, x1, y1 = AREAS[area][spec["extent"]]
     s = spec["scale"]
     return {"epsg": AREAS[area]["epsg"], "transform": (s, 0.0, x0, 0.0, -s, y1), "width": (x1 - x0) // s, "height": (y1 - y0) // s}
@@ -95,7 +104,9 @@ def features_dir(area):
 
 
 def raw_path(area, product, year=None):
-    s = (STATIC.get(product) or PRODUCTS[product])["scale"]
+    s = (STATIC.get(product) or MULTI.get(product) or PRODUCTS[product])["scale"]
+    if product in MULTI:
+        year = MULTI_YEARS
     name = f"gbem_{METHOD}_{area}_{product}.tif" if product in STATIC else f"gbem_{METHOD}_{area}_{product}_{s}m_{year}.tif"
     return raw_dir(area) / name
 

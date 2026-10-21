@@ -67,7 +67,7 @@ def check(path):
             problems.append(f"size {r.width}x{r.height} != {g['width']}x{g['height']}")
         if list(r.descriptions) != exp:
             problems.append(f"bands {list(r.descriptions)} != {exp}")
-        div = (spec.PRODUCTS.get(meta["product"]) or {}).get("div", {})
+        div = (spec.PRODUCTS.get(meta["product"]) or spec.MULTI.get(meta["product"]) or {}).get("div", {})
         for i, name in enumerate(r.descriptions, 1):
             # full resolution, then every 4th pixel: reading at a reduced size would use the overviews, whose
             # resampling creates values that are not in the data (e.g. negative building heights at edges)

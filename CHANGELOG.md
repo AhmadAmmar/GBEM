@@ -2,6 +2,34 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.31.0] - 2026-10-21
+
+### Added
+- `epc/`, a documented certificate table per study area (objective 2):
+  - `certificates.py`: all certificates with a property location, with rules and flags (repeats, new dwellings,
+    UPRN match source, same-day duplicates).
+    - London: 3,880,812 certificates, 2008–2024. The 25 GB register is streamed through DuckDB.
+    - Greater Belfast: 58,865 certificates, 2020–2025.
+  - `footprints.py`: footprints from Overture Maps (release 2026-09-23.1). OpenStreetMap alone misses up to 70% of
+    the buildings in outer London boroughs. Belfast uses OSNI inside the council area and Overture outside it.
+  - `link.py`: UPRN point to footprint (inside, else nearest within 5 m). Unlinked: London 4.1%, Belfast 0.6%.
+  - `morphology.py`:
+    - shape, shared walls and adjacency;
+    - coverage, count and mean area at 100 m and 250 m;
+    - street distance and density;
+    - height, floors and volume where Overture gives them;
+    - the OSNI dwelling type.
+  - `README.md`: sources, rules, counts and checks.
+- `gee/gbem_composites.js` 2.2.0: batch b5, multi-year thermal composites (Landsat and MODIS, 2020–2025, by
+  season), because single-year thermal composites are unstable year to year.
+
+### Changed
+- `gee/extract.py` version 2:
+  - area-weighted footprint means (2 m sub-grid);
+  - neighbourhoods at 50, 100, 250 and 500 m, with standard deviation from 100 m;
+  - certificate mode (`--certificates`): each certificate gets the imagery of its inspection year.
+- `gee/spec.py` and `gee/ingest.py` know the multi-year products.
+
 ## [0.30.0] - 2026-10-21
 
 ### Added
