@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.33.1] - 2026-10-22
+
+### Changed
+- `epc/README.md`: counts from the October 2026 register, and the modelling tables. All years 2020–2025 are
+  extracted for both areas: London 1,501,415 certificates, Belfast 57,551. Multi-year thermal features are complete
+  for every certificate.
+
 ## [0.33.0] - 2026-10-21
 
 ### Added

@@ -23,7 +23,7 @@ only read.
 
 | | Greater London | Greater Belfast |
 |---|---|---|
-| Certificates | England and Wales domestic register with UPRN and coordinates, downloaded January 2025; the 33 London local authorities | Northern Ireland domestic register to January 2025, with Irish Grid coordinates from the UPRN |
+| Certificates | England and Wales domestic register, files dated 13 October 2026 (`domestic-csv.zip`, 2008–2026); the 33 London local authorities; coordinates from OS Open UPRN 2025-07 (the January 2025 snapshot can be rebuilt with `--source ew2025`) | Northern Ireland domestic register to January 2025, with Irish Grid coordinates from the UPRN |
 | Coordinates | OS Open UPRN location of the certificate's UPRN (in a sample of 45,000, 99.2% within 1 m) | UPRN location (OSNI pointer) |
 | Footprints | Overture Maps buildings, release 2026-09-23.1 (OpenStreetMap, plus Microsoft machine-learned footprints) | OSNI building footprints inside Belfast City Council area; Overture outside it |
 | Roads | OpenStreetMap, Geofabrik extract 2026-10-20 | OpenStreetMap, Geofabrik extract 2026-10-20 |
@@ -61,10 +61,28 @@ unlinked share is 4.1% (Harrow and Hillingdon about 20%). In Belfast it is 0.6%.
 
 | | Greater London | Greater Belfast |
 |---|---|---|
-| Certificates / properties (UPRN) | 3,880,812 / 2,681,882 | 57,567 / 54,591 |
-| Years | 2008–2024 (2024 partial: register downloaded January 2025) | 2020–January 2025 |
+| Certificates / properties (UPRN) | 4,444,008 / 2,890,924 | 57,567 / 54,591 |
+| Years | 2007–2026 (2026 to mid-October) | 2020–January 2025 |
 | Footprints | 2,141,314 (956,508 with height) | 417,229 (190,709 OSNI) |
-| UPRNs inside a footprint / nearest within 5 m / unlinked | 92.7% / 3.2% / 4.1% | 98.8% / 0.6% / 0.6% |
+| UPRNs inside a footprint / nearest within 5 m / unlinked | 89.5% / 6.0% / 4.6% | 98.8% / 0.6% / 0.6% |
+
+## Modelling tables (21–22 October 2026)
+
+One table per area and imagery year in `data/<area>/model/`, one row per certificate inspected that year. There are
+about 760 columns (834 in 2022, which has the heatwave and cold-spell windows), with feature groups listed in
+`data_dictionary.csv`. No certificate id is repeated.
+
+| Year | London | Belfast |
+|---|---|---|
+| 2020 | 238,566 | 4,362 |
+| 2021 | 253,423 | 12,802 |
+| 2022 | 271,005 | 13,272 |
+| 2023 | 248,615 | 12,851 |
+| 2024 | 248,544 | 13,301 |
+| 2025 | 241,262 | 963 (register ends January 2025) |
+
+The multi-year thermal features (`thermal_multiyear`) are complete for every certificate. Single-year Landsat winter
+LST is missing for up to 30% (London 2024).
 
 ## Morphology (`morphology.py`)
 
