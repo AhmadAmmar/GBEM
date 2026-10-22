@@ -2,6 +2,29 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.35.0] - 2026-10-22
+
+### Added
+- `epc/lidar_ni.py`: building height and roof form for Greater Belfast from the OpenDataNI LiDAR: the Belfast City 2006
+  survey and 17 River Basin surveys, 2007–2014, read directly from their zips.
+  - Pairing:
+    - Surface and terrain tiles are paired by location, because file names differ between surveys.
+    - `.grd` files are ESRI ASCII grids.
+    - Point-cloud surfaces (Ballygowan, Carryduff) are gridded by the highest return per cell.
+    - Damaged tiles are skipped and logged: 99, mostly truncated Ballyclare 2009 tiles and the empty Dunmurry 2007
+      surface tiles.
+  - Features per footprint, from the most recent survey covering at least 80% of it:
+    - height median and 90th percentile;
+    - roof slope;
+    - south-facing and flat roof shares;
+    - `built_after_survey` when the median height is under 2 m.
+  - Results:
+    - 303,962 of 417,229 footprints have a value; 80% of Belfast properties.
+    - Median heights by property type: bungalows 4.0 m, houses 6.5 m, flats 8.5 m.
+    - Median roof slope is about 35°.
+  - Lisburn and Newtownabbey are published with terrain models only, so they have no heights.
+- `epc/assemble.py`: LiDAR features as the group `lidar`.
+
 ## [0.34.0] - 2026-10-22
 
 ### Added

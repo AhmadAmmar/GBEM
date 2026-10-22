@@ -29,7 +29,7 @@ GROUPS = {"s2_": "sentinel2", "s1_": "sentinel1", "landsat_": "thermal_landsat",
           "landsatmulti_": "thermal_multiyear", "modismulti_": "thermal_multiyear",
           "era5_": "climate", "viirs_": "night_lights", "ghsl_": "built_volume_ghsl", "lc_": "landcover",
           "terrain_": "terrain", "worldcover_": "landcover", "morph_": "morphology", "epc_": "certificate_attributes",
-          "label_": "label", "id_": "identifier", "flag_": "flag", "census_": "census_context"}
+          "label_": "label", "id_": "identifier", "flag_": "flag", "census_": "census_context", "lidar_": "lidar"}
 STREET = {"road_dist_m", "major_road_dist_m", "road_density_250"}
 
 
@@ -60,6 +60,9 @@ def main():
             df = base.merge(f.rename(columns={"rec_id": "id_cert"}), on="id_cert", how="left")
             df = df.merge(morph, left_on="id_fp", right_on="fp_id", how="left").drop(columns=["fp_id"])
             df = df.merge(pos.drop_duplicates("id_cert"), on="id_cert", how="left")
+            lid = e / "lidar_fp.parquet"                             # LiDAR building height and roof form (Belfast; lidar_ni.py)
+            if lid.exists():
+                df = df.merge(pd.read_parquet(lid), left_on="id_fp", right_on="fp_id", how="left").drop(columns=["fp_id"])
             cen = e / "census_cert.parquet"                          # Census 2021 ward context (Belfast; census_ni.py)
             if cen.exists():
                 cc = pd.read_parquet(cen).rename(columns={"cert_id": "id_cert"})
