@@ -29,7 +29,7 @@ GROUPS = {"s2_": "sentinel2", "s1_": "sentinel1", "landsat_": "thermal_landsat",
           "landsatmulti_": "thermal_multiyear", "modismulti_": "thermal_multiyear",
           "era5_": "climate", "viirs_": "night_lights", "ghsl_": "built_volume_ghsl", "lc_": "landcover",
           "terrain_": "terrain", "worldcover_": "landcover", "morph_": "morphology", "epc_": "certificate_attributes",
-          "label_": "label", "id_": "identifier", "flag_": "flag"}
+          "label_": "label", "id_": "identifier", "flag_": "flag", "census_": "census_context"}
 STREET = {"road_dist_m", "major_road_dist_m", "road_density_250"}
 
 
@@ -60,6 +60,11 @@ def main():
             df = base.merge(f.rename(columns={"rec_id": "id_cert"}), on="id_cert", how="left")
             df = df.merge(morph, left_on="id_fp", right_on="fp_id", how="left").drop(columns=["fp_id"])
             df = df.merge(pos.drop_duplicates("id_cert"), on="id_cert", how="left")
+            cen = e / "census_cert.parquet"                          # Census 2021 ward context (Belfast; census_ni.py)
+            if cen.exists():
+                cc = pd.read_parquet(cen).rename(columns={"cert_id": "id_cert"})
+                cc["id_cert"] = cc["id_cert"].astype(str)
+                df = df.merge(cc.drop_duplicates("id_cert"), on="id_cert", how="left")
             df.to_parquet(keep(out_dir / f"dataset_{y}.parquet"), index=False)
             print(f"{area} {y}: {len(df):,} certificates x {df.shape[1]} columns -> {out_dir / f'dataset_{y}.parquet'}")
         cols = df.columns

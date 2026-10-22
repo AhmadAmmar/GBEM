@@ -2,6 +2,25 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.34.0] - 2026-10-22
+
+### Added
+- `epc/census_ni.py`: Census 2021 ward context for Greater Belfast certificates (NISRA MS-E06, MS-E11, MS-E13, MS-E15;
+  OSNI ward boundaries 2012, all 462 codes match). It gives shares of accommodation type, central heating fuel,
+  renewable systems and tenure. The ward sheets list each ward twice (counts, then percentages); the counts are
+  used. `epc/assemble.py` adds the shares as the feature group `census_context`. In 2024, the SAP score's rank
+  correlation is +0.20 with the mains-gas share and −0.20 with the oil share.
+- `epc/get_ni_lidar.py`: downloads the OpenDataNI River Basin LiDAR surveys (DTM and DSM, OGL) that overlap Greater
+  Belfast. There are 17 surveys from 2007 to 2014, chosen from the extents index and matched to files by name.
+  Edenderry has no file in the package.
+
+### Data (not in the repository)
+- `data/belfast/lidar/opendatani_belfast_city_2006/`: Belfast City LiDAR 2006 (0.5 m DTM and DSM, four zones, OGL).
+- `data/belfast/census2021_nisra/`: Census 2021 housing tables (MS-E01 to MS-E19) and CT0062 and CT0082.
+- `data/belfast/boundaries_osni/`: ward boundaries 2012.
+- `data/belfast/sources/2026-10-22/`: Finance NI EIR response DOF/2026-0254. All NI EPC data, 2008 to March 2026, is
+  public in a Box folder that has to be downloaded in a browser.
+
 ## [0.33.1] - 2026-10-22
 
 ### Changed
