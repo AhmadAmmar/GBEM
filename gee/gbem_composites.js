@@ -1,6 +1,6 @@
 /*******************************************************************************
  GBEM - Earth Engine composites for Greater London and Greater Belfast
- Version 2.2.2 (21 October 2026)          https://github.com/AhmadAmmar/GBEM
+ Version 2.3.0 (23 October 2026)          https://github.com/AhmadAmmar/GBEM
 
  Purpose
    Builds the image composites that need the full satellite archives (cloud masking, temporal reduction) and exports
@@ -20,6 +20,7 @@
             cooling degree days (1 km grid, native 0.1 deg)
    viirs    VIIRS monthly night-time light radiance, annual median (500 m)
    landsat_multi, modis_multi   the thermal composites over all years 2020-2025 together (batch b5)
+   lidar_ea  Environment Agency LiDAR composite (1 m): building height and roof form at 2 m, London (batch b6)
 
  Time windows per year: annual (Jan-Dec), summer (Jun-Aug), winter (Dec of the previous year to Feb), plus the event
  windows in CONFIG.events (heatwave and cold spell) for the thermal and climate products.
@@ -39,7 +40,7 @@
  How to run
    1. Paste into the Earth Engine Code Editor and press Run with CONFIG.dryRun = true: the console lists the planned
       exports with an upper bound of their size, and preview layers are added to the map.
-   2. Choose the batch (BATCH = b1 ... b4, see BATCHES), set CONFIG.dryRun = false, press Run, and
+   2. Choose the batch (BATCH = b1 ... b6, see BATCHES), set CONFIG.dryRun = false, press Run, and
       start the tasks in the Tasks tab. Exports go to the Drive folder CONFIG.driveFolder.
    3. A provenance table (number of input scenes per composite and window) is exported with each batch.
 *******************************************************************************/
@@ -55,7 +56,8 @@ var BATCHES = {
   b4: {years: [2025], products: YEARLY, folder: 'GBEM_GEE_v2_b4'},
   b5: {years: [], products: ['landsat_multi', 'modis_multi'], folder: 'GBEM_GEE_v2_b5'},     // multi-year thermal, 2020-2025
   // rerun of the one failed b3 export (Belfast Landsat 2022: no scene in the cold-spell window; fixed in 2.2.2)
-  b3fix: {years: [2022], products: ['landsat'], folder: 'GBEM_GEE_v2_b3', areas: ['belfast']}
+  b3fix: {years: [2022], products: ['landsat'], folder: 'GBEM_GEE_v2_b3', areas: ['belfast']},
+  b6: {years: [], products: ['lidar_ea'], folder: 'GBEM_GEE_v2_b6', areas: ['london']}         // EA LiDAR heights and roofs, 2 m
 };
 var BATCH = 'b2';                       // choose the batch to run
 
@@ -344,6 +346,28 @@ function modisMulti(area) {
   return {img: ee.Image.cat(bands), nBands: bands.length * 8};
 }
 
+// Environment Agency LiDAR composite (England, 1 m; UK/EA/ENGLAND_1M_TERRAIN/2022), London only (batch b6): building
+// height and roof form computed at 1 m, then averaged to 2 m. Pixels lower than 1.5 m above the terrain are masked
+// (ground, cars, low walls), so the file holds buildings and trees; the local step keeps the pixels in footprints.
+//   height_dm      mean first-return surface minus terrain, decimetres     height_max_dm  maximum in the 2 m cell
+//   slope_ddeg     mean slope of the surface, 0.1 degree                   south_pct      % of 1 m cells with slope >= 15
+//   flat_pct       % of 1 m cells with slope < 10 degrees                                 facing 135-225 degrees
+function lidarEA(area) {
+  var t = ee.Image('UK/EA/ENGLAND_1M_TERRAIN/2022');
+  var dsm = t.select('dsm_first'), ndsm = dsm.subtract(t.select('dtm'));
+  var slope = ee.Terrain.slope(dsm), aspect = ee.Terrain.aspect(dsm);
+  var bld = ndsm.gte(1.5);
+  var proj = ee.Projection(AREAS[area].crs).atScale(2);
+  var one = ee.Image.cat([ndsm.multiply(10).rename('height_dm'), slope.multiply(10).rename('slope_ddeg'),
+    slope.gte(15).and(aspect.gte(135)).and(aspect.lte(225)).multiply(100).rename('south_pct'),
+    slope.lt(10).multiply(100).rename('flat_pct')]).updateMask(bld);
+  var mean2 = one.reduceResolution({reducer: ee.Reducer.mean(), maxPixels: 16}).reproject(proj);
+  var max2 = ndsm.multiply(10).updateMask(bld).reduceResolution({reducer: ee.Reducer.max(), maxPixels: 16})
+    .reproject(proj).rename('height_max_dm');
+  var img = mean2.select('height_dm').addBands(max2).addBands(mean2.select(['slope_ddeg', 'south_pct', 'flat_pct']));
+  return {img: img, nBands: 5};
+}
+
 var MULTI = {
   landsat_multi: {fn: landsatMulti, scale: 30, extent: 'context', type: 'int16'},
   modis_multi: {fn: modisMulti, scale: 1000, extent: 'context', type: 'int16'}
@@ -356,6 +380,10 @@ CONFIG.areas.forEach(function (area) {
     addExport(r.img, area, ['gbem', CONFIG.version, area, p, b.scale + 'm', MULTI_YEARS.join('-')].join('_'),
               b.scale, b.extent, b.type, r.nBands);
   });
+  if (CONFIG.products.indexOf('lidar_ea') >= 0 && area === 'london') {
+    var le = lidarEA(area);
+    addExport(le.img, area, ['gbem', CONFIG.version, area, 'lidar_ea_2m'].join('_'), 2, 'core', 'int16', le.nBands);
+  }
   if (CONFIG.products.indexOf('static') >= 0) {
     staticLayers(area).forEach(function (s) {
       addExport(s.img, area, ['gbem', CONFIG.version, area, s.name].join('_'), s.scale, s.extent, s.type, s.nBands);
@@ -371,7 +399,7 @@ CONFIG.areas.forEach(function (area) {
   });
 });
 
-var tag = CONFIG.areas.join('-') + '_' + (CONFIG.years.length ? CONFIG.years.join('-') : 'multi-' + MULTI_YEARS.join('-'));
+var tag = CONFIG.areas.join('-') + '_' + (CONFIG.years.length ? CONFIG.years.join('-') : BATCH);
 print('GBEM ' + CONFIG.version + (CONFIG.dryRun ? ' - DRY RUN (no tasks created)' : ' - export tasks created') +
       ': ' + PLAN.length + ' images', PLAN);
 var prov = ee.FeatureCollection(PROVENANCE.slice());   // a copy: the preview below adds to PROVENANCE

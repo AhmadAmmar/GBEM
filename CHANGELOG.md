@@ -2,6 +2,37 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.36.0] - 2026-10-23
+
+### Added
+- `gee/gbem_composites.js` 2.3.0: batch `b6`, London building height and roof form from the Environment Agency LiDAR
+  composite (`UK/EA/ENGLAND_1M_TERRAIN/2022`), aggregated from 1 m to 2 m over the London core extent.
+  - Normalised surface height (first-return surface minus terrain), with roof slope and aspect.
+  - Only building-height pixels (at least 1.5 m) are kept.
+  - Bands:
+    - `height_dm` and `height_max_dm`: mean and maximum height, in decimetres;
+    - `slope_ddeg`: slope, in tenths of a degree;
+    - `south_pct` and `flat_pct`: south-facing and flat shares.
+  - Large enough that Earth Engine splits it into tiles.
+- `gee/spec.py` and `gee/ingest.py`: the static product `lidar_ea_2m`.
+  - Tiled exports are recognised (`<name>-<row>-<col>.tif`).
+  - Each tile is checked for pixel size and alignment with the area grid.
+- `epc/certificates.py`: `--ni-source ni2026` (now the default), the Northern Ireland register to 31 March 2026 from
+  Finance NI, read from its zip.
+  - UPRNs are normalised and joined to the OSNI address points.
+  - The earlier January 2025 master is still available as `ni2025`.
+  - The new file contains every certificate of the earlier master unchanged: 73,251 certificates against 57,567.
+  - 2025 now has 13,027 certificates (was 963); 2026 has 3,583.
+- `models/reproduce_old.py`: reproduction of the earlier random forest set-up on the current tables, in four variants:
+  - R1: the earlier random 70/30 split;
+  - R2: with certificate attributes added;
+  - R3: split by location;
+  - R4: about 1 km spatial blocks.
+
+  Neither the reported accuracies (about 75% London, 70% Belfast) nor anything close is reached:
+  - R1 accuracy is 0.54 in London and 0.51 in Belfast.
+  - With spatial blocking (R4), macro-F1 falls to about 0.17–0.18.
+
 ## [0.35.0] - 2026-10-22
 
 ### Added
