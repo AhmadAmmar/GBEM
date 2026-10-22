@@ -8,8 +8,10 @@ Sources (snapshots, recorded in the output log):
            without extracting it; coordinates are added from OS Open UPRN (2025-07) by UPRN.
            ew2025: the January 2025 snapshot with UPRN and coordinates (merged_certificates_with_latlon.csv), whose
            coordinates are the OS Open UPRN locations (checked 21 Oct 2026: 99.2% within 1 m).
-  Belfast  Northern Ireland domestic EPC register to January 2025 with Irish Grid coordinates from the UPRN
-           (NI_Domestic_Master_to_01_2025_with_XY_v2.csv); certificates inside the Greater Belfast extent.
+  Belfast  ni2026 (default): Northern Ireland domestic EPC register to 31 March 2026 (Finance NI, released under EIR
+           DOF/2026-0254; read from the zip in place), Irish Grid coordinates joined by UPRN from
+           uprn_union_with_xy_v2.csv. ni2025: the January 2025 file with coordinates
+           (NI_Domestic_Master_to_01_2025_with_XY_v2.csv). Certificates inside the Greater Belfast extent.
            Certificates before 2020 have no UPRN and therefore no location.
 
 Rules (nothing is dropped silently; every rule is counted in the log):
@@ -24,7 +26,7 @@ Rules (nothing is dropped silently; every rule is counted in the log):
   the modelling sets are drawn, not here.
 Output: data/<area>/epc/certificates.parquet and certificates_log.json
 """
-import argparse, datetime, json, pathlib
+import argparse, datetime, json, pathlib, re
 import duckdb
 import numpy as np
 import pandas as pd
@@ -114,6 +116,44 @@ def belfast():
     return flags(d, log)
 
 
+NI_UPRN_XY = DATA / "belfast/uprn/BELFS_20250829_F/uprn_union_with_xy_v2.csv"
+
+
+def canonical_uprn(v):
+    """Digits only, without leading zeros ('UPRN-000185148385' -> '185148385'), as the earlier coordinate join."""
+    s = re.sub(r"\D", "", str(v)) if pd.notna(v) else ""
+    return str(int(s)) if s else None
+
+
+def belfast_2026(zip_path):
+    """Northern Ireland register to 31 March 2026 (Finance NI, released under EIR DOF/2026-0254; zip read in place).
+    Coordinates are joined by UPRN from the same UPRN list as the January 2025 file (uprn_union_with_xy_v2.csv)."""
+    import zipfile
+    zf = zipfile.ZipFile(zip_path)
+    member = next(n for n in zf.namelist() if n.endswith("NI_Domestic_Master_to_31_03_2026.csv"))
+    d = pd.read_csv(zf.open(member), dtype=str, low_memory=False)
+    log = {"source": f"{pathlib.Path(zip_path).name}/{member}",
+           "snapshot": "Northern Ireland register to 31 March 2026 (Finance NI, EIR DOF/2026-0254)", "rows_in_source": len(d)}
+    d["UPRN_key"] = d["UPRN"].map(canonical_uprn)
+    xy = pd.read_csv(NI_UPRN_XY, dtype=str, low_memory=False)
+    xy["UPRN_key"] = xy["UPRN_key"].map(canonical_uprn)
+    xy = xy.dropna(subset=["UPRN_key", "X_COR", "Y_COR"]).drop_duplicates("UPRN_key")[["UPRN_key", "X_COR", "Y_COR", "xy_source"]]
+    d = d.merge(xy, on="UPRN_key", how="left")
+    log["no_uprn"] = int(d["UPRN_key"].isna().sum())
+    log["uprn_not_in_coordinate_list"] = int((d["UPRN_key"].notna() & d["X_COR"].isna()).sum())
+    n0 = len(d)
+    d = d[d["X_COR"].notna() & d["Y_COR"].notna()]; log["dropped_no_location"] = n0 - len(d)
+    d["x"], d["y"] = d["X_COR"].astype(float), d["Y_COR"].astype(float)
+    x0, y0, x1, y1 = BELFAST_EXTENT
+    n0 = len(d)
+    d = d[(d.x >= x0) & (d.x < x1) & (d.y >= y0) & (d.y < y1)]; log["dropped_outside_area"] = n0 - len(d)
+    d["UPRN"] = d["UPRN_key"]
+    d["cert_id"] = d["ASSESSMENT_ID"]
+    d["inspection_date"] = pd.to_datetime(d["INSPECTION_DATE"], errors="coerce", dayfirst=True)
+    d["uprn_source"] = d["xy_source"]
+    return flags(d, log)
+
+
 def stage_ew2026(zip_path, stage):
     """Stream the London rows of every certificates-<year>.csv inside the register zip to one Parquet file.
 
@@ -189,12 +229,15 @@ def main():
     ap.add_argument("--source", choices=["ew2026", "ew2025"], default="ew2026",
                     help="London: register of 13 Oct 2026 (domestic-csv.zip) or the January 2025 snapshot")
     ap.add_argument("--ew-zip", default=r"C:\Users\Owner\Downloads\domestic-csv.zip")
+    ap.add_argument("--ni-source", choices=["ni2026", "ni2025"], default="ni2026",
+                    help="Belfast: register to 31 March 2026 (Finance NI zip) or the January 2025 file with coordinates")
+    ap.add_argument("--ni-zip", default=r"C:\Users\Owner\Downloads\EPC data up to 31 March 2026.zip")
     a = ap.parse_args()
     for area in a.areas:
         if area == "london":
             d, log = london_2026(a.ew_zip) if a.source == "ew2026" else london()
         else:
-            d, log = belfast()
+            d, log = belfast_2026(a.ni_zip) if a.ni_source == "ni2026" else belfast()
         out = DATA / area / "epc"; out.mkdir(parents=True, exist_ok=True)
         log["run"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
         d.to_parquet(keep(out / "certificates.parquet"), index=False)

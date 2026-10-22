@@ -46,6 +46,8 @@ STATIC = {
     "worldcover_10m": {"scale": 10, "extent": "core", "bands": ["worldcover_2021"]},
     "dem_30m": {"scale": 30, "extent": "context", "bands": ["elevation_m"]},
     "ghsl_100m": {"scale": 100, "extent": "context", "bands": ["built_height_2018_m", "built_volume_2020_m3"]},
+    # Environment Agency LiDAR composite, London (batch b6); exported in tiles because of its size
+    "lidar_ea_2m": {"scale": 2, "extent": "core", "bands": ["height_dm", "height_max_dm", "slope_ddeg", "south_pct", "flat_pct"]},
 }
 
 # plausible physical ranges, for the ingest check (values outside are reported, not changed)
@@ -73,12 +75,17 @@ def expected_bands(product, year=None):
 
 def parse_name(name):
     """gbem_v2_0_1_london_s2_10m_2024.tif -> dict(method, area, product, scale, year)."""
+    # large exports are split by Earth Engine into tiles named <name>-<row offset>-<column offset>.tif
+    tile = re.search(r"-(\d{10})-(\d{10})\.tif$", name)
+    if tile:
+        name = name[:tile.start()] + ".tif"
     m = re.match(r"gbem_(v\d+_\d+_\d+)_(london|belfast)_(.+?)(?:_(\d{4}(?:-\d{4})?))?\.tif$", name)
     if not m:
         return None
     method, area, rest, year = m.groups()
     if rest in STATIC:
-        return {"method": method, "area": area, "product": rest, "scale": STATIC[rest]["scale"], "year": None}
+        return {"method": method, "area": area, "product": rest, "scale": STATIC[rest]["scale"], "year": None,
+                "tile": tile.group(0)[1:-4] if tile else None}
     prod, scale = rest.rsplit("_", 1)
     return {"method": method, "area": area, "product": prod, "scale": int(scale.rstrip("m")),
             "year": year if "-" in str(year) else int(year)}

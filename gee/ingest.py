@@ -84,10 +84,17 @@ def check(path):
     with rasterio.open(path) as r:
         if r.crs.to_epsg() != g["epsg"]:
             problems.append(f"CRS {r.crs.to_epsg()} != {g['epsg']}")
-        if tuple(round(v, 6) for v in r.transform[:6]) != g["transform"]:
-            problems.append(f"transform {tuple(r.transform[:6])} != {g['transform']}")
-        if (r.width, r.height) != (g["width"], g["height"]):
-            problems.append(f"size {r.width}x{r.height} != {g['width']}x{g['height']}")
+        if meta.get("tile"):
+            # one tile of a split export: pixel size and alignment with the area grid, not the full extent
+            t, gt = r.transform, g["transform"]
+            off_x, off_y = (t.c - gt[2]) / gt[0], (gt[5] - t.f) / gt[0]
+            if round(t.a, 6) != gt[0] or round(t.e, 6) != gt[4] or off_x % 1 or off_y % 1:
+                problems.append(f"tile grid {tuple(t[:6])} not aligned with {gt}")
+        else:
+            if tuple(round(v, 6) for v in r.transform[:6]) != g["transform"]:
+                problems.append(f"transform {tuple(r.transform[:6])} != {g['transform']}")
+            if (r.width, r.height) != (g["width"], g["height"]):
+                problems.append(f"size {r.width}x{r.height} != {g['width']}x{g['height']}")
         if list(r.descriptions) != exp:
             problems.append(f"bands {list(r.descriptions)} != {exp}")
         div = (spec.PRODUCTS.get(meta["product"]) or spec.MULTI.get(meta["product"]) or {}).get("div", {})

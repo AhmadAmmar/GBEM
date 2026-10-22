@@ -27,6 +27,7 @@ uk-lidar-program
 Thumbs.db   
 # Building-level outputs that identify individual properties (restricted; see DATA.md)
 maps/*.html
+maps/**/*.html
 *.geojson
 !scripts/data_processing/data_iwt_assets/**/*.geojson
 *.gpkg
