@@ -1,6 +1,6 @@
 /*******************************************************************************
  GBEM - Earth Engine composites for Greater London and Greater Belfast
- Version 2.3.0 (23 October 2026)          https://github.com/AhmadAmmar/GBEM
+ Version 2.4.0 (23 October 2026)         https://github.com/AhmadAmmar/GBEM
 
  Purpose
    Builds the image composites that need the full satellite archives (cloud masking, temporal reduction) and exports
@@ -21,6 +21,7 @@
    viirs    VIIRS monthly night-time light radiance, annual median (500 m)
    landsat_multi, modis_multi   the thermal composites over all years 2020-2025 together (batch b5)
    lidar_ea  Environment Agency LiDAR composite (1 m): building height and roof form at 2 m, London (batch b6)
+   embed     pretrained annual satellite embeddings (Google, 64 dimensions, 10 m), int16 x 10000 (batch b7)
 
  Time windows per year: annual (Jan-Dec), summer (Jun-Aug), winter (Dec of the previous year to Feb), plus the event
  windows in CONFIG.events (heatwave and cold spell) for the thermal and climate products.
@@ -57,7 +58,8 @@ var BATCHES = {
   b5: {years: [], products: ['landsat_multi', 'modis_multi'], folder: 'GBEM_GEE_v2_b5'},     // multi-year thermal, 2020-2025
   // rerun of the one failed b3 export (Belfast Landsat 2022: no scene in the cold-spell window; fixed in 2.2.2)
   b3fix: {years: [2022], products: ['landsat'], folder: 'GBEM_GEE_v2_b3', areas: ['belfast']},
-  b6: {years: [], products: ['lidar_ea'], folder: 'GBEM_GEE_v2_b6', areas: ['london']}         // EA LiDAR heights and roofs, 2 m
+  b6: {years: [], products: ['lidar_ea'], folder: 'GBEM_GEE_v2_b6', areas: ['london']},        // EA LiDAR heights and roofs, 2 m
+  b7: {years: [2024], products: ['embed'], folder: 'GBEM_GEE_v2_b7'}                          // pretrained annual embeddings
 };
 var BATCH = 'b2';                       // choose the batch to run
 
@@ -368,6 +370,16 @@ function lidarEA(area) {
   return {img: img, nBands: 5};
 }
 
+// Pretrained annual satellite embeddings (GOOGLE/SATELLITE_EMBEDDING/V1/ANNUAL, 64 dimensions at 10 m, unit-length
+// vectors learnt from multi-sensor time series): exported as int16 x 10000 (batch b7), to compare with the engineered
+// features under the same validation. Band names A00_annual ... A63_annual.
+function embedding(area, year) {
+  var c = ee.ImageCollection('GOOGLE/SATELLITE_EMBEDDING/V1/ANNUAL')
+    .filterDate(year + '-01-01', (year + 1) + '-01-01').filterBounds(rect(area, 'core'));
+  var img = c.mosaic().multiply(10000);
+  return suffix(img, 'annual');
+}
+
 var MULTI = {
   landsat_multi: {fn: landsatMulti, scale: 30, extent: 'context', type: 'int16'},
   modis_multi: {fn: modisMulti, scale: 1000, extent: 'context', type: 'int16'}
@@ -380,6 +392,11 @@ CONFIG.areas.forEach(function (area) {
     addExport(r.img, area, ['gbem', CONFIG.version, area, p, b.scale + 'm', MULTI_YEARS.join('-')].join('_'),
               b.scale, b.extent, b.type, r.nBands);
   });
+  if (CONFIG.products.indexOf('embed') >= 0) {
+    CONFIG.years.forEach(function (year) {
+      addExport(embedding(area, year), area, ['gbem', CONFIG.version, area, 'embed', '10m', year].join('_'), 10, 'core', 'int16', 64);
+    });
+  }
   if (CONFIG.products.indexOf('lidar_ea') >= 0 && area === 'london') {
     var le = lidarEA(area);
     addExport(le.img, area, ['gbem', CONFIG.version, area, 'lidar_ea_2m'].join('_'), 2, 'core', 'int16', le.nBands);

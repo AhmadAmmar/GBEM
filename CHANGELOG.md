@@ -2,6 +2,49 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.39.0] - 2026-10-23
+
+### Added
+- Deprivation and vulnerability:
+  - `geo/get_deprivation.py`: IoD 2025 for London LSOAs and NIMDM 2017 for Belfast Small Areas.
+  - `analysis/vulnerability.py`: SAP against deprivation, plus vulnerable areas (low SAP and high deprivation).
+  - In both cities the most deprived areas have the most efficient homes, mostly social-rented flats.
+- Ground truth:
+  - `analysis/ground_truth.py`: test-retest agreement of repeat certificates (label-noise ceiling, after Crawley et al. 2019).
+  - `geo/get_need.py`, `analysis/need_check.py`: NEED 2024 metered gas by band and by measure.
+- `epc/physics.py`, `analysis/physics_check.py`: steady-state envelope geometry and heat loss (HLC, HLP, demand per m²)
+  from footprints and LiDAR heights. Feature group `physics`.
+- Calibration and applicability:
+  - `models/transfer_calibrate.py`: prior EM, bias correction and pooled local labels for transfer.
+  - `models/calibrate_probs.py`: ECE and temperature scaling.
+  - `models/aoa.py`: area of applicability (Meyer and Pebesma 2021).
+- `analysis/scale_eval.py`: skill by aggregation scale (home to neighbourhood).
+- `docs/doi_bib.py`: Crossref-verified BibTeX, with the references also recorded in Zotero.
+- `viz/slide_figs.py`, `viz/paper_figs.py`: publication and slide figures.
+- `analysis/heatpump_readiness.py`: heat-loss-parameter bands (< 2 ready, ≥ 3 fabric first). London heat pumps:
+  2.2% of homes in the "ready" band and 0.2% in "fabric first".
+- `analysis/heat_density.py`: space-heating demand density per 250 m cell. London check against metered gas:
+  ρ 0.72; the totals are 2.17 times the metered gas.
+- `geo/get_fuel_poverty.py`: DESNZ sub-regional fuel poverty 2026 (2024 data) for London LSOAs.
+- `analysis/targeting.py`: precision of area targeting rules for fuel poverty and high gas use.
+- `analysis/solar.py`: rooftop PV potential from LiDAR roofs. Potential rises with affluence; uptake stays at about 1%.
+- `analysis/overheating.py`: exploratory summer overheating index and its trade-off with winter heat loss.
+- `analysis/noise_eval.py`: error against the mean of two certificates. A single certificate carries about 4.8 SAP of noise.
+- `models/neighbour_baseline.py`: Earth observation (EO) models against interpolation from neighbouring certificates,
+  for two scenarios (gap filling and unseen areas at 1, 2 and 5 km), with cell-bootstrap CIs.
+- `models/metric_targets.py`: fabric demand, heating efficiency and gas heating as targets beside SAP.
+- `gee/extract_embed.py`: pretrained annual satellite embeddings (64 components, 10 m) at the point, footprint and 100 m.
+  - Batch `b7` in `gbem_composites.js` (v2.4.0).
+  - Feature group `embedding`, with sets `embed`, `eo_embed` and `eo_morph_embed`.
+- `models/transfer.py`: `--sets`, `--no-temporal` and `--tag`; sets `spectral`, `form_physics` and `core_phys`.
+- `viz/atlas.py`: layers for heat-pump readiness, heat density, overheating, solar, fuel poverty and area of applicability.
+
+### Fixed
+- Fuel "mains gas (not community)" was classed as community heating.
+- Nullable booleans in the floor-position features.
+- Header detection for DESNZ energy tables.
+- NI LiDAR surveys stored in millimetres.
+
 ## [0.38.0] - 2026-10-23
 
 ### Added

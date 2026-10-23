@@ -31,7 +31,7 @@ GROUPS = {"s2_": "sentinel2", "s1_": "sentinel1", "landsat_": "thermal_landsat",
           "era5_": "climate", "viirs_": "night_lights", "ghsl_": "built_volume_ghsl", "lc_": "landcover",
           "terrain_": "terrain", "worldcover_": "landcover", "morph_": "morphology", "epc_": "certificate_attributes",
           "label_": "label", "id_": "identifier", "flag_": "flag", "census_": "census_context", "lidar_": "lidar",
-          "fps_": "sentinel_fpstats", "st_": "streets", "phys_": "physics"}
+          "fps_": "sentinel_fpstats", "st_": "streets", "phys_": "physics", "emb_": "embedding"}
 STREET = {"road_dist_m", "major_road_dist_m", "road_density_250"}
 
 
@@ -101,6 +101,9 @@ def main():
                                                        "uprn_source", "link_method", "link_dist_m")},
                 **{f"epc_{k.lower()}": c[k].values for k in EPC_ATTR if k in c}})
             df = base.merge(f.rename(columns={"rec_id": "id_cert"}), on="id_cert", how="left")
+            emb = fdir / f"embed_{y}.parquet"                        # pretrained satellite embeddings (gee/extract_embed.py)
+            if emb.exists():
+                df = df.merge(pd.read_parquet(emb).rename(columns={"rec_id": "id_cert"}).drop_duplicates("id_cert"), on="id_cert", how="left")
             fps = fdir / f"fpstats_{y}.parquet"                     # footprint min / max / SD of 10 m layers (gee/fp_stats.py)
             if fps.exists():
                 df = df.merge(pd.read_parquet(fps).rename(columns={"rec_id": "id_cert"}).drop_duplicates("id_cert"), on="id_cert", how="left")
