@@ -44,9 +44,12 @@ BANDS = list("ABCDEFG")
 SAP_BANDS = [(92, "A"), (81, "B"), (69, "C"), (55, "D"), (39, "E"), (21, "F"), (-999, "G")]   # SAP score -> band
 SETS = {"eo": ["sentinel2", "sentinel1", "thermal_landsat", "thermal_modis", "thermal_multiyear", "climate",
                "night_lights", "built_volume_ghsl", "landcover", "terrain"]}
+SETS["eo_morph_nolidar"] = SETS["eo"] + ["morphology", "streets"]           # to isolate what LiDAR adds
 SETS["eo_morph"] = SETS["eo"] + ["morphology", "streets", "lidar"]
+SETS["eo_morph_floor"] = SETS["eo_morph"] + ["floor_position"]                # + where a flat sits in its building
+SETS["eo_morph_fps"] = SETS["eo_morph"] + ["sentinel_fpstats"]                # + footprint min / max / SD (fp_stats.py)
 SETS["eo_morph_ctx"] = SETS["eo_morph"] + ["census_context"]
-SETS["all"] = SETS["eo_morph_ctx"] + ["certificate_attributes"]
+SETS["all"] = SETS["eo_morph_ctx"] + ["certificate_attributes", "floor_position"]
 # identifiers of a place or a data source rather than properties of the building: they would let a model learn locations
 NOT_FEATURES = {"census_ward_code", "lidar_survey", "lidar_survey_year", "morph_source", "morph_src_dataset"}
 # LightGBM settings shared by the classifier and the SAP regressor: 30% of the features per tree and 63 histogram bins
@@ -75,7 +78,42 @@ def load(area, years):
     d = d.merge(xy.drop_duplicates("cert_id").rename(columns={"cert_id": "id_cert"}), on="id_cert", how="left")
     d = d.sort_values("inspection_date").drop_duplicates(["id_uprn", "year"], keep="last")   # one per property and year
     d = d[d["label_rating"].isin(BANDS)].reset_index(drop=True)
+    d = floor_features(d)
+    dd = pd.concat([dd, pd.DataFrame({"column": ["fl_pos", "fl_num", "fl_storeys", "fl_rel"], "group": "floor_position"})])
     return d, dd
+
+
+def floor_features(d):
+    """Where a dwelling sits in its building (the satellite and footprint features are the same for every flat of a
+    building, but heat loss through the ground floor and the roof differs by floor):
+      fl_pos      house | ground | middle | top   (flats and maisonettes; from the floor level and top-storey flag)
+      fl_num      floor number (0 = ground), where the certificate gives a number
+      fl_storeys  storeys of the building: footprint data, else LiDAR 90th percentile height / 3 m
+      fl_rel      relative height in the building: 0 ground ... 1 top
+    The floor comes from the certificate; for homes without one it would come from the address (e.g. "Flat 5, 2nd
+    floor") or be unknown, so this set measures what knowing the floor is worth."""
+    pt = d.get("epc_property_type", pd.Series(index=d.index, dtype=object)).astype("string").str.lower()
+    lv = d.get("epc_floor_level", pd.Series(index=d.index, dtype=object)).astype("string").str.strip().str.lower().fillna("")
+    top = d.get("epc_flat_top_storey", pd.Series(index=d.index, dtype=object)).astype("string").str.upper().fillna("")
+    flat = pt.isin(["flat", "maisonette"]).fillna(False)
+    num = pd.to_numeric(lv.str.extract(r"^(-?\d+)")[0], errors="coerce")
+    num = num.where(~lv.str.contains("ground|basement"), 0)
+    ground = num.eq(0) | lv.str.contains("ground|basement")
+    is_top = top.eq("Y") | lv.str.contains("top")
+    middle = lv.str.contains("mid") | num.gt(0)
+    b = lambda s: s.fillna(False).to_numpy(bool)               # nullable booleans (missing = False)
+    flat, is_top, ground, middle = b(flat), b(is_top), b(ground), b(middle)
+    d["fl_pos"] = pd.Series(np.select([~flat, flat & is_top, flat & ground, flat & middle], ["house", "top", "ground", "middle"],
+                                      "unknown"), index=d.index).where(pt.notna())
+    d["fl_num"] = num.where(flat)
+    storeys = pd.to_numeric(d.get("morph_num_floors"), errors="coerce")
+    if "lidar_height_p90_m" in d:
+        storeys = storeys.fillna((pd.to_numeric(d["lidar_height_p90_m"], errors="coerce") / 3).round().clip(lower=1))
+    d["fl_storeys"] = storeys
+    rel = d["fl_num"] / (storeys - 1).clip(lower=1)
+    rel = rel.where(~(flat & is_top), 1.0).where(~(flat & ground), 0.0)
+    d["fl_rel"] = rel.clip(0, 1).where(flat)
+    return d
 
 
 def features(d, dd, groups):
@@ -113,8 +151,8 @@ def main():
     sap = pd.to_numeric(d["label_sap"], errors="coerce").to_numpy()
     print(f"{a.area} {a.years}: {len(d):,} certificates, {blocks.nunique()} blocks of {a.block_km} km; bands",
           pd.Series(y).value_counts().sort_index().to_dict(), flush=True)
-    rows, oof, imp = [], pd.DataFrame({"id_cert": d["id_cert"], "x": d["x"], "y": d["y"], "year": d["year"],
-                                       "actual": y, "actual_sap": sap}), []
+    rows, oof, imp = [], pd.DataFrame({"id_cert": d["id_cert"], "id_fp": d["id_fp"], "x": d["x"], "y": d["y"], "year": d["year"],
+                                       "fl_pos": d["fl_pos"], "actual": y, "actual_sap": sap}), []
     for fs in a.featuresets:
         X = features(d, dd, SETS[fs])
         if X.shape[1] == 0:
@@ -166,7 +204,32 @@ def main():
     oof.to_parquet(keep(out / f"oof_{tag}.parquet"), index=False)
     if imp:
         pd.concat(imp).sort_values(["featureset", "gain"], ascending=[True, False]).to_csv(keep(out / f"importance_{tag}.csv"), index=False)
+    groups(oof, a.area).round(4).to_csv(keep(out / f"groups_{tag}.csv"), index=False)
     print("written", out)
+
+
+def groups(oof, area):
+    """Spatial out-of-fold results (LightGBM) by floor position, and at building level: for footprints with several
+    certificates (blocks of flats, subdivided houses) the mean predicted SAP against the mean actual SAP."""
+    rows = []
+    for c in [c for c in oof.columns if c.startswith("pred_lgbm_")]:
+        fs = c[len("pred_lgbm_"):]
+        s = oof[f"sap_lgbm_{fs}"]
+        for pos, g in oof.groupby("fl_pos"):
+            ok = g["actual_sap"].notna()
+            rows.append({"area": area, "featureset": fs, "level": "dwelling", "group": f"floor: {pos}", "n": len(g),
+                         **cls_metrics(g["actual"].to_numpy(), g[c].to_numpy()),
+                         "sap_mae": mean_absolute_error(g.loc[ok, "actual_sap"], s[g.index][ok])})
+        b = oof.assign(p=s).groupby("id_fp").agg(n=("actual_sap", "size"), a=("actual_sap", "mean"), p=("p", "mean"),
+                                                 sd=("actual_sap", "std"))
+        for lab, sel in (("buildings with 1 certificate", b["n"] == 1), ("buildings with 2+ certificates", b["n"] >= 2),
+                         ("buildings with 5+ certificates", b["n"] >= 5)):
+            g = b[sel & b["a"].notna()]
+            if len(g) >= 20:
+                rows.append({"area": area, "featureset": fs, "level": "building", "group": lab, "n": len(g),
+                             "sap_mae": mean_absolute_error(g["a"], g["p"]), "sap_r2": r2_score(g["a"], g["p"]),
+                             "within_building_sd": g["sd"].mean()})
+    return pd.DataFrame(rows)
 
 
 if __name__ == "__main__":

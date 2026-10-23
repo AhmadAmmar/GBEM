@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GBEM Atlas</title>
+<script src="https://unpkg.com/deck.gl@9.0.38/dist.min.js"></script>
+<style>
+:root{--bg:#f9f9f7;--panel:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--muted:#898781;--line:#e1e0d9;--axis:#c3c2b7;--soft:#f0efec;
+  --accent:#2a78d6;--s1:#2a78d6;--s2:#eb6834}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0d0d0d;--panel:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--muted:#898781;
+  --line:#2c2c2a;--axis:#383835;--soft:#242422;--accent:#3987e5;--s1:#3987e5;--s2:#d95926}}
+:root[data-theme="dark"]{--bg:#0d0d0d;--panel:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--muted:#898781;--line:#2c2c2a;--axis:#383835;
+  --soft:#242422;--accent:#3987e5;--s1:#3987e5;--s2:#d95926}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font:13px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:14px;padding:8px 16px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+header h1{font-size:15px;margin:0;font-weight:650}
+nav{display:flex;gap:2px;flex-wrap:wrap}
+nav button{border:0;background:none;color:var(--ink2);padding:6px 10px;border-radius:6px;cursor:pointer;font:inherit}
+nav button.on{background:var(--soft);color:var(--ink);font-weight:600}
+.spacer{flex:1}
+select,button.b,input[type=search],input[type=number]{font:inherit;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:3px 6px}
+button.b{cursor:pointer}
+button.b.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.seg button{border:0;background:var(--soft);color:var(--ink2);padding:4px 10px;cursor:pointer;font:inherit}
+.seg button.on{background:var(--accent);color:#fff}
+main{flex:1;min-height:0;display:flex}
+.tab{display:none;flex:1;min-height:0}
+.tab.on{display:flex}
+#t-map .mapwrap{flex:1;position:relative;min-width:0}
+#map{position:absolute;inset:0}
+.ctrl{position:absolute;top:10px;left:10px;z-index:3;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;
+  display:grid;grid-template-columns:auto 1fr;gap:6px 8px;align-items:center;max-width:min(430px,calc(100% - 20px));box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.ctrl span{color:var(--ink2);font-size:12px}
+.ctrl select{max-width:330px}
+.legend{position:absolute;left:10px;bottom:26px;z-index:3;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 9px;
+  font-size:11px;color:var(--ink2);min-width:190px;max-width:300px}
+.legend .grad{height:10px;border-radius:3px;margin:4px 0}
+.legend .ends{display:flex;justify-content:space-between}
+.legend .sw{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.legend .row{display:flex;flex-wrap:wrap;gap:3px 9px}
+.attr{position:absolute;right:4px;bottom:3px;z-index:3;font-size:10px;color:var(--ink2);background:var(--panel);opacity:.85;padding:1px 5px;border-radius:4px}
+.attr a{color:inherit}
+.side{width:380px;overflow:auto;background:var(--panel);border-left:1px solid var(--line);padding:12px 16px 30px}
+.page{flex:1;overflow:auto;padding:16px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink2);margin:14px 0 6px;font-weight:650}
+.card h2:first-child,.side h2:first-child{margin-top:0}
+h3{font-size:14px;margin:0 0 6px}
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.tile{background:var(--soft);border-radius:7px;padding:6px 9px}
+.tile .v{font-size:18px;font-weight:650;font-variant-numeric:tabular-nums}
+.tile .k{font-size:11px;color:var(--ink2)}
+table{border-collapse:collapse;width:100%;font-size:12px;font-variant-numeric:tabular-nums}
+th,td{padding:4px 6px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--ink2);font-weight:600;cursor:pointer;user-select:none;position:sticky;top:0;background:var(--panel)}
+tr.click{cursor:pointer}
+tr.click:hover td{background:var(--soft)}
+.note{color:var(--ink2);font-size:12px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+svg text{fill:var(--ink2);font-size:10.5px}
+svg .lbl{fill:var(--ink)}
+svg .grid{stroke:var(--line)}
+svg .axis{stroke:var(--axis)}
+.deck-tooltip{background:var(--panel)!important;color:var(--ink)!important;border:1px solid var(--line);border-radius:7px;font:12px/1.4 system-ui,sans-serif!important;padding:7px 9px!important;max-width:320px}
+.deck-tooltip td{border:0;padding:0 6px 0 0;text-align:left}
+#loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:5;background:var(--bg);color:var(--ink2);font-size:14px}
+@media (max-width:900px){#t-map{flex-direction:column}.side{width:auto;border-left:0;border-top:1px solid var(--line);max-height:45vh}
+  #t-map .mapwrap{min-height:55vh}.grid2{grid-template-columns:1fr}header{padding:8px 16px}.page{padding:12px 16px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>GBEM Atlas</h1>
+  <div class="seg" id="areaSeg"></div>
+  <nav id="nav"></nav>
+  <span class="spacer"></span>
+  <span class="note" id="built"></span>
+  <button class="b" id="theme" title="Light or dark theme">Theme</button>
+</header>
+<main>
+  <section class="tab" id="t-map">
+    <div class="mapwrap"><div id="map"></div><div id="loading">Loading…</div>
+      <div class="ctrl">
+        <span>Layer</span><select id="layer"></select>
+        <span>Show</span><select id="metric"></select>
+        <span>Min. certificates</span><input type="number" id="minn" value="5" min="5" step="5" style="width:80px">
+        <span>View</span><div><button class="b" id="d3">3D</button> <label class="note"><input type="checkbox" id="hide0" checked> hide empty</label></div>
+      </div>
+      <div class="legend" id="legend"></div>
+      <div class="attr">Basemap © <a href="https://www.esri.com" target="_blank">Esri</a>, HERE, Garmin, © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors · EPC data: DLUHC / MHCLG (OGL), Finance NI</div>
+    </div>
+    <aside class="side" id="mapside"></aside>
+  </section>
+  <section class="tab" id="t-rank"><div class="page" id="rankpage"></div></section>
+  <section class="tab" id="t-trend"><div class="page" id="trendpage"></div></section>
+  <section class="tab" id="t-retro"><div class="page" id="retropage"></div></section>
+  <section class="tab" id="t-form"><div class="page" id="formpage"></div></section>
+  <section class="tab" id="t-model"><div class="page" id="modelpage"></div></section>
+  <section class="tab" id="t-cmp"><div class="page" id="cmppage"></div></section>
+  <section class="tab" id="t-about"><div class="page" id="aboutpage"></div></section>
+</main>
+<script>
+const D = /*__DATA__*/null;
+const AREAS = Object.keys(D.areas);
+const BANDS = "ABCDEFG".split("");
+const EPC = ["#008054", "#19b459", "#8dce46", "#ffd500", "#fcaa65", "#ef8023", "#e9153b"];      // EPC certificate colours
+const SEQ = ["#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b"];     // one hue, light to dark
+const DIV = ["#1c5cab", "#5598e7", "#b7d3f6", "#c3c2b7", "#f4b5b4", "#e66767", "#a8302f"];     // blue - grey - red
+const CAT = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"]; // fixed order
+const AREA_COL = {london: "var(--s1)", belfast: "var(--s2)"};
+const NEED_COL = Object.fromEntries(D.elements.map((e, i) => [e, CAT[i]]));
+const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const ramp = (cols, t) => { const c = cols.map(rgb); t = Math.max(0, Math.min(1, t)) * (c.length - 1);
+  const i = Math.min(Math.floor(t), c.length - 2), f = t - i; return [0, 1, 2].map(j => Math.round(c[i][j] + (c[i + 1][j] - c[i][j]) * f)); };
+const fmt = (v, d = 1) => (v == null || !isFinite(v)) ? "–" : (+v).toFixed(d);
+const pct = v => (v == null || !isFinite(v)) ? "–" : (100 * v).toFixed(1) + "%";
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+const MET = Object.fromEntries(D.metrics.map(m => [m.key, m]));
+const dark = () => document.documentElement.dataset.theme ? document.documentElement.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+const QS = new URLSearchParams(location.search);
+if (QS.get("theme")) document.documentElement.dataset.theme = QS.get("theme");
+
+// ---------- data: gzip blob per area, decompressed on first use ----------
+const CACHE = {};
+async function areaData(a) {
+  if (CACHE[a]) return CACHE[a];
+  const A = D.areas[a], bin = Uint8Array.from(atob(A.blob), c => c.charCodeAt(0));
+  const buf = await new Response(new Blob([bin]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
+  const T = {f4: Float32Array, u4: Uint32Array, u1: Uint8Array, i2: Int16Array};
+  const arr = r => r.s ? {s: r.s} : new T[r.t](buf, r.o, r.n);   // text columns stay as {s: [...]}
+  const L = {};
+  for (const [k, l] of Object.entries(A.layers)) {
+    const cols = Object.fromEntries(Object.entries(l.cols).map(([c, r]) => [c, arr(r)]));
+    const fid = arr(l.fid), st = arr(l.starts), xy = arr(l.xy), cx = A.center[0], cy = A.center[1];   // typed arrays
+    const feats = Array.from({length: l.n}, (_, i) => ({i, rings: []}));
+    for (let r = 0; r < fid.length; r++) {
+      const ring = []; for (let p = st[r]; p < st[r + 1]; p++) ring.push([cx + xy[2 * p], cy + xy[2 * p + 1]]);
+      feats[fid[r]].rings.push(ring);
+    }
+    L[k] = {...l, cols, feats: feats.filter(f => f.rings.length)};
+  }
+  const R = {};   // ranking tables: JSON text compressed with the arrays
+  for (const [k, r] of Object.entries(A.rank)) R[k] = {label: r.label, rows: JSON.parse(new TextDecoder().decode(new Uint8Array(buf, r.json.o, r.json.n)))};
+  return CACHE[a] = {A, L, R};
+}
+
+// ---------- state ----------
+const S = {area: QS.get("area") || AREAS[0], tab: QS.get("tab") || "map", layer: QS.get("layer") || "cell", metric: QS.get("metric") || "sap_mean",
+           d3: QS.get("d3") === "1", minn: 5, run: null};
+
+// ---------- header ----------
+document.getElementById("areaSeg").innerHTML = AREAS.map(a => `<button data-a="${a}">${D.areas[a].name}</button>`).join("");
+document.querySelectorAll("#areaSeg button").forEach(b => b.onclick = () => { S.area = b.dataset.a; render(); });
+const TABS = [["map", "Map"], ["rank", "Rankings"], ["trend", "Trends"], ["retro", "Retrofit"], ["form", "Form & streets"], ["model", "Models"], ["cmp", "Compare"], ["about", "About"]];
+document.getElementById("nav").innerHTML = TABS.map(([k, l]) => `<button data-t="${k}">${l}</button>`).join("");
+document.querySelectorAll("#nav button").forEach(b => b.onclick = () => { S.tab = b.dataset.t; render(); });
+document.getElementById("built").textContent = `built ${D.built}${D.public ? " · public version (aggregates only)" : ""}`;
+document.getElementById("theme").onclick = () => { document.documentElement.dataset.theme = dark() ? "light" : "dark"; render(); };
+
+// ---------- map ----------
+const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/";
+const basemap = () => new deck.TileLayer({id: "base" + (dark() ? "d" : "l"), data: ESRI + (dark() ? "World_Dark_Gray_Base" : "World_Light_Gray_Base") + "/MapServer/tile/{z}/{y}/{x}",
+  minZoom: 0, maxZoom: 16, tileSize: 256, renderSubLayers: p => { const {west, south, east, north} = p.tile.bbox;
+    return new deck.BitmapLayer(p, {data: null, image: p.data, bounds: [west, south, east, north]}); }});
+let viewState = null, deckgl = null, lastArea = null;
+function fitView(A) {
+  const el = document.getElementById("map");
+  try { const v = new deck.WebMercatorViewport({width: el.clientWidth || 900, height: el.clientHeight || 700})
+      .fitBounds([[A.bounds[0], A.bounds[1]], [A.bounds[2], A.bounds[3]]], {padding: 30});
+    return {longitude: v.longitude, latitude: v.latitude, zoom: v.zoom, pitch: S.d3 ? 50 : 0, bearing: S.d3 ? -15 : 0}; }
+  catch (e) { return {longitude: A.center[0], latitude: A.center[1], zoom: 10, pitch: 0, bearing: 0}; }
+}
+function bldgVars(l) {
+  const runs = l.runs || [], lab = {eo: "EO only", eo_morph: "EO + morphology", eo_morph_ctx: "EO + morphology + context", all: "all features"};
+  const v = [{key: "a", label: "Actual band (mean of certificates)", kind: "band"}];
+  for (const r of runs) { const fs = r.replace("lgbm_", "");
+    v.push({key: "p_" + r, label: `Predicted band · ${lab[fs] || fs}`, kind: "band"},
+           {key: "e_" + r, label: `Error (predicted − actual) · ${lab[fs] || fs}`, kind: "err"}); }
+  v.push({key: "height", label: "Height (m; LiDAR where available)", kind: "seq", domain: [3, 30]},
+         {key: "slope", label: "Roof slope, LiDAR (°)", kind: "seq", domain: [5, 45]}, {key: "n", label: "Certificates in the building", kind: "seq", domain: [1, 20]});
+  return v;
+}
+function metricsFor(layer, l) {
+  if (layer === "bldg") return bldgVars(l);
+  if (layer === "types") return [{key: "type_id", label: "Urban form type (k-means of building and street form)", kind: "type"},
+                                 {key: "sap", label: "Mean SAP of certificates 2020–25", kind: "sap"}];
+  const m = D.metrics.filter(m => l.cols[m.key] && !(m.kind === "div" && layer !== "cell"));
+  return l.cols.top_need ? [...m, {key: "top_need", label: "Most common weak element", kind: "cat"}] : m;
+}
+function typeNames(l) { const o = {}; l.cols.type_id.forEach((t, i) => { o[t] = l.cols.type.s[i]; }); return o; }
+function colourFor(v, x) {
+  if (x == null || (typeof x === "number" && !isFinite(x))) return null;
+  if (v.kind === "cat") return x === "none" || x === "" ? [195, 194, 183] : rgb(NEED_COL[x] || "#c3c2b7");
+  if (v.kind === "type") return rgb(CAT[Math.round(x) % CAT.length]);
+  if (v.kind === "divv") { const m = (v.domain || [-1, 1])[1] || 1; return ramp(v.dir < 0 ? DIV : [...DIV].reverse(), (x + m) / (2 * m)); }
+  if (v.kind === "band") return ramp(EPC, x / 6);
+  if (v.kind === "err") return ramp(DIV, (x + 3) / 6);
+  if (v.kind === "sap") return ramp(EPC, 1 - (x - 20) / 72);
+  const dom = v.domain || [0, 1], t = (x - dom[0]) / ((dom[1] - dom[0]) || 1);
+  if (v.kind === "div") return divColour(v, x);
+  return ramp(SEQ, t);
+}
+function value(l, v, i) {
+  if (v.kind === "err") { const r = v.key.slice(2); const p = l.cols["p_" + r][i], a = l.cols.a[i]; return isFinite(p) && isFinite(a) ? p - a : NaN; }
+  const c = l.cols[v.key]; return c ? c[i] : NaN;
+}
+function divColour(v, x) {   // Gi* z: SAP hotspots blue = high SAP; F-G hotspots red = many poor homes
+  const t = (Math.max(-4, Math.min(4, x)) + 4) / 8;
+  return ramp(v.key === "gi_FG" ? DIV : [...DIV].reverse(), t);
+}
+async function drawMap() {
+  const {A, L} = await areaData(S.area);
+  document.getElementById("loading").style.display = "none";
+  if (!L[S.layer]) S.layer = "cell";
+  const l = L[S.layer], vars = metricsFor(S.layer, l);
+  if (!vars.find(v => v.key === S.metric)) S.metric = vars[0].key;
+  const v = vars.find(x => x.key === S.metric);
+  const lsel = document.getElementById("layer");
+  lsel.innerHTML = Object.entries(L).map(([k, x]) => `<option value="${k}"${k === S.layer ? " selected" : ""}>${x.label} (${x.n.toLocaleString()})</option>`).join("");
+  document.getElementById("metric").innerHTML = vars.map(x => `<option value="${x.key}"${x.key === S.metric ? " selected" : ""}>${x.label}</option>`).join("");
+  document.getElementById("d3").classList.toggle("on", S.d3);
+  if (!viewState || lastArea !== S.area) { viewState = fitView(A); lastArea = S.area; if (S.layer === "bldg") focusBuildings(); }
+  viewState = {...viewState, pitch: S.d3 ? Math.max(viewState.pitch, 45) : 0, bearing: S.d3 ? viewState.bearing : 0};
+  const nn = l.cols.n, hide = document.getElementById("hide0").checked;
+  const feats = l.feats.filter(f => S.layer === "bldg" || !nn || nn[f.i] >= S.minn);
+  const col = f => { const x = v.kind === "cat" ? l.cols[v.key].s[f.i] : value(l, v, f.i);
+    const c = v.kind === "div" ? (isFinite(x) ? divColour(v, x) : null) : colourFor(v, x); return c ? [...c, S.layer === "street" ? 235 : 210] : (hide ? [0, 0, 0, 0] : [150, 150, 150, 80]); };
+  let layer;
+  const elevMax = S.area === "london" ? 2500 : 1200;
+  const tnorm = f => { const x = value(l, v, f.i); if (!isFinite(x)) return 0;
+    if (v.kind === "sap") return Math.max(0, (92 - x) / 72); const dom = v.domain || [0, 1]; return Math.max(0, Math.min(1, (x - dom[0]) / ((dom[1] - dom[0]) || 1))); };
+  const common = {pickable: true, autoHighlight: true, highlightColor: [0, 0, 0, 80], updateTriggers: {getFillColor: [S.metric, S.layer, S.minn, dark()], getColor: [S.metric, S.minn], getElevation: [S.metric, S.d3]}};
+  if (l.path) {
+    layer = new deck.PathLayer({id: "streets", data: feats.flatMap(f => f.rings.map(p => ({f, p}))), getPath: d => d.p, getColor: d => col(d.f),
+      widthUnits: "meters", getWidth: 9, widthMinPixels: 1.5, capRounded: true, ...common});
+  } else if (S.layer === "bldg") {
+    layer = new deck.PolygonLayer({id: "bldg", data: feats.flatMap(f => f.rings.map(p => ({f, p}))), getPolygon: d => d.p, getFillColor: d => col(d.f),
+      extruded: S.d3, getElevation: d => l.cols.height[d.f.i], wireframe: false, stroked: !S.d3, getLineColor: [255, 255, 255, 120], lineWidthMinPixels: 0.3,
+      material: {ambient: .45, diffuse: .6, shininess: 20}, ...common});
+  } else {
+    layer = new deck.PolygonLayer({id: "poly" + S.layer, data: feats.flatMap(f => f.rings.map(p => ({f, p}))), getPolygon: d => d.p, getFillColor: d => col(d.f),
+      extruded: S.d3, getElevation: d => tnorm(d.f) * elevMax, stroked: !S.d3, getLineColor: dark() ? [26, 26, 25, 160] : [252, 252, 251, 180],
+      lineWidthMinPixels: 0.4, ...common});
+  }
+  const props = {layers: [basemap(), layer], viewState};
+  if (!deckgl) deckgl = new deck.DeckGL({container: "map", controller: true, ...props, getTooltip: tooltip,
+    onViewStateChange: ({viewState: vs}) => { viewState = vs; deckgl.setProps({viewState}); }});
+  else deckgl.setProps(props);
+  CURRENT = {l, v, L, A};
+  legend(v); mapSide(A, l, v, feats);
+}
+let CURRENT = null;
+function legend(v) {
+  const el = document.getElementById("legend");
+  let h = `<div style="color:var(--ink);margin-bottom:2px">${esc(v.label)}</div>`;
+  if (v.kind === "band") h += '<div class="row">' + BANDS.map((b, i) => `<span><span class="sw" style="background:${EPC[i]}"></span>${b}</span>`).join("") + "</div>";
+  else if (v.kind === "sap") h += `<div class="grad" style="background:linear-gradient(90deg,${[...EPC].reverse().join(",")})"></div><div class="ends"><span>20 (G)</span><span>55 (D)</span><span>92 (A)</span></div>`;
+  else if (v.kind === "err") h += `<div class="grad" style="background:linear-gradient(90deg,${DIV.join(",")})"></div><div class="ends"><span>−3</span><span>0</span><span>+3 bands</span></div><div>blue: predicted better · red: worse</div>`;
+  else if (v.kind === "div") { const c = v.key === "gi_FG" ? DIV : [...DIV].reverse();
+    h += `<div class="grad" style="background:linear-gradient(90deg,${c.join(",")})"></div><div class="ends"><span>−4</span><span>0</span><span>+4</span></div>
+      <div>|z| > 1.96: significant at 5% (Getis-Ord Gi*, ${D.grid} m cells and their 8 neighbours)</div>`; }
+  else if (v.kind === "type" && CURRENT) { const names = typeNames(CURRENT.l);
+    h += '<div style="display:grid;gap:3px">' + Object.entries(names).sort((a, b) => a[0] - b[0]).map(([t, n]) => `<span><span class="sw" style="background:${CAT[t % CAT.length]}"></span>${esc(n)}</span>`).join("") + "</div>"; }
+  else if (v.kind === "divv") { const dom = v.domain || [-1, 1], c = v.dir < 0 ? DIV : [...DIV].reverse();
+    h += `<div class="grad" style="background:linear-gradient(90deg,${c.join(",")})"></div><div class="ends"><span>${fmt(dom[0], 1)}</span><span>0</span><span>+${fmt(dom[1], 1)}</span></div>`;
+    if (v.key === "cert_gap") h += "<div>red: certified homes rate better than all dwellings (certificates flatter the area)</div>";
+    if (v.key === "gas_change") h += "<div>blue: gas use per meter fell</div>"; }
+  else if (v.kind === "cat") h += '<div class="row">' + D.elements.filter(e => e !== "floor" && e !== "lighting").map(e => `<span><span class="sw" style="background:${NEED_COL[e]}"></span>${D.element_label[e]}</span>`).join("")
+      + `<span><span class="sw" style="background:#c3c2b7"></span>none ≥ 25%</span></div><div>element most often rated poor or very poor</div>`;
+  else { const dom = v.domain || [0, 1], isShare = v.key.startsWith("share") || v.key.startsWith("poor") || v.key.startsWith("fuel") || v.key === "pv";
+    h += `<div class="grad" style="background:linear-gradient(90deg,${SEQ.join(",")})"></div><div class="ends"><span>${isShare ? pct(dom[0]) : fmt(dom[0])}</span><span>${isShare ? pct(dom[1]) : fmt(dom[1])}</span></div>`;
+    if (v.dir) h += `<div>${v.dir > 0 ? "darker = better" : "darker = worse"}; same scale in both areas</div>`; }
+  if (S.d3 && S.layer !== "bldg") h += "<div>3D height follows the same value (higher = more)</div>";
+  if (S.d3 && S.layer === "bldg") h += "<div>3D height: building height (LiDAR where available)</div>";
+  el.innerHTML = h;
+}
+function tipRows(l, i) {
+  const c = l.cols, r = (k, v) => `<tr><td style="color:var(--ink2)">${k}</td><td>${v}</td></tr>`;
+  let h = "";
+  if (c.n) h += r("Certificates", fmt(c.n[i], 0));
+  if (c.sap_mean) h += r("Mean SAP", fmt(c.sap_mean[i], 1)) + r("A–C / F–G", `${pct(c.share_AC[i])} / ${pct(c.share_FG[i])}`) + r("SAP gain possible", fmt(c.potential_gap[i], 1));
+  if (c.gi_sap) h += r("Gi* SAP / F–G", `${fmt(c.gi_sap[i], 2)} / ${fmt(c.gi_FG[i], 2)}`);
+  if (c.poor_walls) h += r("Poor walls · roof · windows", `${pct(c.poor_walls[i])} · ${pct(c.poor_roof[i])} · ${pct(c.poor_windows[i])}`)
+    + r("Poor heating · controls", `${pct(c.poor_mainheat[i])} · ${pct(c.poor_controls[i])}`);
+  if (c.fuel_heat_pump) h += r("Heat pump · PV · gas", `${pct(c.fuel_heat_pump[i])} · ${pct(c.pv[i])} · ${pct(c.fuel_gas[i])}`);
+  if (c.top_need) h += r("Most common weak element", c.top_need.s[i] === "none" ? "none ≥ 25%" : D.element_label[c.top_need.s[i]]);
+  if (c.rank_sap) h += r("Rank (1 = best mean SAP)", fmt(c.rank_sap[i], 0));
+  if (c.pred_sap_all) h += r("Predicted SAP, all dwellings", `${fmt(c.pred_sap_all[i], 1)} (F–G ${pct(c.pred_FG_all[i])})`) + r("Certified − all (SAP)", fmt(c.cert_gap[i], 1));
+  if (c.gas_kwh) h += r("Gas · electricity per meter 2024", `${fmt(c.gas_kwh[i], 0)} · ${fmt(c.elec_kwh[i], 0)} kWh`) + r("Gas change since 2015", isFinite(c.gas_change[i]) ? fmt(c.gas_change[i], 1) + "%" : "–");
+  if (c.type) h += r("Urban form type", esc(c.type.s[i])) + r("Mean SAP 2020–25", fmt(c.sap[i], 1));
+  return h;
+}
+function tooltip(info) {
+  if (!info.object || !CURRENT) return null;
+  const {l} = CURRENT, f = info.object.f || info.object, i = f.i, c = l.cols;
+  let title = c.nbhd_name ? `${c.nbhd_name.s[i]} (${c.nbhd.s[i]})` : c.street ? c.street.s[i] : c.cell ? (c.place.s[i] || `Cell ${c.cell.s[i]}`) : "";
+  if (S.layer === "bldg") {
+    const r = (k, v) => `<tr><td style="color:var(--ink2)">${k}</td><td>${v}</td></tr>`, b = x => isFinite(x) ? BANDS[Math.round(x)] : "–";
+    let h = `<b>${esc(c.ptype.s[i] || "Building")} · ${fmt(c.n[i], 0)} certificate(s)</b><table>` + r("Actual", `${b(c.a[i])} (SAP ${fmt(c.sap[i], 0)})`);
+    for (const run of l.runs) h += r("Predicted · " + run.replace("lgbm_", ""), `${b(c["p_" + run][i])} (SAP ${fmt(c["s_" + run][i], 0)})`);
+    h += r("Height", `${fmt(c.height[i], 1)} m (${["default", "LiDAR", "footprint data", "floors × 3 m"][c.hsrc[i]]})`) + r("Roof slope (LiDAR)", isFinite(c.slope[i]) ? fmt(c.slope[i], 0) + "°" : "–");
+    return {html: h + "</table>"};
+  }
+  return {html: `<b>${esc(title)}</b><table>${tipRows(l, i)}</table>`};
+}
+function mapSide(A, l, v, feats) {
+  const st = A.stock, el = document.getElementById("mapside");
+  let h = `<h2>${esc(A.name)} · current stock</h2><div class="tiles">
+    <div class="tile"><div class="v">${st.n.toLocaleString()}</div><div class="k">properties with a valid certificate</div></div>
+    <div class="tile"><div class="v">${fmt(st.sap_mean, 1)}</div><div class="k">mean SAP score</div></div>
+    <div class="tile"><div class="v">${pct(st.bands[0] + st.bands[1] + st.bands[2])}</div><div class="k">rated A–C</div></div>
+    <div class="tile"><div class="v">${pct(st.bands[5] + st.bands[6])}</div><div class="k">rated F–G</div></div></div>`;
+  if (S.layer === "types" && A.types.length) h += `<h2>Urban form types</h2><table><tr><th>Type</th><th>cells</th><th>SAP</th><th>F–G</th><th>poor walls</th></tr>${A.types.map(t =>
+      `<tr><td><span class="sw" style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${CAT[t.type_id % CAT.length]};margin-right:5px"></span>${esc(t.type)}</td><td>${t.cells}</td><td>${fmt(t.sap_mean, 1)}</td><td>${pct(t.share_FG)}</td><td>${pct(t.poor_walls)}</td></tr>`).join("")}</table><div class="note">See the Form &amp; streets tab for how form drives the score.</div>`;
+  if (S.layer !== "bldg" && S.layer !== "types" && l.cols[v.key] && v.kind !== "cat") {
+    const name = i => l.cols.nbhd_name ? `${l.cols.nbhd_name.s[i]}` : l.cols.street ? l.cols.street.s[i] : (l.cols.place.s[i] || `Cell ${l.cols.cell.s[i]}`);
+    const vals = feats.map(f => ({i: f.i, x: l.cols[v.key][f.i], n: l.cols.n[f.i]})).filter(d => isFinite(d.x));
+    const better = v.kind === "div" ? (v.key === "gi_FG" ? -1 : 1) : (v.dir || 1);
+    vals.sort((a, b) => better * (b.x - a.x));
+    const isShare = /^(share|poor|fuel)|^pv$/.test(v.key);
+    const row = d => `<tr class="click" data-i="${d.i}"><td>${esc(name(d.i))}</td><td>${isShare ? pct(d.x) : fmt(d.x, 1)}</td><td>${d.n}</td></tr>`;
+    const lab = v.dir === 0 && v.kind !== "div" ? ["Highest", "Lowest"] : ["Best", "Worst"];
+    h += `<h2>${lab[0]} 8 · ${esc(v.label)}</h2><table><tr><th>${l.label}</th><th>value</th><th>n</th></tr>${vals.slice(0, 8).map(row).join("")}</table>`;
+    h += `<h2>${lab[1]} 8</h2><table><tr><th>${l.label}</th><th>value</th><th>n</th></tr>${vals.slice(-8).reverse().map(row).join("")}</table>`;
+    h += '<div class="note">Click a row to zoom to it. Units with fewer certificates than the minimum are left out.</div>';
+  }
+  if (S.layer === "bldg") h += `<h2>Buildings</h2><div class="note">Footprints of the ${l.n.toLocaleString()} buildings with certificates used in the model run ${esc(A.model_tag)}. Predictions are out-of-fold (spatial cross-validation). Flats in one building are averaged. Turn on 3D to extrude by height.</div>`;
+  h += `<h2>About this layer</h2><div class="note">Current stock = latest certificate per property among certificates issued in the last 10 years (they are valid for 10 years). Certified homes are not a random sample of all homes: they were sold, let, built or retrofitted.</div>`;
+  el.innerHTML = h;
+  el.querySelectorAll("tr.click").forEach(tr => tr.onclick = () => { const f = l.feats.find(x => x.i === +tr.dataset.i); if (!f) return;
+    const ring = f.rings[0]; let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const [x, y] of ring) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+    viewState = {...viewState, longitude: (x0 + x1) / 2, latitude: (y0 + y1) / 2, zoom: S.layer === "street" ? 15 : 14.5, transitionDuration: 800};
+    deckgl.setProps({viewState}); });
+}
+function focusBuildings() {   // buildings are only visible close up: go to the densest cell, tilted
+  const A = D.areas[S.area]; S.d3 = true;
+  viewState = {...(viewState || {}), longitude: A.focus[0], latitude: A.focus[1], zoom: 15.6, pitch: 55, bearing: -20, transitionDuration: 1200};
+}
+document.getElementById("layer").onchange = e => { S.layer = e.target.value; if (S.layer === "bldg") focusBuildings(); drawMap(); };
+document.getElementById("metric").onchange = e => { S.metric = e.target.value; drawMap(); };
+document.getElementById("minn").onchange = e => { S.minn = Math.max(5, +e.target.value || 5); drawMap(); };
+document.getElementById("hide0").onchange = () => drawMap();
+document.getElementById("d3").onclick = () => { S.d3 = !S.d3; drawMap(); };
+
+// ---------- charts ----------
+function lineChart(series, opt) {   // series: [{label, colour, pts: [[x, y]]}]
+  const W = opt.w || 440, H = opt.h || 190, m = {l: 44, r: 12, t: 10, b: 26};
+  const xs = series.flatMap(s => s.pts.map(p => p[0])), ys = series.flatMap(s => s.pts.map(p => p[1])).filter(isFinite);
+  if (!ys.length) return '<div class="note">no data</div>';
+  const x0 = Math.min(...xs), x1 = Math.max(...xs); let y0 = opt.y0 ?? Math.min(...ys), y1 = Math.max(...ys);
+  if (y1 === y0) y1 = y0 + 1; const pad = (y1 - y0) * .08; y0 = opt.y0 ?? y0 - pad; y1 += pad;
+  const X = x => m.l + (x - x0) / ((x1 - x0) || 1) * (W - m.l - m.r), Y = y => H - m.b - (y - y0) / (y1 - y0) * (H - m.t - m.b);
+  let g = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(opt.title || "")}">`;
+  for (let k = 0; k <= 4; k++) { const y = y0 + (y1 - y0) * k / 4; g += `<line class="grid" x1="${m.l}" x2="${W - m.r}" y1="${Y(y)}" y2="${Y(y)}"/><text x="${m.l - 5}" y="${Y(y) + 3.5}" text-anchor="end">${opt.f ? opt.f(y) : fmt(y, 0)}</text>`; }
+  for (let x = Math.ceil(x0 / 2) * 2; x <= x1; x += 2) g += `<text x="${X(x)}" y="${H - 8}" text-anchor="middle">${x}</text>`;
+  for (const s of series) {
+    const p = s.pts.filter(q => isFinite(q[1]));
+    g += `<path d="${p.map((q, k) => (k ? "L" : "M") + X(q[0]).toFixed(1) + " " + Y(q[1]).toFixed(1)).join("")}" fill="none" stroke="${s.colour}" stroke-width="2" stroke-linejoin="round"/>`;
+    g += p.map(q => `<circle cx="${X(q[0])}" cy="${Y(q[1])}" r="3.5" fill="${s.colour}" stroke="var(--panel)" stroke-width="1.5"><title>${s.label} ${q[0]}: ${opt.f ? opt.f(q[1]) : fmt(q[1], 1)}${q[2] ? " (n " + q[2].toLocaleString() + ")" : ""}</title></circle>`).join("");
+  }
+  return g + "</svg>";
+}
+function legendRow(items) { return '<div class="row" style="margin:0 0 4px">' + items.map(([l, c]) => `<span class="note"><span style="display:inline-block;width:14px;height:3px;background:${c};vertical-align:3px;margin-right:5px;border-radius:2px"></span>${l}</span>`).join("") + "</div>"; }
+function hbars(items, opt = {}) {   // items: [{label, v, colour?, n?}]
+  const W = opt.w || 440, lw = opt.lw || 150, bh = 14, gap = 7, H = items.length * (bh + gap) + 6;
+  const max = opt.max || Math.max(1e-9, ...items.map(d => d.v).filter(isFinite));
+  let g = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img">`;
+  items.forEach((d, k) => { const y = k * (bh + gap) + 3, w = isFinite(d.v) ? Math.max(1, (W - lw - 70) * d.v / max) : 0;
+    g += `<text x="${lw - 6}" y="${y + bh - 3}" text-anchor="end" class="lbl">${esc(d.label.length > 26 ? d.label.slice(0, 25) + "…" : d.label)}<title>${esc(d.label)}</title></text>`;
+    g += `<rect x="${lw}" y="${y}" width="${w}" height="${bh}" rx="3" fill="${d.colour || "var(--accent)"}"><title>${esc(d.label)}: ${opt.f ? opt.f(d.v) : fmt(d.v, 2)}${d.n ? " (n " + d.n.toLocaleString() + ")" : ""}</title></rect>`;
+    g += `<text x="${lw + w + 5}" y="${y + bh - 3}">${opt.f ? opt.f(d.v) : fmt(d.v, 2)}</text>`; });
+  return g + "</svg>";
+}
+function groupedBars(cats, series, opt = {}) {   // series: [{label, colour, vals}]
+  const W = opt.w || 440, H = opt.h || 200, m = {l: 40, r: 8, t: 8, b: 24}, n = series.length;
+  const max = opt.max || Math.max(...series.flatMap(s => s.vals).filter(isFinite)) * 1.1;
+  const bw = (W - m.l - m.r) / cats.length, w = Math.min(16, (bw - 8) / n);
+  let g = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img">`;
+  for (let k = 0; k <= 4; k++) { const v = max * k / 4, y = H - m.b - (H - m.t - m.b) * k / 4; g += `<line class="grid" x1="${m.l}" x2="${W - m.r}" y1="${y}" y2="${y}"/><text x="${m.l - 5}" y="${y + 3.5}" text-anchor="end">${opt.f ? opt.f(v) : fmt(v, 0)}</text>`; }
+  cats.forEach((c, i) => { const cx = m.l + bw * i + bw / 2; g += `<text x="${cx}" y="${H - 8}" text-anchor="middle" class="lbl">${c}</text>`;
+    series.forEach((s, j) => { const v = s.vals[i], h = isFinite(v) ? (H - m.t - m.b) * v / max : 0, x = cx - n * (w + 2) / 2 + j * (w + 2);
+      g += `<rect x="${x}" y="${H - m.b - h}" width="${w}" height="${h}" rx="3" fill="${s.colour}"><title>${s.label} ${c}: ${opt.f ? opt.f(v) : fmt(v, 1)}</title></rect>`; }); });
+  return g + "</svg>";
+}
+
+// ---------- rankings ----------
+const RK = {unit: "nbhd", key: "sap_mean", asc: false, q: "", minn: 20};
+async function rankPage() {
+  const el = document.getElementById("rankpage");
+  el.innerHTML = '<div class="note">Loading…</div>';
+  const {A, R: RR} = await areaData(S.area);
+  if (!RR[RK.unit]) RK.unit = Object.keys(RR)[0];
+  const R = RR[RK.unit], cols = ["n", "sap_mean", "share_AC", "share_FG", "potential_gap", "co2_m2", "poor_walls", "poor_roof", "poor_windows", "poor_mainheat", "fuel_heat_pump", "pv", "fuel_gas"];
+  const lab = {n: "n", sap_mean: "Mean SAP", share_AC: "A–C", share_FG: "F–G", potential_gap: "SAP gain possible", co2_m2: "CO₂/m²", poor_walls: "Poor walls",
+               poor_roof: "Poor roof", poor_windows: "Poor windows", poor_mainheat: "Poor heating", fuel_heat_pump: "Heat pump", pv: "PV", fuel_gas: "Gas"};
+  let rows = R.rows.filter(r => r.n >= RK.minn && (!RK.q || String(r.name).toLowerCase().includes(RK.q.toLowerCase())));
+  rows.sort((a, b) => (RK.asc ? 1 : -1) * ((a[RK.key] ?? -1e9) - (b[RK.key] ?? -1e9)));
+  const isShare = k => /^(share|poor|fuel)|^pv$/.test(k);
+  el.innerHTML = `<div class="row"><b>${esc(A.name)}</b> · rank
+    <select id="rkUnit">${Object.entries(RR).map(([k, r]) => `<option value="${k}"${k === RK.unit ? " selected" : ""}>${r.label} (${r.rows.length.toLocaleString()})</option>`).join("")}</select>
+    by <select id="rkKey">${cols.slice(1).map(k => `<option value="${k}"${k === RK.key ? " selected" : ""}>${lab[k]}</option>`).join("")}</select>
+    <button class="b" id="rkDir">${RK.asc ? "lowest first ↑" : "highest first ↓"}</button>
+    min. certificates <input type="number" id="rkMin" value="${RK.minn}" min="5" step="5" style="width:70px">
+    <input type="search" id="rkQ" placeholder="search name" value="${esc(RK.q)}"> <button class="b" id="rkCsv">Download CSV</button></div>
+    <div class="note" style="margin-bottom:8px">${rows.length.toLocaleString()} units. Current stock (valid certificates). Click a column to sort. Shares are of certificates with the element rated.</div>
+    <div class="card" style="overflow:auto;max-height:calc(100vh - 190px)"><table><tr><th>#</th><th>${R.label}</th>${cols.map(k => `<th data-k="${k}">${lab[k]}${RK.key === k ? (RK.asc ? " ↑" : " ↓") : ""}</th>`).join("")}</tr>
+    ${rows.slice(0, 300).map((r, i) => `<tr><td>${i + 1}</td><td>${esc(r.name)}</td>${cols.map(k => `<td>${isShare(k) ? pct(r[k]) : fmt(r[k], k === "n" ? 0 : 1)}</td>`).join("")}</tr>`).join("")}</table>
+    ${rows.length > 300 ? '<div class="note">First 300 shown; the CSV has all.</div>' : ""}</div>`;
+  el.querySelector("#rkUnit").onchange = e => { RK.unit = e.target.value; rankPage(); };
+  el.querySelector("#rkKey").onchange = e => { RK.key = e.target.value; rankPage(); };
+  el.querySelector("#rkDir").onclick = () => { RK.asc = !RK.asc; rankPage(); };
+  el.querySelector("#rkMin").onchange = e => { RK.minn = Math.max(5, +e.target.value || 5); rankPage(); };
+  el.querySelector("#rkQ").onchange = e => { RK.q = e.target.value; rankPage(); };
+  el.querySelectorAll("th[data-k]").forEach(th => th.onclick = () => { if (RK.key === th.dataset.k) RK.asc = !RK.asc; else RK.key = th.dataset.k; rankPage(); });
+  el.querySelector("#rkCsv").onclick = () => { const head = ["name", ...cols]; const csv = [head.join(","), ...rows.map(r => head.map(k => JSON.stringify(r[k] ?? "")).join(","))].join("\n");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], {type: "text/csv"})); a.download = `gbem_${S.area}_${RK.unit}_ranking.csv`; a.click(); };
+}
+
+// ---------- trends ----------
+function trendPage() {
+  const el = document.getElementById("trendpage");
+  const items = [["sap_mean", "Mean SAP score of certificates", v => fmt(v, 0)], ["share_AC", "Share rated A–C", pct], ["share_FG", "Share rated F–G", pct],
+                 ["co2_m2", "CO₂ per m² (median, kg/yr)", v => fmt(v, 0)], ["fuel_gas", "Mains gas share", pct], ["fuel_heat_pump", "Heat pump share", pct],
+                 ["pv", "Solar PV share", pct], ["poor_walls", "Poor walls share", pct], ["poor_mainheat", "Poor main heating share", pct]];
+  const leg = legendRow(AREAS.map(a => [D.areas[a].name, AREA_COL[a]]));
+  let h = `<div class="note" style="margin-bottom:10px">Certificates issued in each year (both areas on each chart). These describe the homes that got a certificate that year, not the whole stock: a change can come from which homes were assessed as well as from improvements. Belfast data start in ${Math.min(...D.areas.belfast ? D.areas.belfast.trends.map(t => t.year) : [2008])}.</div><div class="grid2">`;
+  for (const [k, title, f] of items) h += `<div class="card"><h3>${title}</h3>${leg}${lineChart(AREAS.map(a => ({label: D.areas[a].name, colour: AREA_COL[a],
+      pts: D.areas[a].trends.map(t => [t.year, t[k], t.n])})), {f, title, y0: k === "sap_mean" ? undefined : 0})}</div>`;
+  for (const a of AREAS) for (const fuel of ["gas", "electricity"]) {
+    const E = (D.areas[a].energy || []).filter(e => e.fuel === fuel);
+    if (E.length) h += `<div class="card"><h3>${D.areas[a].name}: measured domestic ${fuel} per meter (kWh/yr)</h3>${legendRow([[D.areas[a].name + ", all LSOAs", AREA_COL[a]]])}
+      ${lineChart([{label: D.areas[a].name, colour: AREA_COL[a], pts: E.map(e => [e.year, e.mean_kwh, e.meters])}], {f: v => fmt(v, 0), title: fuel})}
+      <div class="note">DESNZ sub-national consumption statistics (meters and kWh by LSOA; gas weather-corrected). Measured use of all metered homes, not only certified ones: the independent check on decarbonisation.</div></div>`;
+  }
+  h += `<div class="card"><h3>Change in the same homes</h3><div class="note">Homes with more than one certificate: change of SAP between consecutive certificates, by period of the later one.</div>
+    <table><tr><th>Area · period</th><th>pairs</th><th>mean change</th><th>median</th><th>per year</th><th>improved</th><th>→ heat pump</th><th>new PV</th></tr>
+    ${AREAS.flatMap(a => D.areas[a].change.map(c => `<tr><td>${D.areas[a].name} · ${c.period}</td><td>${c.pairs.toLocaleString()}</td><td>${fmt(c.sap_change_mean, 1)}</td><td>${fmt(c.sap_change_median, 1)}</td><td>${fmt(c.sap_change_per_year, 1)}</td><td>${pct(c.share_improved)}</td><td>${pct(c.to_heat_pump)}</td><td>${pct(c.new_pv)}</td></tr>`)).join("")}</table></div></div>`;
+  el.innerHTML = h;
+}
+
+// ---------- retrofit ----------
+function retroPage() {
+  const el = document.getElementById("retropage"), E = D.elements;
+  const leg = legendRow(AREAS.map(a => [D.areas[a].name, AREA_COL[a]]));
+  let h = `<div class="note" style="margin-bottom:10px">Retrofit needs of the current stock from the element ratings on the certificates (Poor or Very Poor), the SAP gain the assessor considered possible, and (England) the recommended measures.</div><div class="grid2">`;
+  h += `<div class="card"><h3>Share of homes with each element rated poor</h3>${leg}${groupedBars(E.map(e => D.element_label[e].replace("Heating controls", "Controls").replace("Main heating", "Heating")),
+        AREAS.map(a => ({label: D.areas[a].name, colour: AREA_COL[a], vals: E.map(e => D.areas[a].stock.poor[e])})), {f: pct, h: 220})}
+        <div class="note">Floors and roofs are rated only where they are exposed (e.g. not for mid-floor flats).</div></div>`;
+  for (const a of AREAS) {
+    const R = D.areas[a].retrofit.sort((x, y) => y.n - x.n);
+    h += `<div class="card"><h3>${D.areas[a].name}: by property type and floor position</h3><div style="overflow:auto"><table><tr><th>Group</th><th>n</th><th>SAP</th><th>gain possible</th><th>F–G</th>
+      ${["walls", "roof", "windows", "mainheat", "controls", "hotwater"].map(e => `<th>${D.element_label[e]}</th>`).join("")}</tr>
+      ${R.map(r => `<tr><td>${esc(r.group)}</td><td>${r.n.toLocaleString()}</td><td>${fmt(r.sap, 1)}</td><td>${fmt(r.potential_gap, 1)}</td><td>${pct(r.share_FG)}</td>
+      ${["walls", "roof", "windows", "mainheat", "controls", "hotwater"].map(e => `<td>${pct(r[e])}</td>`).join("")}</tr>`).join("")}</table></div>
+      <div class="note">Element columns: share rated poor or very poor. Flats split by floor position (ground, middle, top) from the certificate.</div></div>`;
+  }
+  for (const a of AREAS) if (D.areas[a].recs.length) h += `<div class="card"><h3>${D.areas[a].name}: most recommended measures</h3>
+      ${hbars(D.areas[a].recs.slice(0, 15).map(r => ({label: r.improvement_summary_text, v: r.share_of_current_stock})), {f: pct, lw: 190})}
+      <div class="note">Share of the current stock with the measure on its certificate's recommendations.</div></div>`;
+    else h += `<div class="card"><h3>${D.areas[a].name}: recommended measures</h3><div class="note">Not in the data supplied (the NI register extract has no recommendations); needs come from the element ratings.</div></div>`;
+  el.innerHTML = h + "</div>";
+}
+
+// ---------- form & streets ----------
+const FEAT = {morph_n_uprn: "addresses per building", morph_osni_typecode: "OSNI building type", morph_bldg_class: "building class",
+  lidar_roof_slope_med_deg: "roof slope (LiDAR)", morph_convexity: "convexity", morph_compactness: "compactness", morph_shared_wall_m: "shared wall length",
+  morph_shared_wall_ratio: "shared wall ratio", st_height_m: "street building height", st_width_m: "street width", st_hw: "street H/W",
+  st_setback_m: "setback", st_frontage: "frontage density", morph_area_per_uprn_m2: "footprint area per address", morph_area_m2: "footprint area",
+  lidar_height_med_m: "height (LiDAR)", lidar_height_p90_m: "height p90 (LiDAR)", morph_height_m: "height (footprint data)", lidar_volume_m3: "volume (LiDAR)",
+  morph_bcov_100: "building cover 100 m", morph_bcov_250: "building cover 250 m", morph_pos_in_block: "position in block", morph_n_adjacent: "adjacent buildings",
+  morph_nn_dist_m: "distance to nearest building", morph_road_dist_m: "distance to road", morph_major_road_dist_m: "distance to major road",
+  lidar_roof_flat_share: "flat roof share", lidar_roof_south_share: "south-facing roof share", morph_orientation_deg: "orientation", st_orient_deg: "street orientation",
+  morph_elongation: "elongation", morph_perimeter_m: "perimeter", morph_num_floors: "floors", lidar_storeys_est: "storeys (LiDAR)", lidar_south_roof_m2: "south roof area",
+  lidar_volume_per_dwelling_m3: "volume per address (LiDAR)", lidar_valid_share: "LiDAR coverage of footprint", lidar_roof_m2: "roof area (LiDAR)",
+  lidar_n_px: "LiDAR pixels (size)", morph_volume_m3: "volume (footprint data)", lidar_built_after_survey: "built after LiDAR survey"};
+const fname = f => FEAT[f] || f;
+function formPage() {
+  const el = document.getElementById("formpage");
+  let h = `<div class="note" style="margin-bottom:10px">How urban form and streetscape relate to energy performance. Types: k-means of the median building and street form of 250 m cells. Effects: SHAP contributions of a model predicting SAP from form only (morphology, streetscape, LiDAR; spatial cross-validation): how many SAP points each measure adds or removes, along its range.</div><div class="grid2">`;
+  for (const a of AREAS) {
+    const A = D.areas[a];
+    if (!A.types.length) { h += `<div class="card"><h3>${A.name}</h3><div class="note">Not computed yet.</div></div>`; continue; }
+    const cv = A.form_cv[0] || {};
+    h += `<div class="card"><h3>${A.name}: urban form types</h3><div style="overflow:auto"><table><tr><th>Type</th><th>cells</th><th>certs</th><th>SAP</th><th>A–C</th><th>F–G</th><th>poor walls</th><th>poor roof</th><th>main age bands</th></tr>
+      ${A.types.map(t => `<tr><td><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${CAT[t.type_id % CAT.length]};margin-right:5px"></span>${esc(t.type)}</td><td>${t.cells}</td><td>${t.certificates.toLocaleString()}</td><td>${fmt(t.sap_mean, 1)}</td><td>${pct(t.share_AC)}</td><td>${pct(t.share_FG)}</td><td>${pct(t.poor_walls)}</td><td>${pct(t.poor_roof)}</td><td style="text-align:left">${esc(t.main_age_bands)}</td></tr>`).join("")}</table></div>
+      <div class="note">Form alone explains R² ${fmt(cv.sap_r2, 2)} of the SAP score (MAE ${fmt(cv.sap_mae, 1)}), spatial cross-validation, ${(cv.n || 0).toLocaleString()} certificates ${esc(cv.years || "")}.</div></div>`;
+    h += `<div class="card"><h3>${A.name}: strongest form effects</h3>${hbars(A.shap.slice(0, 12).map(r => ({label: fname(r.feature), v: r.mean_abs_shap})), {f: v => fmt(v, 2), lw: 200})}
+      <div class="note">Mean absolute SAP points contributed.</div></div>`;
+    const feats = [...new Set(A.shap_dep.filter(r => r.x_median != null).map(r => r.feature))].slice(0, 6);
+    h += `<div class="card"><h3>${A.name}: direction of the effects</h3><div class="grid2" style="grid-template-columns:repeat(2,1fr);gap:8px">${feats.map(f => {
+      const pts = A.shap_dep.filter(r => r.feature === f && r.x_median != null).map(r => [r.x_median, r.shap_mean, r.n]);
+      return `<div><div class="note" style="color:var(--ink)">${esc(fname(f))}</div>${lineChartXY(pts, {w: 230, h: 120, colour: AREA_COL[a]})}</div>`; }).join("")}</div>
+      <div class="note">SAP points added (above 0) or removed (below 0) along deciles of each measure.</div></div>`;
+  }
+  el.innerHTML = h + "</div>";
+}
+function lineChartXY(pts, opt) {
+  const W = opt.w, H = opt.h, m = {l: 30, r: 6, t: 6, b: 18};
+  if (!pts.length) return "";
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(0, ...ys), y1 = Math.max(0, ...ys) || 1;
+  const X = x => m.l + (x - x0) / ((x1 - x0) || 1) * (W - m.l - m.r), Y = y => H - m.b - (y - y0) / ((y1 - y0) || 1) * (H - m.t - m.b);
+  const nf = v => Math.abs(v) >= 1000 ? (v / 1000).toFixed(1) + "k" : Math.abs(v) >= 10 ? v.toFixed(0) : v.toFixed(2);
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%"><line class="axis" x1="${m.l}" x2="${W - m.r}" y1="${Y(0)}" y2="${Y(0)}"/>
+    <text x="${m.l - 3}" y="${Y(y1) + 4}" text-anchor="end">${fmt(y1, 1)}</text><text x="${m.l - 3}" y="${Y(y0)}" text-anchor="end">${fmt(y0, 1)}</text>
+    <text x="${m.l}" y="${H - 4}">${nf(x0)}</text><text x="${W - m.r}" y="${H - 4}" text-anchor="end">${nf(x1)}</text>
+    <path d="${pts.map((p, k) => (k ? "L" : "M") + X(p[0]).toFixed(1) + " " + Y(p[1]).toFixed(1)).join("")}" fill="none" stroke="${opt.colour}" stroke-width="2"/>
+    ${pts.map(p => `<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="3" fill="${opt.colour}"><title>${nf(p[0])}: ${fmt(p[1], 2)} SAP (n ${p[2]})</title></circle>`).join("")}</svg>`;
+}
+
+// ---------- models ----------
+function modelPage() {
+  const el = document.getElementById("modelpage"), lab = {eo: "EO only", eo_morph_nolidar: "+ morphology, streets (no LiDAR)", eo_morph: "+ morphology, streets, LiDAR",
+    eo_morph_fps: "… + footprint min/max/SD", eo_morph_floor: "… + floor position", eo_morph_ctx: "… + Census context", all: "+ certificate attributes"};
+  let h = `<div class="note" style="margin-bottom:10px">LightGBM, 5-fold cross-validation. Spatial: folds of 2 km blocks, each home predicted by a model that never saw its block (what to expect for homes without a certificate). Random: random folds, for comparison only.</div><div class="grid2">`;
+  const short = {eo: "EO", eo_morph_nolidar: "+form", eo_morph: "+LiDAR", eo_morph_fps: "+fp stats", eo_morph_floor: "+floor", eo_morph_ctx: "+Census", all: "+cert."};
+  h += `<div class="card"><h3>Band accuracy, spatial validation</h3>${legendRow(AREAS.map(a => [D.areas[a].name, AREA_COL[a]]))}${groupedBars(Object.keys(lab).map(k => short[k]),
+       AREAS.map(a => ({label: D.areas[a].name, colour: AREA_COL[a], vals: Object.keys(lab).map(fs => (D.areas[a].metrics.find(m => m.model === "lgbm" && m.target === "band" && m.validation === "spatial" && m.featureset === fs) || {}).accuracy)})), {f: pct, max: 1, h: 220})}</div>`;
+  for (const a of AREAS) {
+    const M = D.areas[a].metrics;
+    h += `<div class="card"><h3>${D.areas[a].name} (${D.areas[a].model_tag})</h3><table><tr><th>Features</th><th>Validation</th><th>Accuracy</th><th>Macro-F1</th><th>κw</th><th>±1 band</th><th>SAP MAE</th><th>SAP R²</th></tr>
+      ${M.filter(m => m.target === "band" && m.model === "lgbm").map(m => { const s = M.find(x => x.target === "sap" && x.featureset === m.featureset && x.validation === m.validation) || {};
+        return `<tr><td>${lab[m.featureset] || m.featureset}</td><td>${m.validation}</td><td>${pct(m.accuracy)}</td><td>${fmt(m.macro_f1, 3)}</td><td>${fmt(m.qwk, 3)}</td><td>${pct(m.within_one_band)}</td><td>${fmt(s.mae, 1)}</td><td>${fmt(s.r2, 2)}</td></tr>`; }).join("")}</table>
+      ${D.public ? "" : `<div class="note">Property-level inspector: <a href="gbem_dashboard_${a}_${D.areas[a].model_tag}.html">gbem_dashboard_${a}_${D.areas[a].model_tag}.html</a></div>`}</div>`;
+    const imp = D.areas[a].importance.filter(r => r.featureset === "eo_morph");
+    h += `<div class="card"><h3>${D.areas[a].name}: most important features (EO + morphology)</h3>${hbars(imp.map(r => ({label: r.feature, v: r.gain})), {f: v => v.toExponential(1), lw: 210, w: 470})}</div>`;
+    const G = D.areas[a].groups.filter(g => ["eo_morph", "eo_morph_floor"].includes(g.featureset));
+    if (G.length) h += `<div class="card"><h3>${D.areas[a].name}: by floor position and at building level</h3><table><tr><th>Group</th><th>Features</th><th>n</th><th>Accuracy</th><th>SAP MAE</th><th>SAP R²</th><th>SD within building</th></tr>
+      ${G.map(g => `<tr><td>${esc(g.group)}</td><td>${lab[g.featureset] || g.featureset}</td><td>${(g.n || 0).toLocaleString()}</td><td>${pct(g.accuracy)}</td><td>${fmt(g.sap_mae, 1)}</td><td>${fmt(g.sap_r2, 2)}</td><td>${fmt(g.within_building_sd, 1)}</td></tr>`).join("")}</table>
+      <div class="note">Flats of one building share their satellite and footprint features, so their differences (ground / middle / top floor) are visible only with the floor position. Building level: mean predicted vs mean actual SAP of buildings with several certificates.</div></div>`;
+    const RM = D.areas[a].retro_models;
+    if (RM.length) h += `<div class="card"><h3>${D.areas[a].name}: predicting weak elements (homes without a certificate)</h3><table><tr><th>Element</th><th>rated</th><th>poor</th><th>AUC</th><th>avg. precision</th><th>poor found in top 20%</th></tr>
+      ${RM.map(r => `<tr><td>${D.element_label[r.element] || (r.element === "fabric" ? "Walls, roof or windows" : r.element)}</td><td>${r.n_rated.toLocaleString()}</td><td>${pct(r.prevalence)}</td><td>${fmt(r.auc, 3)}</td><td>${fmt(r.avg_precision, 3)}</td><td>${pct(r.share_found_in_top20)}</td></tr>`).join("")}</table>
+      <div class="note">Satellite, morphology, streets and LiDAR only; spatial 5-fold cross-validation. "Top 20%": share of all poor homes among the 20% with the highest predicted risk (a random pick finds 20%).</div></div>`;
+    const sp = D.areas[a].stock_pred;
+    if (sp) h += `<div class="card"><h3>${D.areas[a].name}: whole stock vs certified homes (${sp.year})</h3><table>
+      <tr><td>Dwelling buildings predicted</td><td>${sp.buildings.toLocaleString()} (${Math.round(sp.dwellings).toLocaleString()} addresses)</td></tr>
+      <tr><td>…with a certificate that year</td><td>${sp.certified_buildings.toLocaleString()}</td></tr>
+      <tr><td>Predicted mean SAP: all / certified</td><td>${fmt(sp.sap_all, 1)} / ${fmt(sp.sap_certified, 1)}</td></tr>
+      <tr><td>Predicted F–G share: all / certified</td><td>${pct(sp.fg_all)} / ${pct(sp.fg_certified)}</td></tr></table>
+      <div class="note">Model (EO + morphology) trained on that year's certificates and applied to every building with an address; weighted by addresses. A difference shows how the certified homes differ from the whole stock. Map: Grid layer, "Predicted …" measures.</div></div>`;
+  }
+  if (D.transfer.length) h += `<div class="card" style="grid-column:1/-1"><h3>Transferability: across cities and years</h3><div style="overflow:auto"><table><tr><th>Experiment</th><th>Features</th><th>n train</th><th>n test</th><th>Accuracy</th><th>Macro-F1</th><th>κw</th><th>SAP MAE</th><th>SAP R²</th><th>mean SAP actual → predicted</th></tr>
+    ${D.transfer.map(t => `<tr><td>${esc(t.experiment)}</td><td>${t.featureset === "core" ? "core" : "core + LiDAR"}</td><td>${(t.n_train || 0).toLocaleString()}</td><td>${(t.n_test || 0).toLocaleString()}</td><td>${pct(t.accuracy)}</td><td>${fmt(t.macro_f1, 3)}</td><td>${fmt(t.qwk, 3)}</td><td>${fmt(t.sap_mae, 1)}</td><td>${fmt(t.sap_r2, 2)}</td><td>${t.mean_sap_pred != null ? fmt(t.mean_sap_actual, 1) + " → " + fmt(t.mean_sap_pred, 1) : ""}</td></tr>`).join("")}</table></div>
+    <div class="note">Core features: available in both cities (satellite, climate, morphology, streets; LiDAR optional). Within-area rows are spatial cross-validation for reference.</div></div>`;
+  el.innerHTML = h + "</div>";
+}
+
+// ---------- compare ----------
+function cmpPage() {
+  const el = document.getElementById("cmppage"), rows = [["Properties with a valid certificate", a => D.areas[a].stock.n.toLocaleString()],
+    ["Mean SAP", a => fmt(D.areas[a].stock.sap_mean, 1)], ["Rated A–C", a => pct(D.areas[a].stock.bands.slice(0, 3).reduce((x, y) => x + y, 0))],
+    ["Rated F–G", a => pct(D.areas[a].stock.bands[5] + D.areas[a].stock.bands[6])], ["Mean SAP gain possible", a => fmt(D.areas[a].stock.potential_gap, 1)],
+    ["Solar PV", a => pct(D.areas[a].stock.pv)], ...["gas", "electricity", "heat pump", "oil", "community"].map(f => [`Main fuel: ${f}`, a => pct(D.areas[a].stock.fuels[f] || 0)]),
+    ...["walls", "roof", "windows", "mainheat"].map(e => [`Poor ${D.element_label[e].toLowerCase()}`, a => pct(D.areas[a].stock.poor[e])]),
+    ["Predicted mean SAP, all dwellings (model)", a => D.areas[a].stock_pred ? fmt(D.areas[a].stock_pred.sap_all, 1) : "–"],
+    ["Predicted F–G share, all dwellings (model)", a => D.areas[a].stock_pred ? pct(D.areas[a].stock_pred.fg_all) : "–"],
+    ["Band accuracy (spatial, EO + morphology)", a => pct((D.areas[a].metrics.find(m => m.model === "lgbm" && m.target === "band" && m.validation === "spatial" && m.featureset === "eo_morph") || {}).accuracy)]];
+  el.innerHTML = `<div class="grid2"><div class="card"><h3>Key figures</h3><table><tr><th></th>${AREAS.map(a => `<th style="color:${AREA_COL[a]}">${D.areas[a].name}</th>`).join("")}</tr>
+    ${rows.map(([k, f]) => `<tr><td>${k}</td>${AREAS.map(a => `<td>${f(a)}</td>`).join("")}</tr>`).join("")}</table></div>
+    <div class="card"><h3>Band distribution of the current stock</h3>${legendRow(AREAS.map(a => [D.areas[a].name, AREA_COL[a]]))}${groupedBars(BANDS, AREAS.map(a => ({label: D.areas[a].name, colour: AREA_COL[a], vals: D.areas[a].stock.bands})), {f: pct, h: 230})}</div></div>`;
+}
+
+// ---------- about ----------
+document.getElementById("aboutpage").innerHTML = `<div class="card" style="max-width:860px"><h3>What this atlas shows</h3><div class="note">
+<p><b>Current stock</b>: the latest certificate of every property among certificates issued in the last 10 years. Certified homes are those sold, let, built or retrofitted, so they are not a random sample of all homes.</p>
+<p><b>Units</b>: ${D.grid} m grid cells; neighbourhoods (London LSOA 2021, Belfast wards 2012); streets (nearest named OpenStreetMap road within 60 m, by postcode district); postcode sectors; London boroughs. Units with fewer than 5 certificates (10 in the public version) are not shown.</p>
+<p><b>Hotspots</b>: Getis-Ord Gi* z-scores of the grid cells with their 8 neighbours; |z| > 1.96 marks clusters significant at 5% (not corrected for multiple testing).</p>
+<p><b>Retrofit</b>: element ratings Poor or Very Poor on the certificate; SAP gain possible = potential minus current SAP; recommended measures from the England and Wales register (none in the NI extract).</p>
+<p><b>Trends</b>: certificates issued per year, and change between consecutive certificates of the same home.</p>
+<p><b>Models</b>: LightGBM with spatial 5-fold cross-validation (2 km blocks); the buildings layer shows out-of-fold predictions, averaged over the certificates of each building, extruded by LiDAR height (footprint data or floors × 3 m where LiDAR is missing).</p>
+<p>Code: <code>code/analysis/stock.py</code>, <code>code/models/baseline.py</code>, <code>code/viz/atlas.py</code>. ${D.public ? "" : "<b>This version contains property-level data: keep it local.</b>"}</p></div></div>`;
+
+// ---------- render ----------
+function render() {
+  document.querySelectorAll("#areaSeg button").forEach(b => b.classList.toggle("on", b.dataset.a === S.area));
+  document.querySelectorAll("#nav button").forEach(b => b.classList.toggle("on", b.dataset.t === S.tab));
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", t.id === "t-" + S.tab));
+  document.getElementById("areaSeg").style.visibility = ["trend", "cmp", "retro", "model", "about", "form"].includes(S.tab) ? "hidden" : "visible";
+  if (S.tab === "map") drawMap(); else if (S.tab === "rank") rankPage(); else if (S.tab === "trend") trendPage();
+  else if (S.tab === "retro") retroPage(); else if (S.tab === "model") modelPage(); else if (S.tab === "cmp") cmpPage();
+  else if (S.tab === "form") formPage();
+}
+render();
+</script>
+</body>
+</html>
