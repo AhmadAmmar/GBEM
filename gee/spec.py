@@ -21,7 +21,7 @@ NODATA_INT, NODATA_FLOAT = -32768, -9999.0
 S2_BANDS = ["B2", "B3", "B4", "B5", "B6", "B7", "B8", "B8A", "B11", "B12"]
 EVENTS = {"heat2022": 2022, "cold2022": 2022}
 WINDOWS = {"s2": ["annual", "summer"], "s1": ["annual"], "landsat": ["annual", "summer", "winter"],
-           "modis": ["annual", "summer", "winter"], "era5": ["annual", "summer", "winter"], "viirs": ["annual"]}
+           "modis": ["annual", "summer", "winter"], "era5": ["annual", "summer", "winter"], "viirs": ["annual"], "embed": ["annual"]}
 EVENT_PRODUCTS = ["landsat", "modis", "era5"]
 
 # per window: band stems in export order, and the divisor that turns stored values into physical units
@@ -35,6 +35,8 @@ PRODUCTS = {
     "era5": {"scale": 1000, "extent": "context",
              "stems": ["t2m", "d2m", "u10", "v10", "t2m_max_daily", "t2m_min_daily", "precip_mm", "ssrd_MJm2", "HDD", "CDD"], "div": {}},
     "viirs": {"scale": 500, "extent": "context", "stems": ["avg_rad", "n"], "div": {}},
+    # pretrained annual embeddings (batch b7): 64 unit-vector components stored x 10000
+    "embed": {"scale": 10, "extent": "core", "stems": [f"A{i:02d}" for i in range(64)], "div": {f"A{i:02d}": 10000 for i in range(64)}},
 }
 MULTI = {   # multi-year thermal composites (batch b5): seasons as windows, all years 2020-2025 together
     "landsat_multi": {"scale": 30, "extent": "context", "stems": ["LST", "n"], "div": {"LST": 100}, "windows": ["annual", "summer", "winter"]},

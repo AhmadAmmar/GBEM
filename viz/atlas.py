@@ -47,7 +47,15 @@ METRICS = [("sap_mean", "Mean SAP score", "sap", 1), ("share_AC", "Share rated A
            ("cert_gap", "Certified minus all-dwellings predicted SAP (certificate bias)", "divv", 0),
            ("gas_kwh", "Gas per meter 2024 (kWh, measured, DESNZ)", "seq", -1),
            ("elec_kwh", "Electricity per meter 2024 (kWh, measured, DESNZ)", "seq", -1),
-           ("gas_change", "Change in gas per meter 2015→2024 (%, measured)", "divv", -1)]
+           ("gas_change", "Change in gas per meter 2015→2024 (%, measured)", "divv", -1),
+           ("share_ready", "Heat-pump ready (heat-loss parameter < 2 W/m²K)", "seq", 1),
+           ("share_fabric_first", "Fabric first before a heat pump (≥ 3 W/m²K)", "seq", -1),
+           ("heat_pump_share", "Homes heated by a heat pump", "seq", 1),
+           ("density_mwh_km2", "Space-heating demand density (MWh/km², physics estimate)", "seq", 0),
+           ("overheating_index", "Summer overheating exposure (index 0–1, exploratory)", "seq", -1),
+           ("kwp_median_houses", "Rooftop solar potential per house (kWp, LiDAR)", "seq", 1),
+           ("share_fuel_poor", "Households in fuel poverty (official, 2024 data)", "seq", -1),
+           ("outside_aoa", "Homes outside the model's area of applicability", "seq", -1)]
 GI = [("gi_sap", "Hotspots of SAP: clusters of high (blue) / low (red) scores, Gi* z", "div", 1),
       ("gi_FG", "Hotspots of F–G homes: clusters (red) / absence (blue), Gi* z", "div", -1)]
 TOP_NEED = ("top_need", "Most common weak element", "cat", 0)
@@ -163,6 +171,34 @@ def stock_cells(area):
     return u.set_index("cell")[["pred_sap_all", "pred_FG_all", "cert_gap", "dwellings"]]
 
 
+def extra_units(area, unit):
+    """per-unit results of the analysis scripts (heat pumps, heat density, overheating, solar, fuel poverty, trust)"""
+    A = DATA / area / "analysis"
+    parts = []
+    def add(p, key, cols, rename=None):
+        if p.exists():
+            t = pd.read_parquet(p).rename(columns=rename or {})
+            parts.append(t.set_index(key)[[c for c in cols if c in t]])
+    add(A / f"hp_readiness_units_{unit}.parquet", unit, ["share_ready", "share_fabric_first", "heat_pump_share"])
+    if unit == "cell":
+        add(A / "heat_density_cells.parquet", "cell", ["density_mwh_km2"])
+        add(A / "overheating_units_cell.parquet", "cell", ["overheating_index"])
+        aoa = DATA / "model_transfer/aoa_2024.csv"
+        pts = DATA / "model_transfer/aoa_2024_points.parquet"
+        if aoa.exists() and pts.exists():
+            thr = pd.read_csv(aoa).query("experiment == @'within ' + @area + ' (spatial CV)'")["threshold"]
+            p = pd.read_parquet(pts).query("experiment == @'within ' + @area")
+            cur = pd.read_parquet(A / "cert_enriched.parquet", columns=["cert_id", "cell"]).rename(columns={"cert_id": "id_cert"})
+            p = p.merge(cur, on="id_cert", how="inner")
+            if len(thr):
+                parts.append(p.assign(o=p["di"] > thr.iat[0]).groupby("cell")["o"].mean().rename("outside_aoa").to_frame())
+    if unit == "nbhd":
+        add(A / "solar_units_nbhd.parquet", "nbhd", ["kwp_median_houses"])
+        fp = DATA / area / "fuel_poverty/fuel_poverty_lsoa_london.parquet"
+        add(fp, "nbhd", ["share_fuel_poor"], {"lsoa": "nbhd"})
+    return pd.concat(parts, axis=1) if parts else None
+
+
 def energy_lsoa(area):
     """measured domestic gas and electricity per meter by LSOA (geo/get_desnz_energy.py): 2024 and change since 2015"""
     p = DATA / area / "energy_desnz/lsoa_energy_london.parquet"
@@ -212,6 +248,9 @@ def area_pack(area, public, domains):
     sc = stock_cells(area)
     if sc is not None:
         u = u.join(sc, on="cell")
+    xc = extra_units(area, "cell")
+    if xc is not None:
+        u = u.join(xc, on="cell")
     # a readable place name per cell: its most common street and neighbourhood
     mode = lambda s: s.mode().iat[0] if s.notna().any() else ""
     place = cur.groupby("cell").agg(st=("street", mode), nb=("nbhd_name", mode))
@@ -235,6 +274,9 @@ def area_pack(area, public, domains):
     en, energy_trend = energy_lsoa(area)
     if en is not None:
         u = u.join(en, on="nbhd")
+    xn = extra_units(area, "nbhd")
+    if xn is not None:
+        u = u.join(xn, on="nbhd")
     gs = gpd.GeoSeries(geo.loc[u["nbhd"], "geometry"].values, crs=4326).simplify(0.00004)
     fid, starts, xy = rings(gs.values, center)
     layers["nbhd"] = {"label": NBHD[area], "n": len(u), "cols": table(u, blob, mcols[:-2] + ["nbhd", "nbhd_name", "rank_sap", "top_need"]),
@@ -323,6 +365,7 @@ def main():
     cells = cells[cells["n"] >= 5]
     extra = [x for x in [stock_cells(ar) for ar in a.areas] if x is not None]
     extra += [x for x in [energy_lsoa(ar)[0] for ar in a.areas] if x is not None]
+    extra += [x for x in [extra_units(ar, un) for ar in a.areas for un in ("cell", "nbhd")] if x is not None]
     pool = pd.concat([cells] + [x.reset_index(drop=True) for x in extra], ignore_index=True)
     domains = {}
     for k, *_ in METRICS + GI:

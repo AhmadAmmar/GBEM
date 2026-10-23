@@ -28,7 +28,11 @@ from safeio import keep                      # existing outputs are archived, ne
 OUT = B.DATA / "model_transfer"
 CORE = ["sentinel2", "sentinel1", "thermal_landsat", "thermal_modis", "thermal_multiyear", "climate", "night_lights",
         "built_volume_ghsl", "landcover", "terrain", "morphology", "streets"]
-SETS = {"core": CORE, "core_lidar": CORE + ["lidar"]}
+SETS = {"core": CORE, "core_lidar": CORE + ["lidar"],
+        # does physics-informed geometry travel between cities better than spectra? (--sets spectral form_physics core_phys)
+        "spectral": ["sentinel2", "sentinel1", "thermal_landsat", "thermal_modis", "thermal_multiyear", "night_lights"],
+        "form_physics": ["morphology", "streets", "lidar", "physics"],
+        "core_phys": CORE + ["lidar", "physics"]}
 
 
 def load(area, years, sample, seed=42):
@@ -101,12 +105,16 @@ def run(name, train, test, cols, rows, fs):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--year", type=int, default=2024); ap.add_argument("--sample", type=int, default=50000)
+    ap.add_argument("--sets", nargs="+", default=["core", "core_lidar"]); ap.add_argument("--no-temporal", action="store_true")
+    ap.add_argument("--tag", default="")
     a = ap.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
     rows = []
+    sets = {k: SETS[k] for k in a.sets}
+    name = f"transfer_{a.year}{'_' + a.tag if a.tag else ''}.csv"
     lon, lon_dd = load("london", [a.year], a.sample)
     bel, bel_dd = load("belfast", [a.year], None)
-    for fs, groups in SETS.items():
+    for fs, groups in sets.items():
         cols = common_columns([lon_dd, bel_dd], groups, [lon, bel])
         print(f"{fs}: {len(cols)} common features", flush=True)
         rows.append({"experiment": f"within London {a.year} (spatial 5-fold CV)", "featureset": fs, "n_features": len(cols),
@@ -117,13 +125,14 @@ def main():
             print(f"  {r['experiment']:45s} {fs:10s} acc {r['accuracy']:.3f} QWK {r['qwk']:.3f} SAP MAE {r['sap_mae']:.2f}", flush=True)
         run(f"London -> Belfast {a.year}", lon, bel, cols, rows, fs)
         run(f"Belfast -> London {a.year}", bel, lon, cols, rows, fs)
+    pd.DataFrame(rows).round(4).to_csv(keep(OUT / name), index=False)
     # temporal
-    for area in ("belfast", "london"):
+    for area in (() if a.no_temporal else ("belfast", "london")):
         dd = None
         frames = {}
         for y in range(2020, 2026):
             frames[y], dd = load(area, [y], a.sample if area == "london" else None)
-        for fs, groups in SETS.items():
+        for fs, groups in sets.items():
             cols = common_columns([dd] * 6, groups, list(frames.values()))
             tr = pd.concat([frames[y] for y in (2020, 2021, 2022)])
             for ty in (2024, 2025):
@@ -134,8 +143,8 @@ def main():
                              "n_train": len(frames[ty]), "n_test": len(frames[ty]), **spatial_cv(frames[ty], matrix(frames[ty], cols))})
                 r = rows[-1]
                 print(f"  {r['experiment']:45s} {fs:10s} acc {r['accuracy']:.3f} QWK {r['qwk']:.3f} SAP MAE {r['sap_mae']:.2f}", flush=True)
-        pd.DataFrame(rows).round(4).to_csv(keep(OUT / f"transfer_{a.year}.csv"), index=False)   # saved as it goes
-    print("written", OUT / f"transfer_{a.year}.csv")
+        pd.DataFrame(rows).round(4).to_csv(keep(OUT / name), index=False)   # saved as it goes
+    print("written", OUT / name)
 
 
 if __name__ == "__main__":
