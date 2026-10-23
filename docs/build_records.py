@@ -41,6 +41,7 @@ PIPELINE = [
     ("2 Certificates and buildings", "epc/lidar_london.py", "python epc/lidar_london.py"),
     ("2 Certificates and buildings", "epc/streetscape.py", "python epc/streetscape.py --area <area>"),
     ("2 Certificates and buildings", "epc/physics.py", "python epc/physics.py --area <area>"),
+    ("2 Certificates and buildings", "epc/ber_dublin.py", "python epc/ber_dublin.py"),
     ("2 Certificates and buildings", "epc/assemble.py", "python epc/assemble.py --areas <areas>"),
     ("3 Context data", "geo/get_boundaries.py", "python geo/get_boundaries.py"),
     ("3 Context data", "geo/get_desnz_energy.py", "python geo/get_desnz_energy.py"),
