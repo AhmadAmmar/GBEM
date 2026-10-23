@@ -33,6 +33,7 @@ DATA = PHD / "data"
 LIDAR = DATA / "belfast/lidar"
 EXT = (".asc", ".grd")
 SKIPPED = []                                  # tiles that could not be read (empty or damaged files)
+MM_TILES = set()                              # surveys with tiles stored in millimetres (converted to metres)
 
 
 def surveys():
@@ -131,6 +132,12 @@ def main():
                 dsm = read_dsm(z, dsm_src, dtm.shape, t)
             except Exception as err:              # truncated or damaged tile in the published zip: skipped and logged
                 SKIPPED.append(f"{z.name}/{dsm_src[1]} ({str(err)[:60]})"); continue
+            # some 2012 surveys (Saintfield, Mossley, Glenavy, Bangor extension) store heights in millimetres: ground in
+            # the study area is below 600 m, so a tile median above 2000 means millimetres
+            for a in (dtm, dsm):
+                if np.isfinite(a).any() and np.nanmedian(a) > 2000:
+                    a /= 1000
+                    MM_TILES.add(name)
             res = t.a
             h, w = dsm.shape
             bbox = shapely.box(t.c, t.f + h * t.e, t.c + w * res, t.f)
@@ -164,7 +171,7 @@ def main():
     out = R.drop(columns=["i", "good"]).rename(columns={c: f"lidar_{c}" for c in R.columns if c not in ("i", "good", "fp_id")})
     d = DATA / "belfast/epc"
     out.to_parquet(keep(d / "lidar_fp.parquet"), index=False)
-    log.update({"skipped_tiles": SKIPPED, "footprints": int(len(fp)), "with_lidar": int(len(out)),
+    log.update({"skipped_tiles": SKIPPED, "surveys_in_mm": sorted(MM_TILES), "footprints": int(len(fp)), "with_lidar": int(len(out)),
                 "with_good_coverage": int((out["lidar_valid_share"] >= 0.8).sum()),
                 "by_survey": out["lidar_survey"].value_counts().to_dict(),
                 "height_med_m_median": float(out["lidar_height_med_m"].median()),

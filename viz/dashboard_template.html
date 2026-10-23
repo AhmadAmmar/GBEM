@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GBEM EPC Dashboard</title>
+<script src="https://unpkg.com/deck.gl@9.0.38/dist.min.js"></script>
+<style>
+:root{--bg:#f6f7f8;--panel:#fff;--ink:#1f2328;--ink2:#57606a;--muted:#8c959f;--line:#d8dee4;--accent:#2f6fb3;--soft:#eef2f6;--bar:#5b8fc9;--bar2:#9aa4ae}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f1317;--panel:#171c21;--ink:#e6edf3;--ink2:#a7b1bb;--muted:#7d8590;--line:#2d343c;--accent:#79b0ec;--soft:#202830;--bar:#6fa3dc;--bar2:#6b7580}}
+:root[data-theme="dark"]{--bg:#0f1317;--panel:#171c21;--ink:#e6edf3;--ink2:#a7b1bb;--muted:#7d8590;--line:#2d343c;--accent:#79b0ec;--soft:#202830;--bar:#6fa3dc;--bar2:#6b7580}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font:13px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column}
+header{display:flex;align-items:baseline;gap:12px;padding:8px 14px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+header h1{font-size:15px;margin:0;font-weight:600}
+header .sub{color:var(--ink2)}
+header button{margin-left:auto}
+.controls{display:flex;flex-wrap:wrap;gap:6px 16px;padding:8px 14px;background:var(--panel);border-bottom:1px solid var(--line);align-items:center}
+.ctl{display:flex;align-items:center;gap:6px}
+.ctl>span{color:var(--ink2);font-size:12px}
+select,button{font:inherit;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:3px 6px;max-width:260px}
+button{cursor:pointer}
+button.on{background:var(--accent);color:var(--panel);border-color:var(--accent)}
+.chips{display:flex;gap:3px}
+.chip{min-width:24px;text-align:center;padding:2px 5px;border-radius:5px;border:1px solid var(--line);cursor:pointer;user-select:none;background:var(--soft);color:var(--muted)}
+.chip.on{color:var(--ink);border-color:var(--ink2);background:var(--panel)}
+.main{flex:1;display:flex;min-height:0}
+.maps{flex:1;display:flex;min-width:0}
+.mapwrap{flex:1;position:relative;min-width:0}
+.mapwrap+.mapwrap{border-left:2px solid var(--line)}
+.mapwrap.hidden{display:none}
+.mapcanvas{position:absolute;inset:0}
+.maplabel{position:absolute;top:8px;left:8px;z-index:3;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px 6px;display:flex;gap:6px;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.legend{position:absolute;bottom:26px;left:8px;z-index:3;min-width:170px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:11px;color:var(--ink2);max-width:260px}
+.legend .sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:3px;vertical-align:-2px}
+.legend .row{display:flex;gap:8px;flex-wrap:wrap}
+.legend .grad{height:10px;border-radius:3px;margin:3px 0}
+.legend .ends{display:flex;justify-content:space-between}
+.attr{position:absolute;right:4px;bottom:3px;z-index:3;font-size:10px;color:var(--ink2);background:var(--panel);opacity:.85;padding:1px 5px;border-radius:4px}
+.attr a{color:inherit}
+.side{width:400px;overflow:auto;background:var(--panel);border-left:1px solid var(--line);padding:10px 14px 30px}
+.side h2{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink2);margin:18px 0 6px;font-weight:600}
+.side h2:first-child{margin-top:4px}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.tile{background:var(--soft);border-radius:6px;padding:6px 8px}
+.tile .v{font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
+.tile .k{font-size:11px;color:var(--ink2)}
+table{border-collapse:collapse;width:100%;font-size:11.5px;font-variant-numeric:tabular-nums}
+th,td{padding:3px 4px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--ink2);font-weight:600}
+tr.cur td{background:var(--soft);font-weight:600}
+.note{color:var(--ink2);font-size:12px}
+.note b{color:var(--ink)}
+svg text{fill:var(--ink2);font-size:10.5px}
+svg .lbl{fill:var(--ink)}
+.deck-tooltip{background:var(--panel)!important;color:var(--ink)!important;border:1px solid var(--line);border-radius:6px;font:12px/1.4 system-ui,sans-serif!important;padding:6px 8px!important;max-width:300px}
+.deck-tooltip table td{border:0;padding:0 4px 0 0}
+@media (max-width:900px){.main{flex-direction:column}.side{width:auto;border-left:0;border-top:1px solid var(--line);max-height:50vh}.maps{min-height:50vh}.controls{padding:8px 16px}}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">EPC ratings, predictions and errors</h1>
+  <span class="sub" id="subtitle"></span>
+  <button id="theme" title="Light or dark theme">Theme</button>
+</header>
+<div class="controls">
+  <div class="ctl"><span>Model</span><select id="run"></select></div>
+  <div class="ctl"><span>Year</span><div class="chips" id="years"></div></div>
+  <div class="ctl"><span>Actual band</span><div class="chips" id="bands"></div></div>
+  <div class="ctl" id="catctl"></div>
+  <div class="ctl"><label><input type="checkbox" id="wrong"> misclassified only</label></div>
+  <div class="ctl"><span>View</span><select id="view"><option value="0">Properties</option><option value="250">Grid 250 m</option><option value="500" selected>Grid 500 m</option><option value="1000">Grid 1 km</option></select></div>
+  <div class="ctl"><button id="split" class="on">Side by side</button></div>
+</div>
+<div class="main">
+  <div class="maps">
+    <div class="mapwrap" id="wrapL"><div class="mapcanvas" id="mapL"></div>
+      <div class="maplabel"><select id="varL"></select></div><div class="legend" id="legL"></div>
+      <div class="attr">Basemap © <a href="https://www.esri.com" target="_blank">Esri</a>, HERE, Garmin, © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors</div></div>
+    <div class="mapwrap" id="wrapR"><div class="mapcanvas" id="mapR"></div>
+      <div class="maplabel"><select id="varR"></select></div><div class="legend" id="legR"></div>
+      <div class="attr">Basemap © <a href="https://www.esri.com" target="_blank">Esri</a>, HERE, Garmin, © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors</div></div>
+  </div>
+  <aside class="side" id="side">
+    <h2>Selection</h2>
+    <div class="tiles" id="tiles"></div>
+    <h2>Confusion matrix (share of each actual band)</h2>
+    <div id="cm"></div>
+    <h2>Band distribution</h2>
+    <div id="dist"></div>
+    <h2>Accuracy by year</h2>
+    <div id="byyear"></div>
+    <h2 id="bycatTitle">Accuracy by property type</h2>
+    <div id="bycat"></div>
+    <h2>Cross-validated performance (all certificates)</h2>
+    <div id="metrics"></div>
+    <h2>Earlier set-up reproduced</h2>
+    <div id="old"></div>
+    <h2>Most important features (LightGBM gain)</h2>
+    <div id="imp"></div>
+    <h2>About</h2>
+    <div class="note" id="about"></div>
+  </aside>
+</div>
+<script>
+const D = /*__DATA__*/null;
+const BANDS = "ABCDEFG".split("");
+const EPC = ["#008054", "#19b459", "#8dce46", "#ffd500", "#fcaa65", "#ef8023", "#e9153b"];      // EPC certificate colours
+const DIV = ["#2166ac", "#67a9cf", "#c6dbef", "#bdbdbd", "#fdd0a2", "#ef8a62", "#b2182b"];     // predicted band - actual, -3..+3
+const SEQ = ["#d4e4f4", "#a9c9e8", "#7aaad6", "#4f8bc2", "#2d6aa8", "#174d88", "#0b3366"];     // one hue, light to dark
+const T = {f4: Float32Array, u1: Uint8Array, i2: Int16Array};
+function dec(b, t) { const s = atob(b), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return new T[t](u.buffer); }
+const C = {}; for (const [k, v] of Object.entries(D.cols)) C[k] = dec(v.b64, v.t);
+const N = D.n;
+const rgb = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+const EPCr = EPC.map(rgb), DIVr = DIV.map(rgb), SEQr = SEQ.map(rgb);
+function ramp(cols, t) { t = Math.max(0, Math.min(1, t)) * (cols.length - 1); const i = Math.min(Math.floor(t), cols.length - 2), f = t - i;
+  return [0, 1, 2].map(j => Math.round(cols[i][j] + (cols[i + 1][j] - cols[i][j]) * f)); }
+const fmt = (v, d = 1) => (v == null || !isFinite(v)) ? "–" : v.toFixed(d);
+const pct = v => (v == null || !isFinite(v)) ? "–" : (100 * v).toFixed(1) + "%";
+
+const QS = new URLSearchParams(location.search);   // ?theme=light|dark&view=0|250|500|1000&left=<variable>&right=<variable>
+if (QS.get("theme")) document.documentElement.dataset.theme = QS.get("theme");
+// ---------- state ----------
+const S = {run: D.runs.find(r => r.key === "lgbm_eo_morph_ctx") ? "lgbm_eo_morph_ctx" : D.runs[0].key, years: new Set(D.years), bands: new Set([0, 1, 2, 3, 4, 5, 6]),
+           cat: {}, wrong: false, view: QS.has("view") ? +QS.get("view") : 500, split: true,
+           varL: QS.get("left") || "actual", varR: QS.get("right") || "pred"};
+const run = () => D.runs.find(r => r.key === S.run);
+const P = () => C["pred_" + S.run], Q = () => C["sap_" + S.run], K = () => C["conf_" + S.run];
+
+// map variables: value(i) -> number or NaN; kind sets the colour scale
+function variables() {
+  const r = run(), v = [
+    {id: "actual", label: "Actual band (certificate)", kind: "band", val: i => C.actual[i] < 7 ? C.actual[i] : NaN},
+    {id: "pred", label: "Predicted band", kind: "band", val: i => P()[i] < 7 ? P()[i] : NaN},
+    {id: "err", label: "Error: predicted − actual band", kind: "div", dom: [-3, 3], val: i => (P()[i] < 7 && C.actual[i] < 7) ? P()[i] - C.actual[i] : NaN},
+    {id: "absErr", label: "Absolute error (bands)", kind: "seq", dom: [0, 3], val: i => (P()[i] < 7 && C.actual[i] < 7) ? Math.abs(P()[i] - C.actual[i]) : NaN},
+    {id: "sapA", label: "Actual SAP score", kind: "seq", dom: [20, 95], rev: true, val: i => C.sap_actual[i] === -32768 ? NaN : C.sap_actual[i]}];
+  if (r.has_sap) v.push({id: "sapP", label: "Predicted SAP score", kind: "seq", dom: [20, 95], rev: true, val: i => Q()[i] === -32768 ? NaN : Q()[i]},
+                        {id: "sapE", label: "SAP error: predicted − actual", kind: "div", dom: [-20, 20], rev: true, val: i => (Q()[i] === -32768 || C.sap_actual[i] === -32768) ? NaN : Q()[i] - C.sap_actual[i]});
+  if (r.has_conf) v.push({id: "conf", label: "Model confidence (top-class probability)", kind: "seq", dom: [0.3, 0.9], val: i => K()[i] === 255 ? NaN : K()[i] / 100});
+  for (const n of D.nums) v.push({id: n.key, label: n.label, kind: "seq", dom: n.domain, val: i => C[n.key][i]});
+  return v;
+}
+let VARS = variables();
+const V = id => VARS.find(v => v.id === id) || VARS[0];
+function colour(v, x) {
+  if (!isFinite(x)) return null;
+  if (v.kind === "band") return ramp(EPCr, x / 6);
+  let t = (x - v.dom[0]) / (v.dom[1] - v.dom[0]);
+  if (v.kind === "div") return ramp(v.rev ? [...DIVr].reverse() : DIVr, t);
+  return ramp(SEQr, v.rev ? 1 - t : t);
+}
+
+// ---------- filtering ----------
+let IDX = new Uint32Array(0);
+function filter() {
+  const p = P(), out = new Uint32Array(N); let n = 0;
+  const cats = Object.entries(S.cat).filter(([, v]) => v !== "");
+  for (let i = 0; i < N; i++) {
+    if (!S.years.has(2000 + C.year[i]) || !S.bands.has(C.actual[i])) continue;
+    if (S.wrong && (p[i] === C.actual[i] || p[i] > 6)) continue;
+    let ok = true; for (const [k, v] of cats) if (C[k][i] !== +v) { ok = false; break; }
+    if (ok) out[n++] = i;
+  }
+  IDX = out.slice(0, n);
+}
+
+// ---------- maps ----------
+// Esri grey canvas basemaps (no key needed), drawn by deck.gl itself; native tiles stop at zoom 16 and are enlarged beyond
+const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/";
+const TILES = {light: ESRI + "World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", dark: ESRI + "World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"};
+const basemap = side => new deck.TileLayer({id: "basemap" + side + (dark() ? "d" : "l"), data: dark() ? TILES.dark : TILES.light,
+  minZoom: 0, maxZoom: 16, tileSize: 256,
+  renderSubLayers: p => { const {west, south, east, north} = p.tile.bbox;
+    return new deck.BitmapLayer(p, {data: null, image: p.data, bounds: [west, south, east, north]}); }});
+const dark = () => document.documentElement.dataset.theme ? document.documentElement.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+let viewState = {longitude: D.center[0], latitude: D.center[1], zoom: 11, pitch: 0, bearing: 0};
+try {   // start with the whole study area in view
+  const el = document.getElementById("mapL"), fit = new deck.WebMercatorViewport({width: el.clientWidth || 800, height: el.clientHeight || 600})
+    .fitBounds([[D.bounds[0], D.bounds[1]], [D.bounds[2], D.bounds[3]]], {padding: 20});
+  viewState = {...viewState, longitude: fit.longitude, latitude: fit.latitude, zoom: fit.zoom};
+} catch (e) { console.warn("fit to bounds failed", e); }
+function onVS({viewState: vs}) { viewState = vs; for (const m of MAPS) m.deck.setProps({viewState}); }
+const MAPS = ["L", "R"].map(side => ({side, deck: new deck.DeckGL({container: "map" + side, viewState,
+  controller: true, onViewStateChange: onVS, getTooltip: tooltip, layers: []})}));
+
+function cellLonLat(x, y) {   // national grid -> lon/lat (quadratic fit made by dashboard.py)
+  const q = D.quad, u = (x - q.x0) / 1e4, v = (y - q.y0) / 1e4, t = [1, u, v, u * u, u * v, v * v];
+  let lo = 0, la = 0; for (let k = 0; k < 6; k++) { lo += q.lon[k] * t[k]; la += q.lat[k] * t[k]; } return [lo, la];
+}
+function grid(size) {
+  const cells = new Map(), p = P();
+  for (const i of IDX) {
+    const key = Math.floor(C.x[i] / size) * 1e5 + Math.floor(C.y[i] / size);
+    let c = cells.get(key); if (!c) { c = {key, idx: []}; cells.set(key, c); } c.idx.push(i);
+  }
+  const out = [];
+  for (const c of cells.values()) {
+    if (c.idx.length < 5) continue;                       // cells with fewer than 5 certificates are not shown
+    const gx = Math.floor(c.key / 1e5) * size, gy = (c.key % 1e5) * size;
+    c.poly = [[gx, gy], [gx + size, gy], [gx + size, gy + size], [gx, gy + size]].map(([x, y]) => cellLonLat(x, y));
+    let ok = 0, m = 0; for (const i of c.idx) if (p[i] < 7 && C.actual[i] < 7) { m++; if (p[i] === C.actual[i]) ok++; }
+    c.acc = m ? ok / m : NaN; c.n = c.idx.length; out.push(c);
+  }
+  return out;
+}
+const mean = (idx, f) => { let s = 0, n = 0; for (const i of idx) { const x = f(i); if (isFinite(x)) { s += x; n++; } } return n ? s / n : NaN; };
+
+let CELLS = [];
+function drawMaps() {
+  const pos = new Float32Array(IDX.length * 2); IDX.forEach((i, k) => { pos[2 * k] = C.lon[i]; pos[2 * k + 1] = C.lat[i]; });
+  if (S.view) CELLS = grid(S.view);
+  for (const m of MAPS) {
+    const v = V(m.side === "L" ? S.varL : S.varR);
+    let layer;
+    if (!S.view) {
+      const col = new Uint8Array(IDX.length * 4);
+      IDX.forEach((i, k) => { const c = colour(v, v.val(i)); if (c) { col.set(c, 4 * k); col[4 * k + 3] = 215; } });
+      layer = new deck.ScatterplotLayer({id: "pts" + m.side, data: {length: IDX.length, attributes: {getPosition: {value: pos, size: 2}, getFillColor: {value: col, size: 4}}},
+        radiusUnits: "meters", getRadius: 7, radiusMinPixels: 1.6, radiusMaxPixels: 9, pickable: true, autoHighlight: true, highlightColor: [0, 0, 0, 90]});
+    } else {
+      for (const c of CELLS) c["v" + m.side] = mean(c.idx, v.val);
+      layer = new deck.PolygonLayer({id: "grid" + m.side, data: CELLS, getPolygon: c => c.poly, stroked: true, getLineColor: dark() ? [15, 19, 23, 200] : [255, 255, 255, 200], lineWidthMinPixels: 0.5,
+        getFillColor: c => { const k = colour(v, c["v" + m.side]); return k ? [...k, 205] : [0, 0, 0, 0]; }, pickable: true, autoHighlight: true, highlightColor: [0, 0, 0, 70],
+        updateTriggers: {getFillColor: [v.id, S.run, S.view, IDX.length, Math.random()]}});
+    }
+    m.deck.setProps({layers: [basemap(m.side), layer]});
+    legend(m.side, v);
+  }
+}
+function legend(side, v) {
+  const el = document.getElementById("leg" + side);
+  if (v.kind === "band") el.innerHTML = '<div class="row">' + BANDS.map((b, i) => `<span><span class="sw" style="background:${EPC[i]}"></span>${b}</span>`).join("") + "</div>";
+  else if (v.kind === "div") { const c = v.rev ? [...DIV].reverse() : DIV;
+    el.innerHTML = `<div class="grad" style="background:linear-gradient(90deg,${c.join(",")})"></div><div class="ends"><span>${v.dom[0]}</span><span>0</span><span>+${v.dom[1]}</span></div>
+      <div>${v.id === "err" ? "blue: predicted more efficient · red: less efficient" : "red: predicted lower score · blue: higher"}</div>`; }
+  else { const c = v.rev ? [...SEQ].reverse() : SEQ;
+    el.innerHTML = `<div class="grad" style="background:linear-gradient(90deg,${c.join(",")})"></div><div class="ends"><span>${v.dom[0]}</span><span>${v.dom[1]}</span></div>`; }
+  if (S.view) el.innerHTML += `<div>mean per ${S.view >= 1000 ? S.view / 1000 + " km" : S.view + " m"} cell; cells with fewer than 5 certificates hidden</div>`;
+}
+function catText(k, i) { const c = C[k]; return c && c[i] !== 255 ? D.cats[k].values[c[i]] : "–"; }
+function tooltip(info) {
+  if (!info.object && info.index < 0) return null;
+  const r = run(), row = (k, v) => `<tr><td style="color:var(--ink2)">${k}</td><td>${v}</td></tr>`;
+  if (info.layer && info.layer.id.startsWith("grid")) {
+    const c = info.object, L = V(S.varL), R = V(S.varR);
+    return {html: `<b>${c.n} certificates</b><table>${row(L.label, fmt(c.vL, 2))}${S.split ? row(R.label, fmt(c.vR, 2)) : ""}${row("Accuracy, " + r.label, pct(c.acc))}</table>`};
+  }
+  const i = IDX[info.index], p = P()[i], a = C.actual[i];
+  let h = `<b>${2000 + C.year[i]} · actual ${a < 7 ? BANDS[a] : "–"} (SAP ${C.sap_actual[i] === -32768 ? "–" : C.sap_actual[i]})</b><table>`;
+  h += row("Predicted", (p < 7 ? BANDS[p] : "–") + (r.has_sap && Q()[i] !== -32768 ? ` (SAP ${Q()[i]})` : "") + (r.has_conf && K()[i] !== 255 ? `, confidence ${K()[i]}%` : ""));
+  for (const k of Object.keys(D.cats)) h += row(D.cats[k].label, catText(k, i));
+  for (const n of D.nums) h += row(n.label, fmt(C[n.key][i], 1));
+  return {html: h + "</table>"};
+}
+
+// ---------- side panel ----------
+function stats(idx) {
+  const p = P(), q = Q(), cm = Array.from({length: 7}, () => new Array(7).fill(0)); let n = 0, ok = 0, w1 = 0, ae = 0, an = 0;
+  for (const i of idx) { const a = C.actual[i], b = p[i]; if (a > 6 || b > 6) continue; cm[a][b]++; n++; if (a === b) ok++; if (Math.abs(a - b) <= 1) w1++;
+    if (q && q[i] !== -32768 && C.sap_actual[i] !== -32768) { ae += Math.abs(q[i] - C.sap_actual[i]); an++; } }
+  let f1 = 0, k = 0;
+  for (let c = 0; c < 7; c++) { const tp = cm[c][c], row = cm[c].reduce((s, x) => s + x, 0), col = cm.reduce((s, r) => s + r[c], 0);
+    if (row + col > 0) { f1 += 2 * tp / (row + col); k++; } }
+  // quadratic weighted kappa
+  let num = 0, den = 0; const rs = cm.map(r => r.reduce((s, x) => s + x, 0)), cs = BANDS.map((_, c) => cm.reduce((s, r) => s + r[c], 0));
+  for (let a = 0; a < 7; a++) for (let b = 0; b < 7; b++) { const w = (a - b) ** 2 / 36; num += w * cm[a][b]; den += n ? w * rs[a] * cs[b] / n : 0; }
+  return {cm, n, acc: n ? ok / n : NaN, w1: n ? w1 / n : NaN, f1: k ? f1 / k : NaN, qwk: den ? 1 - num / den : NaN, mae: an ? ae / an : NaN};
+}
+function tiles(s) {
+  const t = [["Certificates", IDX.length.toLocaleString()], ["Accuracy", pct(s.acc)], ["Within one band", pct(s.w1)], ["Macro-F1", fmt(s.f1, 3)],
+             ["Weighted kappa", fmt(s.qwk, 3)], ["SAP MAE", run().has_sap ? fmt(s.mae, 1) : "–"]];
+  document.getElementById("tiles").innerHTML = t.map(([k, v]) => `<div class="tile"><div class="v">${v}</div><div class="k">${k}</div></div>`).join("");
+}
+function cmChart(cm) {
+  const s = 30, ox = 26, oy = 16, W = ox + 7 * s + 4, H = oy + 7 * s + 26;
+  let g = `<svg width="${W}" height="${H}" role="img" aria-label="Confusion matrix">`;
+  g += `<text x="${ox + 3.5 * s}" y="10" text-anchor="middle">predicted</text>`;
+  BANDS.forEach((b, j) => g += `<text x="${ox + j * s + s / 2}" y="${oy + 7 * s + 13}" text-anchor="middle" class="lbl">${b}</text>`);
+  cm.forEach((r, a) => { const tot = r.reduce((x, y) => x + y, 0);
+    g += `<text x="${ox - 8}" y="${oy + a * s + s / 2 + 4}" text-anchor="end" class="lbl">${BANDS[a]}</text>`;
+    r.forEach((c, b) => { const f = tot ? c / tot : 0, col = tot ? `rgb(${ramp(SEQr, f).join(",")})` : "var(--soft)";
+      g += `<rect x="${ox + b * s + 1}" y="${oy + a * s + 1}" width="${s - 2}" height="${s - 2}" rx="3" fill="${col}"${a === b ? ' stroke="var(--ink)" stroke-width="1"' : ""}><title>actual ${BANDS[a]}, predicted ${BANDS[b]}: ${c} (${(100 * f).toFixed(0)}%)</title></rect>`;
+      if (c) g += `<text x="${ox + b * s + s / 2}" y="${oy + a * s + s / 2 + 4}" text-anchor="middle" style="fill:${f > 0.45 ? "#fff" : "#1f2328"};font-size:9.5px">${c > 999 ? (c / 1000).toFixed(1) + "k" : c}</text>`; }); });
+  g += `<text x="6" y="${oy + 3.5 * s}" transform="rotate(-90 6 ${oy + 3.5 * s})" text-anchor="middle">actual</text>`;
+  document.getElementById("cm").innerHTML = g + "</svg>";
+}
+function bars(el, items, opt = {}) {   // items: [{label, a, b?}] ; values 0..max
+  const W = 360, lw = opt.lw || 110, bh = opt.two ? 7 : 12, gap = opt.two ? 8 : 6, rh = (opt.two ? 2 * bh + 2 : bh) + gap;
+  const max = opt.max || Math.max(1e-9, ...items.flatMap(d => [d.a, d.b || 0]).filter(isFinite)), H = items.length * rh + 22;
+  let g = `<svg width="${W}" height="${H}" role="img">`;
+  items.forEach((d, k) => { const y = k * rh + 4;
+    g += `<text x="${lw - 6}" y="${y + (opt.two ? bh + 3 : bh - 2)}" text-anchor="end" class="lbl">${d.label.length > 18 ? d.label.slice(0, 17) + "…" : d.label}<title>${d.label}</title></text>`;
+    const w = v => isFinite(v) ? Math.max(1, (W - lw - (opt.two ? 100 : 90)) * v / max) : 0;
+    g += `<rect x="${lw}" y="${y}" width="${w(d.a)}" height="${bh}" rx="2" fill="${opt.colA || "var(--bar)"}"><title>${d.label}: ${opt.f(d.a)}${d.n != null ? " (n " + d.n + ")" : ""}</title></rect>`;
+    if (!opt.two) g += `<text x="${lw + w(d.a) + 4}" y="${y + bh - 2}">${opt.f(d.a)}${d.n != null ? "  n " + d.n.toLocaleString() : ""}</text>`;
+    else { g += `<rect x="${lw}" y="${y + bh + 2}" width="${w(d.b)}" height="${bh}" rx="2" fill="var(--bar2)"><title>${d.label}: ${opt.f(d.b)}</title></rect>`;
+           g += `<text x="${lw + Math.max(w(d.a), w(d.b)) + 4}" y="${y + bh + 4}">${opt.f(d.a)} / ${opt.f(d.b)}</text>`; } });
+  if (opt.two) g += `<rect x="${lw}" y="${H - 12}" width="10" height="8" rx="2" fill="var(--bar)"/><text x="${lw + 14}" y="${H - 5}">${opt.la}</text><rect x="${lw + 90}" y="${H - 12}" width="10" height="8" rx="2" fill="var(--bar2)"/><text x="${lw + 104}" y="${H - 5}">${opt.lb}</text>`;
+  document.getElementById(el).innerHTML = g + "</svg>";
+}
+function panel() {
+  const s = stats(IDX); tiles(s); cmChart(s.cm);
+  const rs = s.cm.map(r => r.reduce((x, y) => x + y, 0)), cs = BANDS.map((_, c) => s.cm.reduce((x, r) => x + r[c], 0)), n = s.n || 1;
+  bars("dist", BANDS.map((b, i) => ({label: b, a: rs[i] / n, b: cs[i] / n})), {two: true, f: pct, la: "actual", lb: "predicted", lw: 30, colA: "var(--bar)"});
+  const by = (key, label) => { const g = new Map(); for (const i of IDX) { const k = key(i); if (k == null) continue; (g.get(k) || g.set(k, []).get(k)).push(i); }
+    return [...g.entries()].map(([k, idx]) => ({label: label(k), a: stats(idx).acc, n: idx.length})).filter(d => d.n >= 20); };
+  bars("byyear", by(i => C.year[i], k => String(2000 + k)).sort((a, b) => a.label.localeCompare(b.label)), {f: pct, max: 1, lw: 50});
+  const ck = "epc_property_type" in D.cats ? "epc_property_type" : Object.keys(D.cats)[0];
+  if (ck) bars("bycat", by(i => C[ck][i] === 255 ? null : C[ck][i], k => D.cats[ck].values[k]).sort((a, b) => b.n - a.n).slice(0, 10), {f: pct, max: 1});
+  metricsTable();
+  const imp = D.importance.filter(d => d.featureset === run().featureset);
+  if (imp.length) bars("imp", imp.map(d => ({label: d.feature, a: d.gain})), {f: v => v.toExponential(1), lw: 170});
+  else document.getElementById("imp").innerHTML = '<div class="note">Importance is recorded for LightGBM runs only.</div>';
+}
+function metricsTable() {
+  const rows = D.metrics.filter(m => m.target === "band");
+  const sapOf = (r) => D.metrics.find(m => m.target === "sap" && m.featureset === r.featureset && m.validation === r.validation);
+  let h = "<table><tr><th>Model · features</th><th>Valid.</th><th>Acc.</th><th>Macro-F1</th><th>κw</th><th>±1</th><th>SAP MAE</th></tr>";
+  for (const r of rows) { const s = r.model === "lgbm" ? sapOf(r) : null, cur = r.validation === "spatial" && `${r.model}_${r.featureset}` === S.run;
+    h += `<tr class="${cur ? "cur" : ""}"><td>${(D.runs.find(x => x.key === r.model + "_" + r.featureset) || {label: r.model + " · " + r.featureset}).label}</td><td>${r.validation}</td><td>${pct(r.accuracy)}</td><td>${fmt(r.macro_f1, 3)}</td><td>${fmt(r.qwk, 3)}</td><td>${pct(r.within_one_band)}</td><td>${s ? fmt(s.mae, 1) : "–"}</td></tr>`; }
+  document.getElementById("metrics").innerHTML = h + '</table><div class="note">“spatial”: 5 folds of 2 km blocks, each property predicted by a model that never saw its block (what the maps show). “random”: 5 random folds, shown only for comparison; the gap is the optimism of random splits.</div>';
+  const old = D.old.filter(o => !o.area || o.area === D.area);
+  document.getElementById("old").innerHTML = old.length ? "<table><tr><th>Variant</th><th>Acc.</th><th>Macro-F1</th></tr>" +
+    old.map(o => `<tr><td>${o.variant || o.name || ""}${o.description ? " – " + o.description : ""}</td><td>${pct(o.accuracy)}</td><td>${fmt(o.macro_f1, 3)}</td></tr>`).join("") +
+    '</table><div class="note">The maps of April 2025 showed predictions of a random forest trained on all mapped properties, i.e. in-sample; the accuracy reported then is not reproduced once properties are held out.</div>'
+    : '<div class="note">No reproduction results for this area.</div>';
+}
+
+// ---------- controls ----------
+function fillVarSelect(id, cur) { const el = document.getElementById(id); el.innerHTML = VARS.map(v => `<option value="${v.id}"${v.id === cur ? " selected" : ""}>${v.label}</option>`).join(""); }
+function refresh(all = true) { if (all) filter(); drawMaps(); panel(); }
+const runSel = document.getElementById("run");
+runSel.innerHTML = D.runs.map(r => `<option value="${r.key}"${r.key === S.run ? " selected" : ""}>${r.label}</option>`).join("");
+runSel.onchange = () => { S.run = runSel.value; VARS = variables(); if (!VARS.find(v => v.id === S.varL)) S.varL = "actual"; if (!VARS.find(v => v.id === S.varR)) S.varR = "pred";
+  fillVarSelect("varL", S.varL); fillVarSelect("varR", S.varR); refresh(); };
+fillVarSelect("varL", S.varL); fillVarSelect("varR", S.varR);
+document.getElementById("varL").onchange = e => { S.varL = e.target.value; refresh(false); };
+document.getElementById("varR").onchange = e => { S.varR = e.target.value; refresh(false); };
+function chips(id, items, set) { const el = document.getElementById(id);
+  el.innerHTML = items.map(([v, l, c]) => `<span class="chip on" data-v="${v}"${c ? ` style="border-bottom:3px solid ${c}"` : ""}>${l}</span>`).join("");
+  el.querySelectorAll(".chip").forEach(ch => ch.onclick = ev => { const v = +ch.dataset.v;
+    if (ev.shiftKey || ev.ctrlKey || ev.metaKey) { set.clear(); set.add(v); el.querySelectorAll(".chip").forEach(x => x.classList.toggle("on", +x.dataset.v === v)); }
+    else { if (set.has(v) && set.size > 1) set.delete(v); else set.add(v); ch.classList.toggle("on", set.has(v)); }
+    refresh(); }); }
+chips("years", D.years.map(y => [y, String(y)]), S.years);
+chips("bands", BANDS.map((b, i) => [i, b, EPC[i]]), S.bands);
+document.getElementById("catctl").innerHTML = Object.entries(D.cats).filter(([k]) => ["epc_property_type", "epc_built_form", "epc_construction_age_band", "epc_tenure"].includes(k))
+  .map(([k, c]) => `<span>${c.label}</span><select data-k="${k}"><option value="">all</option>${c.values.map((v, i) => `<option value="${i}">${v}</option>`).join("")}</select>`).join("");
+document.querySelectorAll("#catctl select").forEach(el => el.onchange = () => { S.cat[el.dataset.k] = el.value; refresh(); });
+document.getElementById("wrong").onchange = e => { S.wrong = e.target.checked; refresh(); };
+document.getElementById("view").value = String(S.view);
+document.getElementById("view").onchange = e => { S.view = +e.target.value; refresh(false); };
+document.getElementById("split").onclick = e => { S.split = !S.split; e.target.classList.toggle("on", S.split); document.getElementById("wrapR").classList.toggle("hidden", !S.split);
+  setTimeout(() => window.dispatchEvent(new Event("resize")), 30); };
+document.getElementById("theme").onclick = () => { document.documentElement.dataset.theme = dark() ? "light" : "dark";
+  drawMaps(); };
+
+const areaName = {london: "Greater London", belfast: "Greater Belfast"}[D.area] || D.area;
+document.getElementById("title").textContent = `${areaName}: EPC ratings, predictions and errors`;
+document.getElementById("subtitle").textContent = `${D.n.toLocaleString()} certificates, ${D.years.join(", ")} · out-of-fold predictions, spatial 5-fold cross-validation · built ${D.built}`;
+document.title = `GBEM ${areaName} EPC`;
+document.getElementById("about").innerHTML = `<p><b>Actual</b>: band and SAP score on the certificate (one certificate per property and year, the latest).</p>
+<p><b>Predicted</b>: each certificate is predicted by a model trained on the other folds; the folds are 2 km blocks, so neighbouring properties of the same block are never used to predict it. These are the predictions to expect for properties in areas without certificates.</p>
+<p><b>Feature sets</b>: EO only (Sentinel-2, Sentinel-1, Landsat and MODIS thermal, ERA5, VIIRS, GHSL, land cover, terrain) → + building morphology, streets and LiDAR → + Census 2021 ward context → + attributes recorded on the certificate (type, built form, age band, floor area, tenure, fuel), which are not known for properties without a certificate.</p>
+<p><b>Controls</b>: click a year or band to toggle it; Shift-click to show it alone. The grid views show cell means and hide cells with fewer than 5 certificates. Hover a property or cell for details.</p>
+<p>Property-level data: keep this file local; do not share or publish it.</p>`;
+refresh();
+</script>
+</body>
+</html>
