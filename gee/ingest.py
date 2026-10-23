@@ -1,6 +1,6 @@
 """Step 1 - ingest Earth Engine exports: unzip, check, file by area, record.
 
-    python ingest.py <batch> <zip> [<zip> ...]          e.g. python ingest.py b1 GBEM_GEE_v2-...-001.zip ...-002.zip
+    python ingest.py <batch> <zip or tif> [...]          e.g. python ingest.py b1 GBEM_GEE_v2-...-001.zip ...-002.zip
 
 - Each GeoTIFF is extracted to data/<area>/gee_v2/raw/ (the zips are kept where they are; an existing file is never
   replaced: identical content is skipped, different content is written alongside as <name>__conflict<n>.tif and
@@ -40,10 +40,35 @@ def crc32(path, chunk=1 << 22):
     return c & 0xFFFFFFFF
 
 
+def copy_tif(src):
+    """A file too large for a Drive zip is downloaded on its own, with the part number of the download appended
+    (name-003.tif); it is copied under its export name (the download is kept)"""
+    import re
+    name = re.sub(r"-\d{3}\.tif$", ".tif", src.name)
+    if not spec.parse_name(name):
+        print("skipped (not an export of gbem_composites.js):", src.name); return []
+    dest = spec.raw_dir(spec.parse_name(name)["area"]) / name
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if dest.exists():
+        if crc32(dest) == crc32(src):
+            print("already there (identical):", dest.name); return [dest]
+        n = 1
+        while dest.with_name(f"{dest.stem}__conflict{n}{dest.suffix}").exists():
+            n += 1
+        dest = dest.with_name(f"{dest.stem}__conflict{n}{dest.suffix}")
+        print(f"CONFLICT: different content; new file kept as {dest.name}")
+    tmp = dest.with_suffix(dest.suffix + ".part")
+    shutil.copyfile(src, tmp); tmp.rename(dest)
+    print("copied:", dest)
+    return [] if "__conflict" in dest.name else [dest]
+
+
 def extract(zips):
     """Extract the GeoTIFFs and provenance tables; returns the paths of the files in their final place."""
     out = []
     for z in zips:
+        if str(z).endswith(".tif"):
+            out += copy_tif(_pl.Path(z)); continue
         with zipfile.ZipFile(z) as zf:
             for info in zf.infolist():
                 name = info.filename.rsplit("/", 1)[-1]
