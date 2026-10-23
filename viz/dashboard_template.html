@@ -97,7 +97,7 @@ svg .lbl{fill:var(--ink)}
     <div id="bycat"></div>
     <h2>Cross-validated performance (all certificates)</h2>
     <div id="metrics"></div>
-    <h2>Earlier set-up reproduced</h2>
+    <h2>Random forest: effect of the validation design</h2>
     <div id="old"></div>
     <h2>Most important features (LightGBM gain)</h2>
     <div id="imp"></div>
@@ -327,8 +327,8 @@ function metricsTable() {
   const old = D.old.filter(o => !o.area || o.area === D.area);
   document.getElementById("old").innerHTML = old.length ? "<table><tr><th>Variant</th><th>Acc.</th><th>Macro-F1</th></tr>" +
     old.map(o => `<tr><td>${o.variant || o.name || ""}${o.description ? " – " + o.description : ""}</td><td>${pct(o.accuracy)}</td><td>${fmt(o.macro_f1, 3)}</td></tr>`).join("") +
-    '</table><div class="note">The maps of April 2025 showed predictions of a random forest trained on all mapped properties, i.e. in-sample; the accuracy reported then is not reproduced once properties are held out.</div>'
-    : '<div class="note">No reproduction results for this area.</div>';
+    '</table><div class="note">The same random forest scored on properties it was trained on, on a random hold-out and on spatially held-out blocks: the differences show how much non-spatial evaluation overstates accuracy for unseen areas.</div>'
+    : '<div class="note">No validation-design comparison for this area.</div>';
 }
 
 // ---------- controls ----------
