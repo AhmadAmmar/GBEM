@@ -92,7 +92,7 @@ def parse_name(name):
                 "tile": tile.group(0)[1:-4] if tile else None}
     prod, scale = rest.rsplit("_", 1)
     return {"method": method, "area": area, "product": prod, "scale": int(scale.rstrip("m")),
-            "year": year if "-" in str(year) else int(year)}
+            "year": year if "-" in str(year) else int(year), "tile": tile.group(0)[1:-4] if tile else None}
 
 
 def grid(area, product):
