@@ -48,6 +48,8 @@ SETS["eo_morph_nolidar"] = SETS["eo"] + ["morphology", "streets"]           # to
 SETS["eo_morph"] = SETS["eo"] + ["morphology", "streets", "lidar"]
 SETS["eo_morph_floor"] = SETS["eo_morph"] + ["floor_position"]                # + where a flat sits in its building
 SETS["eo_morph_fps"] = SETS["eo_morph"] + ["sentinel_fpstats"]                # + footprint min / max / SD (fp_stats.py)
+SETS["eo_morph_phys"] = SETS["eo_morph"] + ["physics"]                        # + envelope geometry for heat loss (physics.py)
+SETS["eo_morph_floor_phys"] = SETS["eo_morph_floor"] + ["physics"]
 SETS["eo_morph_ctx"] = SETS["eo_morph"] + ["census_context"]
 SETS["all"] = SETS["eo_morph_ctx"] + ["certificate_attributes", "floor_position"]
 # identifiers of a place or a data source rather than properties of the building: they would let a model learn locations

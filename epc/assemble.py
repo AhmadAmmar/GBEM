@@ -31,7 +31,7 @@ GROUPS = {"s2_": "sentinel2", "s1_": "sentinel1", "landsat_": "thermal_landsat",
           "era5_": "climate", "viirs_": "night_lights", "ghsl_": "built_volume_ghsl", "lc_": "landcover",
           "terrain_": "terrain", "worldcover_": "landcover", "morph_": "morphology", "epc_": "certificate_attributes",
           "label_": "label", "id_": "identifier", "flag_": "flag", "census_": "census_context", "lidar_": "lidar",
-          "fps_": "sentinel_fpstats", "st_": "streets"}
+          "fps_": "sentinel_fpstats", "st_": "streets", "phys_": "physics"}
 STREET = {"road_dist_m", "major_road_dist_m", "road_density_250"}
 
 
@@ -110,6 +110,10 @@ def main():
             if lid.exists():
                 df = df.merge(pd.read_parquet(lid), left_on="id_fp", right_on="fp_id", how="left").drop(columns=["fp_id"])
                 df = lidar_derived(df)
+            php = e / "physics_fp.parquet"                           # envelope geometry for heat loss (physics.py)
+            if php.exists():
+                df = df.merge(pd.read_parquet(php).drop(columns=["phys_height_source"], errors="ignore"),
+                              left_on="id_fp", right_on="fp_id", how="left").drop(columns=["fp_id"])
             stp = e / "streetscape_fp.parquet"                       # street canyon measures (streetscape.py)
             if stp.exists():
                 df = df.merge(pd.read_parquet(stp), left_on="id_fp", right_on="fp_id", how="left").drop(columns=["fp_id"])
