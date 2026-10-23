@@ -2,6 +2,58 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.37.0] - 2026-10-23
+
+### Added
+- `models/baseline.py`: LightGBM and random forest predict the A–G band and the SAP score.
+  - Feature sets:
+    - EO only;
+    - + morphology, streets and LiDAR;
+    - + Census context;
+    - + certificate attributes.
+  - Validation: spatial 5-fold cross-validation on 2 km blocks, with random 5-fold for comparison.
+  - Outputs: metrics, out-of-fold predictions and LightGBM importance.
+  - Place and source identifiers (ward code, LiDAR survey) are excluded. Numbers stored as text are read as numbers.
+  - `--sample` runs the models on a random sample of certificates.
+  - Results for 2024, spatial validation, LightGBM:
+
+    | Area | Feature set | Accuracy | κw | SAP MAE |
+    |---|---|---|---|---|
+    | Belfast | EO | 0.42 | 0.17 | 9.9 |
+    | Belfast | + morphology and LiDAR | 0.48 | 0.33 | 8.7 |
+    | Belfast | all | 0.65 | 0.72 | 5.0 |
+    | London (50k sample) | EO | 0.49 | 0.24 | 6.3 |
+    | London (50k sample) | + morphology and LiDAR | 0.52 | 0.37 | 5.9 |
+    | London (50k sample) | all | 0.68 | 0.70 | 4.3 |
+
+  - Random folds overstate accuracy by 2–7 points. Census context adds nothing beyond morphology.
+- `viz/dashboard.py` and `viz/dashboard_template.html`: interactive dashboard, one self-contained page per area and
+  model run, written to `maps/dashboard/`. It holds property-level data, so it is never committed (`.gitignore` now
+  covers `maps/**/*.html`). It replaces the Folium maps of April 2025, whose predictions were in-sample.
+  - Two linked maps: actual band, predicted band, error, SAP score, confidence or a building feature.
+  - Views: properties, or 250 m to 1 km grid cells (cells with fewer than 5 certificates hidden).
+  - Filters: year, band, property type, built form, age band and tenure.
+  - Live metrics, confusion matrix, band distribution and accuracy by group.
+  - The cross-validated results and the reproduction of the earlier set-up.
+  - Built with deck.gl over Esri grey canvas basemaps.
+- `epc/lidar_london.py`: London building height and roof form per footprint from the batch b6 export, with the same
+  columns as `lidar_ni.py`.
+  - 2,113,317 of 2,141,314 footprints have values.
+  - Median heights: houses 6.4 m, bungalows 3.7 m, flats 11.6 m (Belfast: 6.5, 4.0 and 8.6 m).
+- `hotsat/assess_hotsat.py`: assessment of the three HotSat-1 scenes.
+  - The scenes:
+    - 13 July 2023: south-west Belfast, night;
+    - 8 October 2023: Southampton, night;
+    - 25 November 2023: Runcorn/Widnes, afternoon.
+  - All three are the uncalibrated "visual" product.
+  - Correlation with the SAP score is at most 0.19.
+  - Adding HotSat to spatially cross-validated SAP models raises the error at all three sites. Not used as a predictor.
+
+### Fixed
+- `epc/lidar_ni.py`: four 2012 River Basin surveys are stored in millimetres (Saintfield, Mossley, Glenavy, Bangor
+  extension). Their heights came out about 1000 times too large and their slopes were distorted. Tiles with a median
+  above 2000 are now converted to metres, and the converted surveys are listed in `lidar_log.json`.
+
 ## [0.36.0] - 2026-10-23
 
 ### Added
