@@ -1,6 +1,6 @@
 /*******************************************************************************
- GBEM - Earth Engine composites for Greater London and Greater Belfast
- Version 2.4.0 (23 October 2026)         https://github.com/AhmadAmmar/GBEM
+ GBEM - Earth Engine composites for Greater London, Greater Belfast and the Dublin region
+ Version 2.5.0 (23 October 2026)         https://github.com/AhmadAmmar/GBEM
 
  Purpose
    Builds the image composites that need the full satellite archives (cloud masking, temporal reduction) and exports
@@ -28,11 +28,13 @@
 
  Grids
    Each area is exported in its national grid (London: British National Grid EPSG:27700; Belfast: Irish Grid
-   EPSG:29902, as the local data), on extents snapped to 3 km, so that the 10, 30, 100, 500 and 1000 m rasters nest
+   EPSG:29902, as the local data; Dublin: Irish Transverse Mercator EPSG:2157, as the Irish open data), on extents snapped to 3 km, so that the 10, 30, 100, 500 and 1000 m rasters nest
    exactly. 'core' extent: area + 1 km (London) or the Greater Belfast extent; 'context' extent: a wider ring used by
    the coarse products and for the rural reference of the surface urban heat island.
    Greater London: Greater London Authority boundary. Greater Belfast: Belfast City Council area extent + 8 km
-   (Lisburn, Castlereagh, Newtownabbey, Holywood, Carrickfergus).
+   (Lisburn, Castlereagh, Newtownabbey, Holywood, Carrickfergus). Dublin region: the four Dublin councils (Dublin City,
+   Dún Laoghaire-Rathdown, Fingal, South Dublin; CSO Small Areas 2022) + 1 km. No LiDAR heights in Earth Engine for
+   Ireland, so Dublin has no lidar product.
 
  Data types and missing values
    Large products are integers with scale factors (see SCALE below; value = stored / scale); missing = -32768.
@@ -41,7 +43,7 @@
  How to run
    1. Paste into the Earth Engine Code Editor and press Run with CONFIG.dryRun = true: the console lists the planned
       exports with an upper bound of their size, and preview layers are added to the map.
-   2. Choose the batch (BATCH = b1 ... b6, see BATCHES), set CONFIG.dryRun = false, press Run, and
+   2. Choose the batch (BATCH = b1 ... b9, see BATCHES), set CONFIG.dryRun = false, press Run, and
       start the tasks in the Tasks tab. Exports go to the Drive folder CONFIG.driveFolder.
    3. A provenance table (number of input scenes per composite and window) is exported with each batch.
 *******************************************************************************/
@@ -59,9 +61,13 @@ var BATCHES = {
   // rerun of the one failed b3 export (Belfast Landsat 2022: no scene in the cold-spell window; fixed in 2.2.2)
   b3fix: {years: [2022], products: ['landsat'], folder: 'GBEM_GEE_v2_b3', areas: ['belfast']},
   b6: {years: [], products: ['lidar_ea'], folder: 'GBEM_GEE_v2_b6', areas: ['london']},        // EA LiDAR heights and roofs, 2 m
-  b7: {years: [2024], products: ['embed'], folder: 'GBEM_GEE_v2_b7'}                          // pretrained annual embeddings
+  b7: {years: [2024], products: ['embed'], folder: 'GBEM_GEE_v2_b7'},                         // pretrained annual embeddings
+  // Dublin region, third test area (BER, Republic of Ireland): the b1 and b5 products, then the embeddings
+  b8: {years: [2024], products: ['static'].concat(YEARLY, ['landsat_multi', 'modis_multi']), folder: 'GBEM_GEE_v2_b8',
+       areas: ['dublin']},
+  b9: {years: [2024], products: ['embed'], folder: 'GBEM_GEE_v2_b9', areas: ['dublin']}
 };
-var BATCH = 'b2';                       // choose the batch to run
+var BATCH = 'b7';                       // choose the batch to run
 
 var CONFIG = {
   version: 'v2_0_1',                    // method version: change only when a composite is defined differently
@@ -95,7 +101,9 @@ var AREAS = {
   // Irish Grid as the local Northern Ireland data; if Earth Engine rejects the code, use 'EPSG:2157' (Irish Transverse
   // Mercator) and recompute the extents with code/gee/extents.py
   belfast: {crs: 'EPSG:29902', label: 'Greater Belfast',
-            core: [315000, 357000, 351000, 390000], context: [309000, 351000, 357000, 399000]}
+            core: [315000, 357000, 351000, 390000], context: [309000, 351000, 357000, 399000]},
+  dublin: {crs: 'EPSG:2157', label: 'Dublin region',
+           core: [693000, 714000, 735000, 768000], context: [684000, 705000, 744000, 777000]}
 };
 
 var NODATA_INT = -32768, NODATA_FLOAT = -9999;
