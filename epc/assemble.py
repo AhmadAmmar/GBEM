@@ -15,6 +15,7 @@ Also written: data_dictionary.csv (column, group, source) for feature-group abla
 Output: data/<area>/model/dataset_<year>.parquet
 """
 import argparse, json, pathlib
+import numpy as np
 import pandas as pd
 import sys as _sys, pathlib as _pl
 _sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[1]))
@@ -29,8 +30,50 @@ GROUPS = {"s2_": "sentinel2", "s1_": "sentinel1", "landsat_": "thermal_landsat",
           "landsatmulti_": "thermal_multiyear", "modismulti_": "thermal_multiyear",
           "era5_": "climate", "viirs_": "night_lights", "ghsl_": "built_volume_ghsl", "lc_": "landcover",
           "terrain_": "terrain", "worldcover_": "landcover", "morph_": "morphology", "epc_": "certificate_attributes",
-          "label_": "label", "id_": "identifier", "flag_": "flag", "census_": "census_context", "lidar_": "lidar"}
+          "label_": "label", "id_": "identifier", "flag_": "flag", "census_": "census_context", "lidar_": "lidar",
+          "fps_": "sentinel_fpstats", "st_": "streets"}
 STREET = {"road_dist_m", "major_road_dist_m", "road_density_250"}
+
+
+def dictionary_columns(out_dir):
+    """columns of all modelling tables of the area, in first-seen order"""
+    import pyarrow.parquet as pq
+    seen = {}
+    for p in sorted(out_dir.glob("dataset_[0-9][0-9][0-9][0-9].parquet")):
+        for c in pq.ParquetFile(p).schema.names:
+            seen.setdefault(c, None)
+    return list(seen)
+
+
+def write_dictionary(area):
+    out_dir = DATA / area / "model"
+    cols = dictionary_columns(out_dir)
+    dd = pd.DataFrame({"column": cols})
+    dd["group"] = [("streets" if c.replace("morph_", "") in STREET else next((g for p, g in GROUPS.items() if c.startswith(p)), "meta"))
+                   for c in cols]
+    dd.to_csv(keep(out_dir / "data_dictionary.csv"), index=False)
+    return dd
+
+
+def lidar_derived(df):
+    """Building measures from LiDAR and the footprint (where the LiDAR covers at least half of the footprint):
+      lidar_volume_m3        footprint area x median height
+      lidar_storeys_est      90th percentile height / 3 m, at least 1
+      lidar_south_roof_m2    south-facing roof area (footprint area x south share / cos(roof slope)): solar potential
+      lidar_roof_m2          roof surface area (footprint area / cos(roof slope), flat parts counted as flat)
+      lidar_volume_per_dwelling_m3   volume / addresses in the footprint"""
+    ok = pd.to_numeric(df["lidar_valid_share"], errors="coerce") >= 0.5
+    area = pd.to_numeric(df["morph_area_m2"], errors="coerce")
+    h = pd.to_numeric(df["lidar_height_med_m"], errors="coerce").clip(lower=0)
+    slope = np.radians(pd.to_numeric(df["lidar_roof_slope_med_deg"], errors="coerce").clip(0, 70))
+    flat = pd.to_numeric(df["lidar_roof_flat_share"], errors="coerce")
+    south = pd.to_numeric(df["lidar_roof_south_share"], errors="coerce")
+    df["lidar_volume_m3"] = (area * h).where(ok)
+    df["lidar_storeys_est"] = (pd.to_numeric(df["lidar_height_p90_m"], errors="coerce") / 3).round().clip(lower=1).where(ok)
+    df["lidar_south_roof_m2"] = (area * south / np.cos(slope)).where(ok)
+    df["lidar_roof_m2"] = (area * (flat + (1 - flat) / np.cos(slope))).where(ok)
+    df["lidar_volume_per_dwelling_m3"] = (df["lidar_volume_m3"] / pd.to_numeric(df.get("morph_n_uprn"), errors="coerce").clip(lower=1))
+    return df
 
 
 def main():
@@ -58,11 +101,18 @@ def main():
                                                        "uprn_source", "link_method", "link_dist_m")},
                 **{f"epc_{k.lower()}": c[k].values for k in EPC_ATTR if k in c}})
             df = base.merge(f.rename(columns={"rec_id": "id_cert"}), on="id_cert", how="left")
+            fps = fdir / f"fpstats_{y}.parquet"                     # footprint min / max / SD of 10 m layers (gee/fp_stats.py)
+            if fps.exists():
+                df = df.merge(pd.read_parquet(fps).rename(columns={"rec_id": "id_cert"}).drop_duplicates("id_cert"), on="id_cert", how="left")
             df = df.merge(morph, left_on="id_fp", right_on="fp_id", how="left").drop(columns=["fp_id"])
             df = df.merge(pos.drop_duplicates("id_cert"), on="id_cert", how="left")
             lid = e / "lidar_fp.parquet"                             # LiDAR building height and roof form (Belfast; lidar_ni.py)
             if lid.exists():
                 df = df.merge(pd.read_parquet(lid), left_on="id_fp", right_on="fp_id", how="left").drop(columns=["fp_id"])
+                df = lidar_derived(df)
+            stp = e / "streetscape_fp.parquet"                       # street canyon measures (streetscape.py)
+            if stp.exists():
+                df = df.merge(pd.read_parquet(stp), left_on="id_fp", right_on="fp_id", how="left").drop(columns=["fp_id"])
             cen = e / "census_cert.parquet"                          # Census 2021 ward context (Belfast; census_ni.py)
             if cen.exists():
                 cc = pd.read_parquet(cen).rename(columns={"cert_id": "id_cert"})
@@ -70,7 +120,7 @@ def main():
                 df = df.merge(cc.drop_duplicates("id_cert"), on="id_cert", how="left")
             df.to_parquet(keep(out_dir / f"dataset_{y}.parquet"), index=False)
             print(f"{area} {y}: {len(df):,} certificates x {df.shape[1]} columns -> {out_dir / f'dataset_{y}.parquet'}")
-        cols = df.columns
+        cols = dictionary_columns(out_dir)                       # all years: some layers exist for one year only
         dd = pd.DataFrame({"column": cols})
         dd["group"] = [("streets" if c.replace("morph_", "") in STREET else next((g for p, g in GROUPS.items() if c.startswith(p)), "meta"))
                        for c in cols]

@@ -2,6 +2,74 @@
 
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/): MAJOR for incompatible changes to scripts' inputs or outputs, MINOR for new analyses or pipeline stages, PATCH for fixes.
 
+## [0.38.0] - 2026-10-23
+
+### Added
+- `analysis/stock.py`: housing stock analysis from all certificates. Each certificate gets:
+  - fuel class, heat pump, PV;
+  - poor building elements;
+  - floor position of flats;
+  - postcode sector, neighbourhood (London LSOA 2021, Belfast ward 2012), borough, nearest OSM street, 250 m cell.
+
+  Outputs:
+  - certificate counts and shares by inspection year;
+  - SAP change between repeat certificates;
+  - the current stock (latest valid certificate per property): London 2,113,928, Belfast 68,737;
+  - summaries for each unit with rankings, plus Getis-Ord Gi* hotspots of SAP and of F–G homes;
+  - London recommendations: 5.1 million for 1.63 million homes.
+- `analysis/morph_types.py`: urban form typology (k-means of building and street form of 250 m cells) and SHAP
+  effects of form on SAP.
+  - Best forms: tall street-front and multi-dwelling blocks (London SAP 77.6, Belfast 74.7).
+  - Worst forms: set-back single dwellings and detached homes on wide streets (London 67.9, Belfast 60.6).
+  - Dense small terraces: poor walls in 72% (London) and 60% (Belfast).
+  - Form alone explains R² 0.28–0.29 of SAP.
+- `epc/streetscape.py`: street canyon measures per footprint (width between fronts, building height, H/W, setback,
+  frontage, orientation, road class), added to the `streets` group.
+- `gee/fp_stats.py`: minimum, maximum and SD of 10 m Sentinel layers within footprints. Only 13% (Belfast) and 58%
+  (London) of footprints cover 2+ pixels, and they add no accuracy.
+- `geo/get_boundaries.py`: London LSOA 2021 boundaries (ONS).
+- `geo/get_desnz_energy.py`: measured domestic gas and electricity by LSOA, 2010–2024 (DESNZ). London gas per meter:
+  about 13,000 kWh in 2015–2020, about 11,500 kWh in 2022–2024.
+- `models/baseline.py`:
+  - floor position of flats (ground / middle / top, relative height, storeys) as feature set `eo_morph_floor`;
+  - sets without LiDAR and with footprint statistics;
+  - results by floor position and at building level (`groups_<tag>.csv`).
+  - Spatial CV results:
+
+    | Feature set | London accuracy | London κw | Belfast accuracy | Belfast κw |
+    |---|---|---|---|---|
+    | without LiDAR | 0.515 | 0.36 | 0.481 | 0.32 |
+    | with LiDAR | 0.544 | 0.39 | 0.481 | 0.33 |
+    | with floor position | 0.607 | 0.57 | 0.491 | 0.34 |
+- `models/retrofit_needs.py`: weak elements predicted for homes without a certificate (spatial CV).
+  - Walls: AUC 0.86 (London), 0.81 (Belfast).
+  - Windows: 0.83 (London); the top 20% risk finds 63% of poor windows.
+- `models/transfer.py`: core feature set, transfer between cities and to later years.
+  - London to Belfast: accuracy 0.44 against 0.49 within Belfast.
+  - Belfast to London: 0.47 against 0.57, with predicted mean SAP 5 points low.
+  - 2020–22 to 2025: within 2–6 points of within-year CV, predicted mean SAP 2–3 points low.
+- `models/stock_predict.py`: predicted rating for every dwelling building (Belfast 2024: 287,563 buildings). Predicted
+  mean SAP is 64.1 for all dwellings against 69.5 for the certified ones: certificates overstate the stock.
+- `viz/atlas.py`, `viz/atlas_template.html`: one dashboard for both areas.
+  - Map layers:
+    - 250 m grid;
+    - LSOA / ward;
+    - streets;
+    - urban types;
+    - 3D buildings extruded by LiDAR height.
+  - Map measures:
+    - hotspots;
+    - weak elements;
+    - fuels;
+    - predicted whole stock and certificate bias;
+    - measured gas and electricity.
+  - Tabs: rankings with CSV export, trends, retrofit, form and streets, models, comparison.
+  - `--public` writes an aggregate-only version that can be shared.
+
+### Changed
+- `epc/assemble.py`: adds LiDAR-derived volume, storeys, roof and south-facing roof area, footprint statistics and
+  streetscape. The data dictionary now covers the columns of all years.
+
 ## [0.37.0] - 2026-10-23
 
 ### Added
