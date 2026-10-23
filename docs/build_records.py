@@ -47,6 +47,7 @@ PIPELINE = [
     ("3 Context data", "geo/get_deprivation.py", "python geo/get_deprivation.py"),
     ("3 Context data", "geo/get_need.py", "python geo/get_need.py"),
     ("3 Context data", "geo/get_fuel_poverty.py", "python geo/get_fuel_poverty.py"),
+    ("3 Context data", "geo/get_dublin.py", "python geo/get_dublin.py"),
     ("4 Models", "models/reproduce_old.py", "python models/reproduce_old.py --area <area>"),
     ("4 Models", "models/baseline.py", "python models/baseline.py --area <area> --years <years>"),
     ("4 Models", "models/retrofit_needs.py", "python models/retrofit_needs.py --area <area> --years <years>"),
