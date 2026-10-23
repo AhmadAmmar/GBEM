@@ -15,6 +15,8 @@ AREAS = {
                "boundary": DATA / "london/SHP/london.shp"},
     "belfast": {"epsg": 29902, "core": (315000, 357000, 351000, 390000), "context": (309000, 351000, 357000, 399000),
                 "boundary": DATA / "belfast/belfast-dissolved/belfast-dissolved.shp"},
+    "dublin": {"epsg": 2157, "core": (693000, 714000, 735000, 768000), "context": (684000, 705000, 744000, 777000),
+               "boundary": DATA / "dublin/boundaries/small_areas_2022.gpkg"},
 }
 
 NODATA_INT, NODATA_FLOAT = -32768, -9999.0
@@ -81,7 +83,7 @@ def parse_name(name):
     tile = re.search(r"-(\d{10})-(\d{10})\.tif$", name)
     if tile:
         name = name[:tile.start()] + ".tif"
-    m = re.match(r"gbem_(v\d+_\d+_\d+)_(london|belfast)_(.+?)(?:_(\d{4}(?:-\d{4})?))?\.tif$", name)
+    m = re.match(r"gbem_(v\d+_\d+_\d+)_(london|belfast|dublin)_(.+?)(?:_(\d{4}(?:-\d{4})?))?\.tif$", name)
     if not m:
         return None
     method, area, rest, year = m.groups()
