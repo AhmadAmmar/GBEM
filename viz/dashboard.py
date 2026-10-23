@@ -1,12 +1,12 @@
 """Interactive dashboard of EPC ratings, model predictions and their errors: one self-contained HTML file per area and
-model run (replaces the Folium maps of April 2025 in maps/, whose predictions were in-sample).
+model run.
 
     python dashboard.py --area belfast --tag 2024
 
 Reads, from data/<area>/model/:
   results/oof_<tag>.parquet        out-of-fold predictions (code/models/baseline.py, spatial validation)
   results/baseline_<tag>.csv       cross-validated metrics;  results/importance_<tag>.csv  LightGBM importance
-  results/reproduce_old.csv        reproduction of the earlier set-up (code/models/reproduce_old.py), if present
+  results/reproduce_old.csv        random forest under different validation designs (models/reproduce_old.py), if present
   dataset_<year>.parquet           certificate attributes and selected features of the same certificates
 Writes maps/dashboard/gbem_dashboard_<area>_<tag>.html (template: dashboard_template.html). The page holds
 property-level data: it is kept local, never committed (.gitignore) or published.

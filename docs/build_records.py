@@ -21,6 +21,9 @@ from safeio import keep                      # existing outputs are archived, ne
 CODE = pathlib.Path(__file__).resolve().parents[1]
 PHD = CODE.parent
 DATA = PHD / "data"
+# scripts kept for our own record of how the work developed (exploratory comparisons, early checks): listed in the
+# internal pipeline_reference.md, left out of the thesis appendix (pipeline_reference.tex)
+INTERNAL = {"models/reproduce_old.py"}
 # pipeline in run order: (stage, script, typical command)
 PIPELINE = [
     ("1 Satellite data", "gee/gbem_composites.js", "Earth Engine Code Editor, BATCH = 'b1' ... 'b7'"),
