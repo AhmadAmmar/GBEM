@@ -3,7 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GBEM Atlas</title>
+<title>GBEM Atlas: energy performance of homes in London and Belfast</title>
+<meta name="description" content="Interactive atlas of the energy efficiency (EPC ratings) of the housing stock in Greater London and Greater Belfast by grid cell, neighbourhood and street: hotspots, rankings, trends, retrofit needs and model results. PhD research, Ulster University.">
+<meta name="author" content="Ahmad Ammar">
+<link rel="canonical" href="https://ahmadammar.github.io/GBEM/">
+<meta property="og:title" content="GBEM Atlas: energy performance of homes in London and Belfast">
+<meta property="og:description" content="Energy Performance Certificate ratings of the housing stock in Greater London and Greater Belfast, mapped by grid cell, neighbourhood and street.">
+<meta property="og:url" content="https://ahmadammar.github.io/GBEM/">
+<meta property="og:type" content="website">
 <script src="https://unpkg.com/deck.gl@9.0.38/dist.min.js"></script>
 <style>
 :root{--bg:#f9f9f7;--panel:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--muted:#898781;--line:#e1e0d9;--axis:#c3c2b7;--soft:#f0efec;
@@ -75,6 +82,10 @@ svg .axis{stroke:var(--axis)}
 </style>
 </head>
 <body>
+<noscript><p>GBEM Atlas: the energy performance (Energy Performance Certificate ratings) of the housing stock in Greater
+London and Greater Belfast, by 250 m grid cell, neighbourhood and street, with hotspots, rankings, trends, retrofit
+needs and model results. Developed by Ahmad Ammar, School of Geography and Environmental Sciences, Ulster University.
+Code: https://github.com/AhmadAmmar/GBEM. This interactive map needs JavaScript.</p></noscript>
 <header>
   <h1>GBEM Atlas</h1>
   <div class="seg" id="areaSeg"></div>
