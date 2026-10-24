@@ -13,9 +13,11 @@ by a tile edge is taken from the tile holding most of it):
   roof_south_share             share of pixels with slope >= 15 deg facing 135-225 deg (south-facing roof planes)
   roof_flat_share              share of pixels with slope < 10 deg
   valid_share                  share of the footprint area with LiDAR values
+  ground_med_m                 median DTM (ground height above Malin Head datum)
 For each footprint the most recent survey with valid_share >= 0.8 is kept (survey name and year recorded). A median
 height below 2 m usually means the building did not exist at the survey date: flag built_after_survey.
-Output: data/belfast/epc/lidar_fp.parquet (fp_id) and lidar_log.json
+Output: data/belfast/epc/lidar_fp.parquet (fp_id) and lidar_log.json. From Python, main(footprints, out_dir) runs the
+same for any footprints in EPSG:29902 (for example the open 3D building model, geo/open3d_belfast.py).
 """
 import json, pathlib, re, zipfile
 import numpy as np
@@ -116,8 +118,10 @@ def read_dsm(z, src, dtm_shape, dtm_t):
     return out.reshape(h, w).astype("float32")
 
 
-def main():
-    fp = gpd.read_parquet(DATA / "belfast/epc/footprints.parquet", columns=["fp_id", "geometry"])
+def main(footprints=None, out_dir=None):
+    """footprints: a GeoParquet with fp_id and geometry in EPSG:29902 (default: the project's footprints); out_dir: where
+    lidar_fp.parquet and lidar_log.json are written (default: data/belfast/epc)"""
+    fp = gpd.read_parquet(footprints or DATA / "belfast/epc/footprints.parquet", columns=["fp_id", "geometry"])
     geoms = fp.geometry.values
     tree = shapely.STRtree(geoms)
     area = shapely.area(geoms)
@@ -149,7 +153,7 @@ def main():
             slope = np.degrees(np.arctan(np.hypot(gx, gy)))
             aspect = (np.degrees(np.arctan2(gx, gy)) + 180) % 360           # direction the plane faces, clockwise from north
             sel = lab > 0
-            df = pd.DataFrame({"i": lab[sel] - 1, "hgt": (dsm - dtm)[sel], "slope": slope[sel], "aspect": aspect[sel]})
+            df = pd.DataFrame({"i": lab[sel] - 1, "hgt": (dsm - dtm)[sel], "ground": dtm[sel], "slope": slope[sel], "aspect": aspect[sel]})
             df = df[df["hgt"].notna()]
             if df.empty:
                 continue
@@ -157,7 +161,8 @@ def main():
             df["flat"] = df.slope < 10
             g = df.groupby("i")
             s = pd.DataFrame({"n_px": g.size(), "height_med_m": g.hgt.median(), "height_p90_m": g.hgt.quantile(0.9),
-                              "roof_slope_med_deg": g.slope.median(), "roof_south_share": g.south.mean(), "roof_flat_share": g.flat.mean()})
+                              "roof_slope_med_deg": g.slope.median(), "roof_south_share": g.south.mean(), "roof_flat_share": g.flat.mean(),
+                              "ground_med_m": g.ground.median()})
             s["valid_share"] = np.minimum(1, s["n_px"] * res * res / area[s.index])
             s["survey"], s["survey_year"] = name, year
             rows.append(s.reset_index())
@@ -169,7 +174,8 @@ def main():
     R["fp_id"] = fp["fp_id"].values[R["i"].to_numpy()]
     R["built_after_survey"] = R["height_med_m"] < 2
     out = R.drop(columns=["i", "good"]).rename(columns={c: f"lidar_{c}" for c in R.columns if c not in ("i", "good", "fp_id")})
-    d = DATA / "belfast/epc"
+    d = pathlib.Path(out_dir) if out_dir else DATA / "belfast/epc"
+    d.mkdir(parents=True, exist_ok=True)
     out.to_parquet(keep(d / "lidar_fp.parquet"), index=False)
     log.update({"skipped_tiles": SKIPPED, "surveys_in_mm": sorted(MM_TILES), "footprints": int(len(fp)), "with_lidar": int(len(out)),
                 "with_good_coverage": int((out["lidar_valid_share"] >= 0.8).sum()),
