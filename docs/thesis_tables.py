@@ -48,7 +48,9 @@ def table(name, caption, header, rows, align, note=None, size=r"\small"):
 
 def missing(name, what):
     MISSING.append(name)
-    return f"% table {name}: {what} not available yet\n\\begin{{center}}\\fbox{{\\parbox{{0.9\\linewidth}}{{\\small Table \\texttt{{{name}}}: results pending ({tex(what)}).}}}}\\end{{center}}\n"
+    return (f"% table {name}: {what} not available yet\n\\begin{{table}}[htbp]\\centering\\small\n"
+            f"\\caption{{Results pending: {tex(what)}.}}\\label{{tab:{name}}}\n"
+            f"\\fbox{{\\parbox{{0.9\\linewidth}}{{\\centering The table is generated when the results are available.}}}}\n\\end{{table}}\n")
 
 
 def read(p):
