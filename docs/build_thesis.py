@@ -54,7 +54,7 @@ def odt(report):
         if src.exists():
             shutil.copy(src, tmp / "latex" / f"main.{ext}")
     code, out = run(["make4ht", "-u", "-f", "odt", "main.tex", "mathml", "", "", "-interaction=nonstopmode"],
-                    tmp / "latex", timeout=5400)
+                    tmp / "latex", timeout=1800)
     f = tmp / "latex" / "main.odt"
     report.append(f"ODT: {'ok' if f.exists() else 'failed (exit ' + str(code) + ')'}")
     if not f.exists():
