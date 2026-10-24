@@ -86,6 +86,8 @@ PIPELINE = [
     ("4 Models", "models/repeat_cv.py", "python models/repeat_cv.py --area <area> --year 2024"),
     ("5 Analysis", "analysis/temporal_stability.py", "python analysis/temporal_stability.py --area <area>"),
     ("4 Models", "models/predict_footprints.py", "python models/predict_footprints.py --area <area> --fp-ids <ids> | --polygon <file>"),
+    ("6 Communication", "geo/export_cityjson.py", "python geo/export_cityjson.py --area <area> [--nbhd <code> | --name <name>] --preview"),
+    ("6 Communication", "geo/cityjson_to_ifc.py", "python geo/cityjson_to_ifc.py <district>.city.json (GeoBIM environment)"),
     ("7 Records", "docs/thesis_tables.py", "python docs/thesis_tables.py"),
     ("7 Records", "docs/build_thesis.py", "python docs/build_thesis.py"),
 ]
