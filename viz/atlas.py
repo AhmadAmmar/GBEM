@@ -27,6 +27,7 @@ DATA = CODE.parent / "data"
 EPSG = {"london": 27700, "belfast": 29902}
 NAMES = {"london": "Greater London", "belfast": "Greater Belfast"}
 NBHD = {"london": "LSOA 2021", "belfast": "Ward 2012"}
+OPEN_ADDRESSES = {"london": True, "belfast": False}     # OS Open UPRN (OGL) vs LPS Pointer (licensed)
 MODEL_TAG = {"london": "2024_s50k", "belfast": "2024"}
 GRID = 250
 BANDS = list("ABCDEFG")
@@ -290,12 +291,15 @@ def area_pack(area, public, domains):
     geo = gpd.read_parquet(a_dir / "geometry_street.parquet").drop_duplicates("street").set_index("street")
     u = u[u["street"].isin(geo.index)].reset_index(drop=True)
     u["top_need"] = top_need(u)
-    # draw each street only where its homes are: the road line within 80 m of the convex hull of its address points
-    pts = cur[cur["street"].isin(u["street"])].groupby("street").apply(
-        lambda g: shapely.convex_hull(shapely.multipoints(np.column_stack([g["x"], g["y"]]))).buffer(80), include_groups=False)
-    lines = gpd.GeoSeries(geo.loc[u["street"], "geometry"].values, crs=4326).to_crs(EPSG[area])
-    clipped = shapely.intersection(lines.values, pts.reindex(u["street"]).values)
-    lines = gpd.GeoSeries(clipped, crs=EPSG[area]).to_crs(4326)
+    # draw each street only where its homes are: the road line within 80 m of the convex hull of its address points.
+    # Public version of an area whose address points are licensed (NI: LPS Pointer): whole street lines, so that no
+    # geometry derived from the address points is published
+    lines = gpd.GeoSeries(geo.loc[u["street"], "geometry"].values, crs=4326)
+    if not (public and not OPEN_ADDRESSES[area]):
+        pts = cur[cur["street"].isin(u["street"])].groupby("street").apply(
+            lambda g: shapely.convex_hull(shapely.multipoints(np.column_stack([g["x"], g["y"]]))).buffer(80), include_groups=False)
+        clipped = shapely.intersection(lines.to_crs(EPSG[area]).values, pts.reindex(u["street"]).values)
+        lines = gpd.GeoSeries(clipped, crs=EPSG[area]).to_crs(4326)
     fid, starts, xy = rings(lines.values, center)
     layers["street"] = {"label": "Streets", "n": len(u), "cols": table(u, blob, mcols[:-2] + ["street", "rank_sap", "top_need"]),
                         "fid": blob.add(fid, "u4"), "starts": blob.add(starts, "u4"), "xy": blob.add(xy.ravel(), "f4"), "path": True}

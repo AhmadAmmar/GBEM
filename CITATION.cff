@@ -13,7 +13,10 @@ authors:
   - family-names: McKenzie
     given-names: Paul
     affiliation: "Ulster University"
+  - family-names: Irfan
+    given-names: Muhammad
 license: Apache-2.0
+url: "https://ahmadammar.github.io/GBEM/"
 repository-code: "https://github.com/AhmadAmmar/GBEM"
 keywords:
   - energy performance certificate
