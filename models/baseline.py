@@ -10,7 +10,7 @@ Validation:
   spatial   5-fold cross-validation with folds made of square blocks of --block-km (default 2 km): every certificate is
             predicted by a model trained only on other areas (out-of-fold). All certificates of a building or property
             fall in the same block, so none is in training and test.
-  random    5-fold cross-validation with random folds, for comparison only (what the earlier random 70/30 split did).
+  random    5-fold cross-validation with random folds, for comparison only (the design common in the literature).
 Feature sets (groups from data/<area>/model/data_dictionary.csv):
   eo            satellite and climate: Sentinel-2, Sentinel-1, thermal (single- and multi-year), climate, night lights,
                 GHSL, land cover, terrain

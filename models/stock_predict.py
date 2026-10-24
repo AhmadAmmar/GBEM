@@ -32,9 +32,16 @@ from safeio import keep                      # existing outputs are archived, ne
 CODE = pathlib.Path(__file__).resolve().parents[1]
 
 
-def building_table(area, year):
+def building_table(area, year, need=None):
+    """features of every dwelling building; need: model columns, so that only those satellite columns are read (the
+    London file has 1.5 million rows and about 700 columns)"""
+    import pyarrow.parquet as pq
     e = B.DATA / area / "epc"
-    f = pd.read_parquet(B.DATA / area / "gee_v2/features" / f"stock_{year}.parquet")
+    src = B.DATA / area / "gee_v2/features" / f"stock_{year}.parquet"
+    names = pq.ParquetFile(src).schema.names
+    use = None if need is None else [c for c in names if c in set(need) or c in ("rec_id", "fp_id")]
+    f = pd.read_parquet(src, columns=use)
+    f = f.astype({c: "float32" for c in f.columns if f[c].dtype == "float64"})
     f = f.drop(columns=[c for c in ("fp_id", "UPRN", "link_method", "year") if c in f]).rename(columns={"rec_id": "id_fp"})
     f["id_fp"] = f["id_fp"].astype(str)
     morph = pd.read_parquet(e / "morphology.parquet").merge(pd.read_parquet(e / "dwellings_fp.parquet"), on="fp_id", how="left")
@@ -81,17 +88,21 @@ def main():
     ok = ~np.isnan(sap)
     reg = lgb.LGBMRegressor(**B.LGBM).fit(X[ok], sap[ok])
     # predict every dwelling building
-    S = building_table(a.area, a.year)
-    XS = S.reindex(columns=cols).copy()
+    S = building_table(a.area, a.year, need=cols + ["morph_n_uprn"])
+    XS = S.reindex(columns=cols)
     for c in cols:
         if c in cats:
             XS[c] = pd.Categorical(XS[c].astype("string"), categories=cats[c])
         else:
             XS[c] = pd.to_numeric(XS[c], errors="coerce").astype("float32")
-    pr = np.zeros((len(XS), len(B.BANDS))); pr[:, clf.classes_] = clf.predict_proba(XS)
+    pr = np.zeros((len(XS), len(B.BANDS))); sap_pred = np.zeros(len(XS))
+    for i in range(0, len(XS), 200_000):                           # in chunks, to bound memory
+        part = XS.iloc[i:i + 200_000]
+        pr[i:i + len(part)][:, clf.classes_] = clf.predict_proba(part)
+        sap_pred[i:i + len(part)] = reg.predict(part)
     certified = set(d["id_fp"].dropna().astype(str))
     res = pd.DataFrame({"fp_id": S["id_fp"], "n_uprn": pd.to_numeric(S["morph_n_uprn"], errors="coerce").fillna(1).clip(lower=1),
-                        "certified": S["id_fp"].isin(certified), "pred_sap": reg.predict(XS),
+                        "certified": S["id_fp"].isin(certified), "pred_sap": sap_pred,
                         "pred_band": np.array(B.BANDS)[pr.argmax(1)], "p_FG": pr[:, 5] + pr[:, 6], "confidence": pr.max(1)})
     res.to_parquet(keep(out / f"stock_pred_{a.year}.parquet"), index=False)
     # summaries: all dwellings vs certified only, weighted by addresses

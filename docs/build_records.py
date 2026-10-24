@@ -82,6 +82,8 @@ PIPELINE = [
     ("6 Communication", "viz/dashboard.py", "python viz/dashboard.py --area <area> --tag <tag>"),
     ("6 Communication", "viz/atlas.py", "python viz/atlas.py [--public]"),
     ("7 Records", "docs/build_records.py", "python docs/build_records.py"),
+    ("7 Records", "docs/thesis_tables.py", "python docs/thesis_tables.py"),
+    ("7 Records", "docs/build_thesis.py", "python docs/build_thesis.py"),
 ]
 RESULTS = ["*/model/results/*.csv", "*/analysis/*.csv", "model_transfer/*.csv", "*/model/stock/*.csv"]
 
