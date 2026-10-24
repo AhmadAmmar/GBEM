@@ -31,6 +31,7 @@ def bibtex(key, doi):
     bib = urllib.request.urlopen(urllib.request.Request(f"https://doi.org/{doi}", headers={**HDR, "Accept": "application/x-bibtex"}), timeout=60).read().decode("utf-8")
     bib = re.sub(r"@(\w+)\{[^,]+,", lambda x: f"@{x.group(1)}{{{key},", bib, count=1)
     bib = bib.replace("\u2013", "--").replace("\u2014", "---").replace("\u2010", "-").replace("\u2011", "-")
+    bib = bib.replace("&amp;", "\\&").replace("&lt;", "<").replace("&gt;", ">")   # HTML entities in some records
     bib = re.sub(r",\s*month\s*=\s*\{?\w+\}?", "", bib)
     return unicodedata.normalize("NFKD", bib).encode("ascii", "ignore").decode().strip()
 
