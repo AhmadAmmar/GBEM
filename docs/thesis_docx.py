@@ -103,6 +103,7 @@ def main():
     body = body.replace(r"\end{tabularx}", r"\end{tabular}")
     body = re.sub(r"\\begin\{tabular\}\{((?:[^{}]|\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\})*)\}", to_tabular, body)
     body = re.sub(r"\\par\\smallskip\\parbox\{[^}]*\}\{\\footnotesize (.*?)\}\n", r"\n\\emph{Note.} \1\n", body)
+    body = re.sub(r"\\setlist(\[[^\]]*\])?\{[^{}]*\}", "", body)
     body = re.sub(r"\\(small|footnotesize|scriptsize|normalsize)\b", "", body)
     body = re.sub(r"\\fbox\{\\parbox\{[^}]*\}\{(.*?)\}\}", r"\1", body, flags=re.S)
     body = body.replace(r"\crefalias{chapter}{appendix}", "")
