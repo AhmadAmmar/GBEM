@@ -413,6 +413,20 @@ def energy():
                  ["Fuel", "LSOAs", "$\\rho$ (SAP)", "Partial $\\rho$ given floor area", "$\\rho$ (floor area)"], rows, "lrrrr")
 
 
+def simulation():
+    s = read("national/ucd_synthetic_stock/simulation_check.csv")
+    if s is None:
+        return missing("simulation", "comparison with dynamic simulation")
+    s = s[s.variant == "fabric, ventilation and set-point"]
+    rows = [[tex(r.group.replace("type: ", "").replace("weather: ", "Weather ")), f"{int(r.n):,}".replace(",", "{,}"),
+             num(r.spearman), num(r.median_sim_kwh_m2, 0)] for _, r in s.iterrows()]
+    return table("simulation", "Steady-state heat demand of this study against EnergyPlus space-heating demand for the "
+                 "synthetic Irish housing stock of \\citet{ali2024synthetic} (Spearman's $\\rho$ per m$^2$ of floor area).",
+                 ["Group", "Simulations", "$\\rho$", "Median simulated demand (kWh/m$^2$)"], rows, "lrrr",
+                 note="Geometry of each house type reconstructed with the rules of this study; ranks only, because the "
+                 "degree-days of the weather files are not published with the data.")
+
+
 def software():
     import importlib, platform, subprocess
     rows = [["Python", platform.python_version()]]
@@ -487,7 +501,7 @@ def targeting():
 
 TABLES = {"baselines": baselines, "embeddings": embeddings, "validation_design": validation_design, "retest": retest, "scale": scale,
           "neighbours": neighbours, "targets": targets, "transfer": transfer, "adaptation": adaptation, "temporal": temporal,
-          "typology": typology, "retrofit": retrofit, "need": need, "software": software, "aoa": aoa, "calibration": calibration,
+          "typology": typology, "retrofit": retrofit, "need": need, "simulation": simulation, "software": software, "aoa": aoa, "calibration": calibration,
           "noise_eval": noise_eval, "physics": physics, "energy": energy, "applications": applications,
           "targeting": targeting}
 

@@ -32,12 +32,12 @@ from safeio import keep                      # existing outputs are archived, ne
 CODE = pathlib.Path(__file__).resolve().parents[1]
 
 
-def building_table(area, year, need=None):
+def building_table(area, year, need=None, src=None):
     """features of every dwelling building; need: model columns, so that only those satellite columns are read (the
-    London file has 1.5 million rows and about 700 columns)"""
+    London file has 1.5 million rows and about 700 columns); src: another features file of gee/extract.py --buildings"""
     import pyarrow.parquet as pq
     e = B.DATA / area / "epc"
-    src = B.DATA / area / "gee_v2/features" / f"stock_{year}.parquet"
+    src = src or B.DATA / area / "gee_v2/features" / f"stock_{year}.parquet"
     names = pq.ParquetFile(src).schema.names
     use = None if need is None else [c for c in names if c in set(need) or c in ("rec_id", "fp_id")]
     f = pd.read_parquet(src, columns=use)
