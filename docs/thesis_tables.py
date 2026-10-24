@@ -413,6 +413,42 @@ def energy():
                  ["Fuel", "LSOAs", "$\\rho$ (SAP)", "Partial $\\rho$ given floor area", "$\\rho$ (floor area)"], rows, "lrrrr")
 
 
+def repeat_cv():
+    rows = []
+    for area, tag in (("london", "2024_s50k"), ("belfast", "2024")):
+        s = read(f"{area}/model/results/repeat_cv_{tag}_summary.csv")
+        if s is None:
+            continue
+        for _, r in s.sort_values(["featureset", "block_km"]).iterrows():
+            rows.append([AREA[area], tex(FS.get(r.featureset, r.featureset)), f"{r.block_km:g}", str(int(r.runs)),
+                         f"{num(r.sap_mae_mean, 2)} [{num(r.sap_mae_ci_low, 2)}, {num(r.sap_mae_ci_high, 2)}]",
+                         f"{num(r.qwk_mean)} [{num(r.qwk_ci_low)}, {num(r.qwk_ci_high)}]"])
+        rows.append("MID")
+    if not rows:
+        return missing("repeat_cv", "repeated spatial cross-validation")
+    return table("repeat_cv", "Repeated spatial cross-validation with blocks of 1, 2 and 5 km and random assignments of "
+                 "blocks to folds: mean and 95\\% interval over runs.",
+                 ["Area", "Features", "Block (km)", "Runs", "SAP MAE", "$\\kappa_w$"], rows[:-1], "llrrll")
+
+
+def stability():
+    rows = []
+    for area in ("london", "belfast"):
+        s = read(f"{area}/model/deploy/temporal_stability_stab2000.csv")
+        if s is None:
+            continue
+        r = s.iloc[0]
+        rows.append([AREA[area], str(int(r.buildings)), num(r.sd_median, 2), num(r.sd_p90, 2), num(r.mean_abs_year_change, 2),
+                     num(100 * r.share_band_changes, 0), num(r.min_detectable_change_95, 1)])
+    if not rows:
+        return missing("stability", "year-to-year stability")
+    return table("stability", "Year-to-year variation of predictions for the same buildings (fixed model, satellite "
+                 "composites of 2020--2025, random sample of dwelling footprints).",
+                 ["Area", "Buildings", "SD median", "SD 90th pct.", "Mean change per year", "Band changes (\\%)",
+                  "Detectable change (95\\%)"], rows, "lrrrrrr", note="SD: standard deviation of predicted SAP across "
+                 "the six years for one building. Detectable change: $1.96\\sqrt{2}$ times the median SD.")
+
+
 def simulation():
     s = read("national/ucd_synthetic_stock/simulation_check.csv")
     if s is None:
@@ -501,7 +537,7 @@ def targeting():
 
 TABLES = {"baselines": baselines, "embeddings": embeddings, "validation_design": validation_design, "retest": retest, "scale": scale,
           "neighbours": neighbours, "targets": targets, "transfer": transfer, "adaptation": adaptation, "temporal": temporal,
-          "typology": typology, "retrofit": retrofit, "need": need, "simulation": simulation, "software": software, "aoa": aoa, "calibration": calibration,
+          "typology": typology, "retrofit": retrofit, "need": need, "simulation": simulation, "repeat_cv": repeat_cv, "stability": stability, "software": software, "aoa": aoa, "calibration": calibration,
           "noise_eval": noise_eval, "physics": physics, "energy": energy, "applications": applications,
           "targeting": targeting}
 

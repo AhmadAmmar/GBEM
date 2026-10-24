@@ -83,6 +83,8 @@ PIPELINE = [
     ("6 Communication", "viz/atlas.py", "python viz/atlas.py [--public]"),
     ("7 Records", "docs/build_records.py", "python docs/build_records.py"),
     ("5 Analysis", "analysis/simulation_check.py", "python analysis/simulation_check.py"),
+    ("4 Models", "models/repeat_cv.py", "python models/repeat_cv.py --area <area> --year 2024"),
+    ("5 Analysis", "analysis/temporal_stability.py", "python analysis/temporal_stability.py --area <area>"),
     ("4 Models", "models/predict_footprints.py", "python models/predict_footprints.py --area <area> --fp-ids <ids> | --polygon <file>"),
     ("7 Records", "docs/thesis_tables.py", "python docs/thesis_tables.py"),
     ("7 Records", "docs/build_thesis.py", "python docs/build_thesis.py"),

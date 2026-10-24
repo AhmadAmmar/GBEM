@@ -94,6 +94,7 @@ def predict(m, S):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--fp-ids", nargs="+"); ap.add_argument("--polygon")
+    ap.add_argument("--sample-buildings", type=int, help="random sample of dwelling footprints (seed 42), e.g. for stability tests")
     ap.add_argument("--years", nargs="+", type=int, default=[2020, 2021, 2022, 2023, 2024, 2025])
     ap.add_argument("--model-year", type=int, default=2024); ap.add_argument("--featureset", default="eo_morph")
     ap.add_argument("--sample", type=int, default=50000); ap.add_argument("--name", default=None)
@@ -107,8 +108,12 @@ def main():
     elif a.polygon:
         aoi = gpd.read_file(a.polygon).to_crs(fp.crs)
         sel = fp[fp.intersects(aoi.union_all())]
+    elif a.sample_buildings:
+        dw = pd.read_parquet(e / "dwellings_fp.parquet", columns=["fp_id", "n_uprn"])
+        ids = set(dw.loc[dw["n_uprn"] >= 1, "fp_id"].astype(str))
+        sel = fp[fp["fp_id"].isin(ids)].sample(n=a.sample_buildings, random_state=42)
     else:
-        raise SystemExit("give --fp-ids or --polygon")
+        raise SystemExit("give --fp-ids, --polygon or --sample-buildings")
     if sel.empty:
         raise SystemExit("no footprints selected")
     name = a.name or hashlib.sha1(",".join(sorted(sel["fp_id"])).encode()).hexdigest()[:10]
