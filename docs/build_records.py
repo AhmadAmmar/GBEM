@@ -13,7 +13,7 @@ Writes:
   environment.txt               Python, packages (conda list), git commit and tag of the code, time of the build
 Nothing under data/ is changed. Outputs are archived before being replaced (safeio.keep).
 """
-import argparse, ast, datetime, hashlib, json, pathlib, re, subprocess, sys
+import argparse, ast, datetime, hashlib, json, pathlib, re, subprocess, sys, textwrap
 import pandas as pd
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 from safeio import keep                      # existing outputs are archived, never overwritten
@@ -94,7 +94,107 @@ RESULTS = ["*/model/results/*.csv", "*/analysis/*.csv", "model_transfer/*.csv", 
 
 def tex(s):
     return (str(s).replace("\\", r"\textbackslash{}").replace("&", r"\&").replace("%", r"\%").replace("_", r"\_")
-            .replace("#", r"\#").replace("$", r"\$").replace("{", r"\{").replace("}", r"\}").replace("~", r"\textasciitilde{}"))
+            .replace("#", r"\#").replace("$", r"\$").replace("{", r"\{").replace("}", r"\}").replace("~", r"\textasciitilde{}").replace("^", r"\textasciicircum{}"))
+
+
+CMD = re.compile(r"(python|node|Rscript|rh|Earth Engine)\b")
+ITEM = re.compile(r"^(\S(?:.{0,38}?\S)?)\s{2,}(\S.*)$")      # "term  description", term at most 40 characters
+
+
+def doc_blocks(doc):
+    """Parse a docstring written in the project's plain-text style into blocks: ('h', text), ('p', text),
+    ('code', [lines]), ('dl', [[term, text]]), ('ul', [text]), ('ol', [text])."""
+    first, _, rest = doc.strip("\n").partition("\n")                   # the first line may have lost its indent
+    lines = [l.rstrip() for l in [first.strip()] + textwrap.dedent(rest).splitlines()]
+    blocks, i, base = [], 0, 0
+    nxt = lambda j: next((l for l in lines[j + 1:] if l.strip()), "")
+    while i < len(lines):
+        raw = lines[i]
+        if not raw.strip():
+            blocks.append(("blank", "")); i += 1; continue
+        ind, t = len(raw) - len(raw.lstrip()), raw.strip()
+        if ind == 0:
+            base = 0
+        ind -= base
+        nx = nxt(i)
+        # a short title line with an indented block below: a run-in heading; the block below is read as top level
+        if ind == 0 and len(t) < 90 and not t.endswith((":", ".", ",", ";")) and nx and nx[:1] == " " and not ITEM.match(t):
+            blocks.append(("h", t)); base = len(nx) - len(nx.lstrip()); i += 1; continue
+        last = blocks[-1] if blocks else None
+        if ind >= 2 and (CMD.match(t) or (last and last[0] == "code" and t[:1] in "[-|")):
+            if last and last[0] == "code":
+                last[1].append(t)
+            else:
+                blocks.append(("code", [t]))
+            i += 1; continue
+        m_ol, m_ul, m_dl = re.match(r"(\d+)[.)]\s+(.*)", t), re.match(r"[-*]\s+(.*)", t), ITEM.match(t)
+        if ind <= 2 and m_ol:
+            if last and last[0] == "ol" and last[2] == ind:
+                last[1].append(m_ol.group(2))
+            else:
+                blocks.append(("ol", [m_ol.group(2)], ind))
+        elif ind <= 4 and m_ul:
+            if last and last[0] == "ul" and last[2] == ind:
+                last[1].append(m_ul.group(1))
+            else:
+                blocks.append(("ul", [m_ul.group(1)], ind))
+        elif last and last[0] in ("ol", "ul", "dl") and ind > last[2]:
+            if last[0] == "dl":
+                entry = last[1][-1]
+                sub = ITEM.match(t)
+                if sub and " " not in sub.group(1) and ind >= last[2] + 2 and len(raw) - len(raw.lstrip()) - base < 20:
+                    entry.append([sub.group(1), sub.group(2)])        # nested option: [term, text, [sub], ...]
+                elif len(entry) > 2:
+                    entry[-1][1] += " " + t
+                else:
+                    entry[1] += " " + t
+            else:
+                last[1][-1] += " " + t
+        elif last and last[0] == "ul" and last[2] == ind and ind >= 1:        # a bulleted list stays bulleted
+            last[1].append(t)
+        elif m_dl and not m_dl.group(1).endswith((".", ":")) and (ind >= 1 or base):
+            if last and last[0] == "dl" and last[2] == ind:
+                last[1].append([m_dl.group(1), m_dl.group(2)])
+            else:
+                blocks.append(("dl", [[m_dl.group(1), m_dl.group(2)]], ind))
+        elif ind >= 1 and not (last and last[0] == "p" and not last[1].endswith(":")):
+            if last and last[0] == "ul" and last[2] == ind:
+                last[1].append(t)
+            else:
+                blocks.append(("ul", [t], ind))
+        elif last and last[0] == "p":
+            last[1] += " " + t
+        else:
+            blocks.append(["p", t])
+        i += 1
+    return [b for b in blocks if b[0] != "blank"]
+
+
+def doc_tex(doc):
+    """a script's docstring as LaTeX: paragraphs reflowed, outputs as description lists, commands as code"""
+    # paths may break after a slash; command-line options keep both hyphens (no en dash)
+    tex = lambda s: re.sub(r"([,=])(?=\S)", r"\1\\allowbreak{}", globals()["tex"](s).replace("/", "/\\allowbreak{}")
+                           .replace("\\_", "\\_\\allowbreak{}").replace("--", "-{}-"))
+    out = []
+    for b in doc_blocks(doc):
+        kind = b[0]
+        if kind == "h":
+            out.append(f"\\par\\textbf{{{tex(b[1])}}}\\par")
+        elif kind == "p":
+            out.append(tex(b[1]))
+        elif kind == "code":
+            out.append("\\begin{Verbatim}\n" + "\n".join(b[1]) + "\n\\end{Verbatim}")
+        elif kind == "dl":
+            items = []
+            for k, v, *subs in b[1]:
+                inner = ("\n\\begin{description}\n" + "\n".join(f"\\item[{{{tex(sk)}}}] {tex(sv)}" for sk, sv in subs)
+                         + "\n\\end{description}") if subs else ""
+                items.append(f"\\item[{{{tex(k)}}}] {tex(v)}{inner}")
+            out.append("\\begin{description}\n" + "\n".join(items) + "\n\\end{description}")
+        else:
+            env = "itemize" if kind == "ul" else "enumerate"
+            out.append(f"\\begin{{{env}}}\n" + "\n".join(f"\\item {tex(x)}" for x in b[1]) + f"\n\\end{{{env}}}")
+    return "\n\n".join(out)
 
 
 def sha(p):
@@ -148,10 +248,11 @@ def pipeline_reference():
         elif p.suffix == ".js":
             m = re.search(r"/\*(.*?)\*/", p.read_text(encoding="utf-8"), re.S)
             doc = re.sub(r"^\s*\* ?", "", m.group(1), flags=re.M).strip() if m else ""
+            doc = re.sub(r"^\*+\s*$\n?", "", doc, flags=re.M).strip()   # comment banner lines
         last = git("log", "-1", "--format=%h %cs", "--", script)
         md.append(f"\n### `{script}`\n\nCommand: `{cmd}`  \nLast change: {last}\n\n```text\n{doc}\n```\n")
         tx.append(f"\\subsection{{\\texttt{{{tex(script)}}}}}\\label{{code:{script.replace('/', '-').replace('.', '-')}}}\n"
-                  f"\\noindent Command: \\texttt{{{tex(cmd)}}}. Last change: {tex(last)}.\n\\begin{{verbatim}}\n{doc}\n\\end{{verbatim}}\n")
+                  f"\\noindent Command: \\texttt{{{tex(cmd).replace('--', '-{}-')}}}. Last change: {tex(last)}.\n\n{doc_tex(doc)}\n")
     return "\n".join(md), "\n".join(tx)
 
 
