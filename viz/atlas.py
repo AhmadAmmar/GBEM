@@ -186,9 +186,12 @@ def extra_units(area, unit):
         aoa = DATA / "model_transfer/aoa_2024.csv"
         pts = DATA / "model_transfer/aoa_2024_points.parquet"
         if aoa.exists() and pts.exists():
-            thr = pd.read_csv(aoa).query("experiment == @'within ' + @area + ' (spatial CV)'")["threshold"]
-            p = pd.read_parquet(pts).query("experiment == @'within ' + @area")
+            t = pd.read_csv(aoa)
+            thr = t.loc[t["experiment"] == f"within {area} (spatial CV)", "threshold"]
+            p = pd.read_parquet(pts)
+            p = p[p["experiment"] == f"within {area}"]
             cur = pd.read_parquet(A / "cert_enriched.parquet", columns=["cert_id", "cell"]).rename(columns={"cert_id": "id_cert"})
+            cur["id_cert"] = cur["id_cert"].astype(str); p = p.assign(id_cert=p["id_cert"].astype(str))
             p = p.merge(cur, on="id_cert", how="inner")
             if len(thr):
                 parts.append(p.assign(o=p["di"] > thr.iat[0]).groupby("cell")["o"].mean().rename("outside_aoa").to_frame())
