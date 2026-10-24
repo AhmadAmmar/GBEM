@@ -580,6 +580,7 @@ function cmpPage() {
 
 // ---------- about ----------
 document.getElementById("aboutpage").innerHTML = `<div class="card" style="max-width:860px"><h3>What this atlas shows</h3><div class="note">
+<p><b>SAP score and bands</b>: the rating on an Energy Performance Certificate comes from the Standard Assessment Procedure (SAP): the modelled energy cost of heating, hot water and lighting per square metre, for standard occupancy and climate. It runs from 1 to 100 or above; higher is more efficient. Bands: A 92 and above, B 81&ndash;91, C 69&ndash;80, D 55&ndash;68, E 39&ndash;54, F 21&ndash;38, G 1&ndash;20. It describes the dwelling, not the energy its occupants use.</p>
 <p><b>Current stock</b>: the latest certificate of every property among certificates issued in the last 10 years. Certified homes are those sold, let, built or retrofitted, so they are not a random sample of all homes.</p>
 <p><b>Units</b>: ${D.grid} m grid cells; neighbourhoods (London LSOA 2021, Belfast wards 2012); streets (nearest named OpenStreetMap road within 60 m, by postcode district); postcode sectors; London boroughs. Units with fewer than 5 certificates (10 in the public version) are not shown.</p>
 <p><b>Hotspots</b>: Getis-Ord Gi* z-scores of the grid cells with their 8 neighbours; |z| > 1.96 marks clusters significant at 5% (not corrected for multiple testing).</p>

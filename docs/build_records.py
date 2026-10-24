@@ -299,6 +299,18 @@ def numbers():
         if cur.exists():
             v = pd.read_csv(cur).iloc[0]
             put(f"{key}RhoSapIncome", v.spearman_sap_vs_income_deprivation, 2); put(f"{key}DoubleBurdenUnits", int(v.double_burden_units))
+    s = DATA / "sap_stats_2024.csv"                                   # the label (analysis/sap_stats.py)
+    if s.exists():
+        s = pd.read_csv(s)
+        for area, key in (("london", "Lon"), ("belfast", "Bel")):
+            r = s[(s.area == area) & s["set"].str.startswith("certificates")]
+            if len(r):
+                r = r.iloc[0]
+                for col, nm, d in (("mean", "Mean", 1), ("sd", "Sd", 1), ("median", "Median", 0), ("p25", "Pquart", 0), ("p75", "Pthreeq", 0),
+                                   ("p05", "Pfive", 0), ("p95", "Pninetyfive", 0), ("mae_of_median", "MaeMedian", 1)):
+                    put(f"{key}Sap{nm}", float(r[col]), d)
+                put(f"{key}ShareCD", 100 * float(r.share_C + r.share_D), 0)
+                put(f"{key}ShareEFG", 100 * float(r.share_E + r.share_F + r.share_G), 0)
     t = DATA / "model_transfer/transfer_2024.csv"
     if t.exists():
         t = pd.read_csv(t)

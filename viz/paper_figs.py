@@ -114,6 +114,13 @@ def main():
         for sc, sn in (("certificate", "Home"), ("street", "Street"), ("neighbourhood", "Nbhd")):
             if ("eo_morph", sc) in s.index:
                 nums[f"{k}RsqMorph{sn}"] = f"{s.loc[('eo_morph', sc), 'r2']:.2f}"
+    sp = DATA / "sap_stats_2024.csv"                                  # the label (analysis/sap_stats.py)
+    if sp.exists():
+        st = pd.read_csv(sp)
+        for area, k in (("london", "Lon"), ("belfast", "Bel")):
+            r = st[(st.area == area) & st["set"].str.startswith("certificates")].iloc[0]
+            nums[f"{k}SapMean"] = f"{r['mean']:.1f}"; nums[f"{k}SapSd"] = f"{r['sd']:.1f}"
+            nums[f"{k}SapPfive"] = f"{r['p05']:.0f}"; nums[f"{k}SapPninetyfive"] = f"{r['p95']:.0f}"
     t = pd.read_csv(DATA / "model_transfer/transfer_2024.csv")
     for exp, nm in (("London -> Belfast 2024", "LonToBel"), ("Belfast -> London 2024", "BelToLon")):
         r = t[(t.experiment == exp) & (t.featureset == "core")]

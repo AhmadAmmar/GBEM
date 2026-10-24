@@ -87,7 +87,7 @@ def baselines():
     rows = rows[:-1]
     return table("baselines", "Predictive performance of the gradient-boosting models by feature set under spatial "
                  "cross-validation (five folds of 2 km blocks). Band metrics refer to the seven EPC bands; SAP metrics "
-                 "to the SAP score (1--100).",
+                 "to the SAP score (1 to 100 or above; \\cref{tab:sap_stats}).",
                  ["Feature set", "Accuracy (\\%)", "Macro-F1", "$\\kappa_w$", "Within one band (\\%)", "SAP MAE", "SAP $R^2$"],
                  rows, "lrrrrrr", note="$\\kappa_w$: quadratic weighted kappa. The reference model uses attributes "
                  "recorded on the certificate and is not available for homes without one.")
@@ -535,7 +535,37 @@ def targeting():
                  "precision of 0.20.")
 
 
-TABLES = {"baselines": baselines, "embeddings": embeddings, "validation_design": validation_design, "retest": retest, "scale": scale,
+def sap_stats():
+    """the label: SAP bands and the distribution of the SAP score in each city (analysis/sap_stats.py)"""
+    s = read("sap_stats_2024.csv")
+    if s is None:
+        return missing("sap_stats", "descriptive statistics of the SAP score")
+    pct = lambda v: num(100 * v, 1)
+    rows = []
+    for area in ("london", "belfast"):
+        for _, r in s[s.area == area].iterrows():
+            rows.append([AREA[area], tex(r["set"]), f"{int(r['n']):,}".replace(",", "{,}"), num(r["mean"], 1), num(r["sd"], 1),
+                         f"{num(r['median'], 0)} ({num(r['p25'], 0)}--{num(r['p75'], 0)})", f"{num(r['p05'], 0)}--{num(r['p95'], 0)}",
+                         f"{num(r['min'], 0)}--{num(r['max'], 0)}", num(r.get("mae_of_median"), 1)] + [pct(r[f"share_{b}"]) for b in "ABCDEFG"])
+    return table("sap_stats", "The label: distribution of the SAP score and share of each EPC band (\\%) in the 2024 "
+                 "certificates used for modelling and in the current certified stock (latest valid certificate per property).",
+                 ["City", "Set", "n", "Mean", "SD", "Median (IQR)", "5th--95th pct.", "Min--max", "MAE of median", "A", "B", "C", "D", "E", "F", "G"],
+                 rows, "llrrrrrrr" + "r" * 7,
+                 note="SAP: Standard Assessment Procedure energy rating, 1 to 100 or above (higher is more efficient). Bands: "
+                      "A 92 and above, B 81--91, C 69--80, D 55--68, E 39--54, F 21--38, G 1--20. Scores above 100 are possible "
+                      "for dwellings that export energy. MAE of median: the mean absolute error of predicting the median score "
+                      "for every dwelling, the reference for the MAE of the models. Isolated extreme values in the registers (for example a maximum of 478 "
+                      "in London) are recording errors and do not affect the medians and percentiles reported.")
+
+
+def sap_bands():
+    """fixed: the EPC bands as ranges of the SAP score"""
+    rows = [["A", "92 and above", "most efficient"], ["B", "81--91", ""], ["C", "69--80", ""], ["D", "55--68", ""],
+            ["E", "39--54", ""], ["F", "21--38", ""], ["G", "1--20", "least efficient"]]
+    return table("sap_bands", "EPC bands as ranges of the SAP score \\citep{bre2022sap}.", ["Band", "SAP score", ""], rows, "lll")
+
+
+TABLES = {"sap_bands": sap_bands, "sap_stats": sap_stats, "baselines": baselines, "embeddings": embeddings, "validation_design": validation_design, "retest": retest, "scale": scale,
           "neighbours": neighbours, "targets": targets, "transfer": transfer, "adaptation": adaptation, "temporal": temporal,
           "typology": typology, "retrofit": retrofit, "need": need, "simulation": simulation, "repeat_cv": repeat_cv, "stability": stability, "software": software, "aoa": aoa, "calibration": calibration,
           "noise_eval": noise_eval, "physics": physics, "energy": energy, "applications": applications,
