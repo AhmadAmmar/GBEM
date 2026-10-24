@@ -20,9 +20,22 @@ All scripts use snake_case file names. Superseded scripts are kept for the recor
 
 No input or derived building-level data are stored in this repository. See [DATA.md](DATA.md) for the data sources and their terms of use.
 
+## Atlas
+
+The public GBEM Atlas (Greater London and Greater Belfast; aggregates of at least 10 certificates per unit, no
+building-level data) is at https://ahmadammar.github.io/GBEM/. It is built with `viz/atlas.py --public` and served
+from the `gh-pages` branch.
+
+## Funding and acknowledgements
+
+This work is part of a PhD project funded by a Vice-Chancellor's Research Scholarship (VCRS) from Ulster University,
+supervised by Dr Saad Bhatti and Dr Paul McKenzie (Ulster University) and Dr Muhammad Irfan (external supervisor).
+
 ## Licence and ownership
 
-Copyright © Ulster University. Released under the [Apache License 2.0](LICENSE); see [NOTICE](NOTICE). Third-party data remain subject to their own licences.
+Copyright © Ulster University: intellectual property arising from research degrees belongs to the University under its
+Intellectual Property Policy. Released under the [Apache License 2.0](LICENSE); see [NOTICE](NOTICE). Third-party data
+remain subject to their own licences.
 
 ## Citation
 

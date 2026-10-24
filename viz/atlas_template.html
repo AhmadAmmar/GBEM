@@ -93,7 +93,7 @@ svg .axis{stroke:var(--axis)}
         <span>View</span><div><button class="b" id="d3">3D</button> <label class="note"><input type="checkbox" id="hide0" checked> hide empty</label></div>
       </div>
       <div class="legend" id="legend"></div>
-      <div class="attr">Basemap © <a href="https://www.esri.com" target="_blank">Esri</a>, HERE, Garmin, © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors · EPC data: DLUHC / MHCLG (OGL), Finance NI · Contains public sector information licensed under the <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">Open Government Licence v3.0</a> (MHCLG, ONS, DESNZ) · Contains OS data © Crown copyright and database right 2025</div>
+      <div class="attr">Basemap © <a href="https://www.esri.com" target="_blank">Esri</a>, HERE, Garmin, © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors · EPC data: DLUHC / MHCLG (OGL), Finance NI · Contains public sector information licensed under the <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">Open Government Licence v3.0</a> (MHCLG, ONS, DESNZ) · Contains OS data © Crown copyright and database right 2025 · Contains LPS Intellectual Property © Crown copyright and database right 2025 · Ulster University (VCRS-funded PhD research)</div>
     </div>
     <aside class="side" id="mapside"></aside>
   </section>
@@ -575,7 +575,17 @@ document.getElementById("aboutpage").innerHTML = `<div class="card" style="max-w
 <p><b>Retrofit</b>: element ratings Poor or Very Poor on the certificate; SAP gain possible = potential minus current SAP; recommended measures from the England and Wales register (none in the NI extract).</p>
 <p><b>Trends</b>: certificates issued per year, and change between consecutive certificates of the same home.</p>
 <p><b>Models</b>: LightGBM with spatial 5-fold cross-validation (2 km blocks); the buildings layer shows out-of-fold predictions, averaged over the certificates of each building, extruded by LiDAR height (footprint data or floors × 3 m where LiDAR is missing).</p>
-<p>Code: <code>code/analysis/stock.py</code>, <code>code/models/baseline.py</code>, <code>code/viz/atlas.py</code>. ${D.public ? "" : "<b>This version contains property-level data: keep it local.</b>"}</p></div></div>`;
+<p>Code: <code>code/analysis/stock.py</code>, <code>code/models/baseline.py</code>, <code>code/viz/atlas.py</code>. ${D.public ? "" : "<b>This version contains property-level data: keep it local.</b>"}</p></div></div>
+<div class="card" style="max-width:860px"><h3>Credits</h3><div class="note">
+<p>Developed by Ahmad Ammar as part of a PhD project in the School of Geography and Environmental Sciences, Ulster University, supervised by Dr Saad Bhatti, Dr Paul McKenzie and Dr Muhammad Irfan.</p>
+<p><b>Funding</b>: Vice-Chancellor's Research Scholarship (VCRS), Ulster University.</p>
+<p><b>Ownership</b>: © Ulster University. Code: <a href="https://github.com/AhmadAmmar/GBEM" target="_blank">GBEM</a>, Apache License 2.0.</p>
+<p><b>Cite as</b>: Ammar, A., Bhatti, S., McKenzie, P. and Irfan, M. (2026) <i>GBEM Atlas: energy performance of the housing stock in Greater London and Greater Belfast</i>. Ulster University. https://ahmadammar.github.io/GBEM/</p>
+<p>For research and communication: aggregates of certificates, not information about individual homes.</p></div></div>
+<div class="card" style="max-width:860px"><h3>Data</h3><div class="note">
+<p><b>England and Wales</b>: Energy Performance Certificates (Ministry of Housing, Communities and Local Government); OS Open UPRN (contains OS data © Crown copyright and database right 2025); LSOA 2021 boundaries (Office for National Statistics); English Indices of Deprivation 2025 (MHCLG); sub-national energy consumption (Department for Energy Security and Net Zero). Contains public sector information licensed under the <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank">Open Government Licence v3.0</a>.</p>
+<p><b>Northern Ireland</b>: Energy Performance Certificates provided by the Department of Finance (NI) under the Environmental Information Regulations (DOF/2026-0254); addresses: Pointer, Land &amp; Property Services (contains LPS Intellectual Property © Crown copyright and database right 2025), used only to place certificates, no address data shown; ward boundaries (OSNI, Open Government Licence); Census 2021 and NI Multiple Deprivation Measure (NISRA, Open Government Licence).</p>
+<p><b>Both</b>: streets © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap contributors</a> (ODbL); LiDAR: Environment Agency (OGL) and OpenDataNI (OGL); building footprints: Overture Maps Foundation (ODbL / CDLA); Sentinel-1 and Sentinel-2 (Copernicus, ESA), Landsat and MODIS (NASA / USGS), ERA5-Land (Copernicus Climate Change Service), VIIRS (NOAA), GHSL (European Commission JRC), ESA WorldCover, satellite embeddings (Google, CC BY 4.0), processed with Google Earth Engine. Basemap © Esri, HERE, Garmin, © OpenStreetMap contributors.</p></div></div>`;
 
 // ---------- render ----------
 function render() {
