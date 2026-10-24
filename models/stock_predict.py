@@ -32,29 +32,53 @@ from safeio import keep                      # existing outputs are archived, ne
 CODE = pathlib.Path(__file__).resolve().parents[1]
 
 
-def building_table(area, year, need=None, src=None):
-    """features of every dwelling building; need: model columns, so that only those satellite columns are read (the
-    London file has 1.5 million rows and about 700 columns); src: another features file of gee/extract.py --buildings"""
-    import pyarrow.parquet as pq
+def _footprint_tables(area):
+    """per-footprint tables joined to the satellite features: morphology with addresses per footprint, LiDAR and
+    streetscape, each indexed by fp_id (read once)"""
     e = B.DATA / area / "epc"
-    src = src or B.DATA / area / "gee_v2/features" / f"stock_{year}.parquet"
-    names = pq.ParquetFile(src).schema.names
-    use = None if need is None else [c for c in names if c in set(need) or c in ("rec_id", "fp_id")]
-    f = pd.read_parquet(src, columns=use)
+    morph = pd.read_parquet(e / "morphology.parquet").merge(pd.read_parquet(e / "dwellings_fp.parquet"), on="fp_id", how="left")
+    morph = morph.rename(columns={c: f"morph_{c}" for c in morph.columns if c != "fp_id"})
+    tables = [morph]
+    for name in ("lidar_fp.parquet", "streetscape_fp.parquet"):
+        if (e / name).exists():
+            tables.append(pd.read_parquet(e / name))
+    out = []
+    for t in tables:
+        t["fp_id"] = t["fp_id"].astype(str)
+        out.append(t.drop_duplicates("fp_id").set_index("fp_id"))
+    return out
+
+
+def _assemble(f, tables):
     f = f.astype({c: "float32" for c in f.columns if f[c].dtype == "float64"})
     f = f.drop(columns=[c for c in ("fp_id", "UPRN", "link_method", "year") if c in f]).rename(columns={"rec_id": "id_fp"})
     f["id_fp"] = f["id_fp"].astype(str)
-    morph = pd.read_parquet(e / "morphology.parquet").merge(pd.read_parquet(e / "dwellings_fp.parquet"), on="fp_id", how="left")
-    morph = morph.rename(columns={c: f"morph_{c}" for c in morph.columns if c != "fp_id"})
-    morph["fp_id"] = morph["fp_id"].astype(str)
-    d = f.merge(morph, left_on="id_fp", right_on="fp_id", how="left").drop(columns=["fp_id"])
-    for name in ("lidar_fp.parquet", "streetscape_fp.parquet"):
-        if (e / name).exists():
-            t = pd.read_parquet(e / name); t["fp_id"] = t["fp_id"].astype(str)
-            d = d.merge(t, left_on="id_fp", right_on="fp_id", how="left").drop(columns=["fp_id"])
+    d = f.set_index(f["id_fp"].rename(None)).join(tables).reset_index(drop=True)
     if "lidar_valid_share" in d:
         d = lidar_derived(d)
     return d
+
+
+def _columns(src, need):
+    import pyarrow.parquet as pq
+    names = pq.ParquetFile(src).schema.names
+    return None if need is None else [c for c in names if c in set(need) or c in ("rec_id", "fp_id")]
+
+
+def building_table(area, year, need=None, src=None):
+    """features of every dwelling building; need: model columns, so that only those satellite columns are read (the
+    London file has 1.5 million rows and about 700 columns); src: another features file of gee/extract.py --buildings"""
+    src = src or B.DATA / area / "gee_v2/features" / f"stock_{year}.parquet"
+    return _assemble(pd.read_parquet(src, columns=_columns(src, need)), _footprint_tables(area))
+
+
+def building_batches(area, year, need=None, src=None, rows=150_000):
+    """building_table in batches of rows, for whole-stock prediction without holding the whole table in memory"""
+    import pyarrow.parquet as pq
+    src = src or B.DATA / area / "gee_v2/features" / f"stock_{year}.parquet"
+    tables = _footprint_tables(area)
+    for batch in pq.ParquetFile(src).iter_batches(batch_size=rows, columns=_columns(src, need)):
+        yield _assemble(batch.to_pandas(), tables)
 
 
 def main():
@@ -88,22 +112,24 @@ def main():
     ok = ~np.isnan(sap)
     reg = lgb.LGBMRegressor(**B.LGBM).fit(X[ok], sap[ok])
     # predict every dwelling building
-    S = building_table(a.area, a.year, need=cols + ["morph_n_uprn"])
-    XS = S.reindex(columns=cols)
-    for c in cols:
-        if c in cats:
-            XS[c] = pd.Categorical(XS[c].astype("string"), categories=cats[c])
-        else:
-            XS[c] = pd.to_numeric(XS[c], errors="coerce").astype("float32")
-    pr = np.zeros((len(XS), len(B.BANDS))); sap_pred = np.zeros(len(XS))
-    for i in range(0, len(XS), 200_000):                           # in chunks, to bound memory
-        part = XS.iloc[i:i + 200_000]
-        pr[i:i + len(part)][:, clf.classes_] = clf.predict_proba(part)
-        sap_pred[i:i + len(part)] = reg.predict(part)
     certified = set(d["id_fp"].dropna().astype(str))
-    res = pd.DataFrame({"fp_id": S["id_fp"], "n_uprn": pd.to_numeric(S["morph_n_uprn"], errors="coerce").fillna(1).clip(lower=1),
-                        "certified": S["id_fp"].isin(certified), "pred_sap": sap_pred,
-                        "pred_band": np.array(B.BANDS)[pr.argmax(1)], "p_FG": pr[:, 5] + pr[:, 6], "confidence": pr.max(1)})
+    parts = []
+    for S in building_batches(a.area, a.year, need=cols + ["morph_n_uprn"]):   # batches bound the memory (London: 1.5 M rows)
+        XS = S.reindex(columns=cols)
+        for c in cols:
+            if c in cats:
+                XS[c] = pd.Categorical(XS[c].astype("string"), categories=cats[c])
+            else:
+                XS[c] = pd.to_numeric(XS[c], errors="coerce").astype("float32")
+        pr = np.zeros((len(XS), len(B.BANDS)))
+        pr[:, clf.classes_] = clf.predict_proba(XS)
+        parts.append(pd.DataFrame({"fp_id": S["id_fp"].to_numpy(),
+                                   "n_uprn": pd.to_numeric(S["morph_n_uprn"], errors="coerce").fillna(1).clip(lower=1).to_numpy(),
+                                   "certified": S["id_fp"].isin(certified).to_numpy(), "pred_sap": reg.predict(XS),
+                                   "pred_band": np.array(B.BANDS)[pr.argmax(1)], "p_FG": pr[:, 5] + pr[:, 6], "confidence": pr.max(1)}))
+        print(f"  predicted {sum(len(p) for p in parts):,} buildings", flush=True)
+        del XS, S
+    res = pd.concat(parts, ignore_index=True)
     res.to_parquet(keep(out / f"stock_pred_{a.year}.parquet"), index=False)
     # summaries: all dwellings vs certified only, weighted by addresses
     fp = gpd.read_parquet(e / "footprints.parquet", columns=["fp_id", "geometry"])
