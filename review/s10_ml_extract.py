@@ -16,7 +16,7 @@ Complements the rule-based stage 9 with two local models (no external service on
 
 For the studies the reviewer has already extracted, the suggestions are compared with the reviewer's values.
 
-Requires the packages in requirements-ml.txt (separate environment; see docs/ml_extraction_method.md).
+Requires the packages in requirements-ml.txt (separate environment).
 Output: outputs/ml_evidence.csv (top sentences per work and field), outputs/ml_extraction.csv (one row per work),
         outputs/stats_ml_extract.json (coverage and agreement with the reviewer)
 """

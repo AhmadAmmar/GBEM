@@ -1,6 +1,6 @@
 """Write a dated inventory of every script in a repository.
 
-    python tools/make_inventory.py                 # GBEM code repository -> docs/INVENTORY.md
+    python tools/make_inventory.py                 # GBEM code repository -> docs/internal/INVENTORY.md
     python tools/make_inventory.py --root <dir> --out <file>
 
 For each .py / .R / .ipynb file: folder, purpose (first docstring or comment line), date of the last
@@ -65,7 +65,7 @@ def main():
     ap.add_argument("--title", default="Code inventory")
     a = ap.parse_args()
     root = pathlib.Path(a.root).resolve()
-    out = pathlib.Path(a.out) if a.out else root / "docs" / "INVENTORY.md"
+    out = pathlib.Path(a.out) if a.out else root / "docs" / "internal" / "INVENTORY.md"
     tracked = set(subprocess.run(["git", "ls-files"], cwd=root, capture_output=True, text=True).stdout.split("\n"))
     rows = []
     for p in sorted(root.rglob("*")):

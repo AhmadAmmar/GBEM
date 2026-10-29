@@ -8,13 +8,12 @@ Code for estimating and mapping the energy efficiency of buildings from Earth ob
 |---|---|
 | `scripts/data_processing` | Data preparation: EPC certificates, UPRN and coordinate linkage, OpenStreetMap buildings, Google Earth Engine extraction, spectral indices, zonal statistics |
 | `scripts/ml` | Machine learning experiments for EPC rating and efficiency-class prediction |
-| `scripts/visualization` | Figures, maps, PRISMA and workflow diagrams |
+| `scripts/visualization` | Figure and map scripts |
 | `scripts/utils` | Helper utilities (for example `inspect_dataset.py` for row counts, columns and metadata) |
-| `review/` | Analysis pipeline for the systematic review and bibliometric analysis of remote sensing and geospatial methods for building energy efficiency: screening, bibliometric indicators, keyword networks, word clouds, maps of where research is produced and applied, country profiles, tables and figures (see `review/README.md`) |
+| `review/` | Review and bibliometric analysis pipeline (see `review/README.md`) |
 | `tools/` | Repository utilities (`make_inventory.py`) |
-| `docs/` | [INVENTORY.md](docs/INVENTORY.md): every script with its purpose, last-change date and status |
 
-All scripts use snake_case file names. Superseded scripts are kept for the record and marked as such in the inventory.
+All scripts use snake_case file names; each script's docstring describes its inputs, outputs and arguments.
 
 ## Data
 
