@@ -62,7 +62,9 @@ def main():
         leaks = d["InfiltrationVentilation"].get("Leaks", {})
         if "test_result" in leaks:
             leaks["test_result"] = ap50
-        n = ap50 * env / volume / 20.0                         # n50/20 rule of thumb, air changes per hour
+        # n50/20 rule of thumb, air changes per hour; air permeability is per m2 of the whole envelope (HEM env_area,
+        # party walls and floors included), not only the exposed part used for heat loss
+        n = ap50 * leaks.get("env_area", env) / volume / 20.0
         hlc = ua + Y * env + 0.33 * n * volume
         q = hlc * HDD_LONDON * 24 / 1000 / floor
         vid = f"{i:02d}"
