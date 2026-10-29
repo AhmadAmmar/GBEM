@@ -33,11 +33,22 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--demo", required=True); ap.add_argument("--out", required=True)
     ap.add_argument("--full-year", action="store_true", help="set 8,760 hourly steps (only if the base has full-year schedules)")
+    ap.add_argument("--top-floor", action="store_true", help="turn party ceilings into an exposed roof (top-floor flat)")
     a = ap.parse_args()
     base = json.load(open(a.demo, encoding="utf8"))
     out = pathlib.Path(a.out); out.mkdir(parents=True, exist_ok=True)
     if a.full_year:
         base["SimulationTime"] = {"start": 0, "end": 8760, "step": 1}
+    if a.top_floor:                                            # party ceilings become an exposed flat roof
+        for z in base["Zone"].values():
+            for el in z["BuildingElement"].values():
+                if el["type"] == "BuildingElementAdjacentConditionedSpace" and el["pitch"] == 0:
+                    ar = el["area"]
+                    el.clear()
+                    el.update({"type": "BuildingElementOpaque", "area": ar, "solar_absorption_coeff": 0.7,
+                               "thermal_resistance_construction": 1.0, "areal_heat_capacity": 19000,
+                               "mass_distribution_class": "I", "pitch": 0, "orientation360": 0,
+                               "base_height": 13, "height": ar, "width": 1})
     zones = list(base["Zone"].values())
     floor, volume = sum(z["area"] for z in zones), sum(z["volume"] for z in zones)
     has_roof = any(el["type"] == "BuildingElementOpaque" and el["pitch"] == 0 for z in zones for el in z["BuildingElement"].values())
