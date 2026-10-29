@@ -7,7 +7,7 @@ CAMP=$(ls -d ~/phd/scratch/data/*campaign_forms* ~/phd/scratch/data/hem_trial/*c
 EPW_LON=$(ls ~/phd/scratch/data/weather/*Heathrow*TMYx*.epw | head -1)
 EPW_BEL=$(ls ~/phd/scratch/data/weather/*Belfast*TMYx*.epw | head -1)
 OUT=~/phd/scratch/outputs/packing_$(date +%Y-%m-%d_%H%M)
-echo "inputs: $CAMP"; echo "weather: $EPW_LON | $EPW_BEL"; echo "output: $OUT"
+mkdir -p "$OUT"; echo "inputs: $CAMP"; echo "weather: $EPW_LON | $EPW_BEL"; echo "output: $OUT"
 [ -d "$CAMP" ] && [ -f "$EPW_LON" ] && [ -f "$EPW_BEL" ] || { echo "missing inputs or weather"; exit 1; }
 for PER in 1 5 20 100; do
   for d in "$CAMP"/*/; do
