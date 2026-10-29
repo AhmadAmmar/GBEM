@@ -48,7 +48,7 @@ def main():
                     el.update({"type": "BuildingElementOpaque", "area": ar, "solar_absorption_coeff": 0.7,
                                "thermal_resistance_construction": 1.0, "areal_heat_capacity": 19000,
                                "mass_distribution_class": "I", "pitch": 0, "orientation360": 0,
-                               "base_height": 13, "height": ar, "width": 1})
+                               "base_height": 13, "height": ar, "width": 1, "is_unheated_pitched_roof": False})
     zones = list(base["Zone"].values())
     floor, volume = sum(z["area"] for z in zones), sum(z["volume"] for z in zones)
     has_roof = any(el["type"] == "BuildingElementOpaque" and el["pitch"] == 0 for z in zones for el in z["BuildingElement"].values())
