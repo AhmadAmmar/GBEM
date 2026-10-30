@@ -67,14 +67,14 @@ def r_construction(u, pitch):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--demo", required=True); ap.add_argument("--out", required=True)
-    ap.add_argument("--full-year", action="store_true", help="set 8,760 hourly steps (only if the base has full-year schedules)")
+    ap.add_argument("--full-year", action="store_true", help="simulate 8,760 hours, keeping the base's time step (only if the base has full-year schedules)")
     ap.add_argument("--top-floor", action="store_true", help="same as --form flat_top")
     ap.add_argument("--form", choices=list(FORMS), default="flat_mid", help="built form derived from the flat base")
     a = ap.parse_args()
     base = json.load(open(a.demo, encoding="utf8"))
     out = pathlib.Path(a.out); out.mkdir(parents=True, exist_ok=True)
     if a.full_year:
-        base["SimulationTime"] = {"start": 0, "end": 8760, "step": 1}
+        base["SimulationTime"]["start"], base["SimulationTime"]["end"] = 0, 8760
     form = "flat_top" if a.top_floor else a.form
     base = make_form(base, form)
     zones = list(base["Zone"].values())
