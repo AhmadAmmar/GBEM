@@ -75,6 +75,9 @@ def main():
     out = pathlib.Path(a.out); out.mkdir(parents=True, exist_ok=True)
     if a.full_year:
         base["SimulationTime"]["start"], base["SimulationTime"]["end"] = 0, 8760
+        for name in ("vent opening min", "vent opening max"):   # the base leaves these blank after hour 4,380
+            sched = base["Control"][name]["schedule"]["main"]
+            base["Control"][name]["schedule"]["main"] = [{"value": sched[0]["value"], "repeat": 8760}]
     form = "flat_top" if a.top_floor else a.form
     base = make_form(base, form)
     zones = list(base["Zone"].values())
