@@ -8,5 +8,5 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install pytest numpy pandas pyyaml
-      - run: pytest tests/test_physics.py -q
+      - run: pip install pytest numpy pandas scipy
+      - run: pytest tests -q -rs
