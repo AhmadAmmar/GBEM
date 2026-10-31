@@ -60,7 +60,7 @@ def load(area):
     e["fg"] = np.select([fuel.str.contains("mains gas"), fuel.str.contains("electric"), fuel.str.contains("oil")], ["gas", "elec", "oil"], "other")
     start = e.CONSTRUCTION_AGE_BAND.map(age_start)
     # same groups as the paper, so that estimates can be compared
-    e["ag"] = np.select([start < 0, start <= 1918, start <= 1949, start <= 1975, start <= 1990, start <= 2002], ["none", "g1", "g2", "g3", "g4", "g5"], "g6")
+    e["ag"] = np.select([start < 0, start <= 1929, start <= 1949, start <= 1975, start <= 1990, start <= 2002], ["none", "g1", "g2", "g3", "g4", "g5"], "g6")
     e["pt"], e["bf"] = e.PROPERTY_TYPE.astype(object).astype(str), e.BUILT_FORM.astype(object).astype(str)
     e["cb"] = e.CURRENT_ENERGY_RATING.astype(str).isin(list("ABC")).astype(float)
     return e

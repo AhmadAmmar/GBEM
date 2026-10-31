@@ -44,8 +44,8 @@ def load(area):
                                 ["mains gas", "electricity", "oil"], "other")
     age = e["CONSTRUCTION_AGE_BAND"].astype(str)
     yr = pd.to_numeric(age.str.extract(r"(\d{4})")[0], errors="coerce")
-    e["age_group"] = pd.cut(yr, [0, 1918, 1949, 1975, 1990, 2002, 2100],
-                            labels=["before 1919", "1919-1949", "1950-1975", "1976-1990", "1991-2002", "2003 on"]).astype(str)
+    e["age_group"] = pd.cut(yr, [0, 1929, 1949, 1975, 1990, 2002, 2100],
+                            labels=["before 1930", "1930-1949", "1950-1975", "1976-1990", "1991-2002", "2003 on"]).astype(str)
     return e.sort_values(["uprn", "date"])
 
 
