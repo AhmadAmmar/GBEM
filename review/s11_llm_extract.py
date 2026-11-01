@@ -1,6 +1,6 @@
 """Stage 11 - extraction with a large language model, checked against the source text (optional).
 
-For each work with a full text, the body text (reference list removed, pages marked) is sent to the Claude Messages API
+For each work with a full text, the body text (reference list removed, pages marked) is sent to a large language model API
 with the fields of the extraction sheet and a JSON schema. For every field the model must return a value and the exact
 sentence of the paper that supports it, with its page. The quote is then searched for in the PDF text (after
 normalising spaces, hyphenation and quotation marks):
@@ -11,8 +11,8 @@ normalising spaces, hyphenation and quotation marks):
 Values are suggestions for the reviewer, like those of stages 9 and 10; the extraction sheet is never changed. Responses
 are cached per work (outputs are reproducible without new requests) and every request is logged with its token counts.
 
-Runs only when an API key is available (environment variable ANTHROPIC_API_KEY, or ANTHROPIC_API_KEY in
-local_settings.py) and only when asked for (python s11_llm_extract.py <iteration folder> [--limit N] [--only-included]).
+Runs only when LLM_API_KEY, LLM_MODEL, LLM_SDK (client package) and LLM_CLIENT (its client class) are set in the
+environment or local_settings.py, and only when asked for (python s11_llm_extract.py <iteration folder> [--limit N] [--only-included]).
 Requires the packages in requirements-ml.txt.
 
 Output: outputs/llm_extraction.csv (one row per work and field, with quote, page and verification),
@@ -24,7 +24,7 @@ from common import norm_doi, dump, read_csv
 from s04_fulltext import pdf_text
 from s09_fulltext_extract import works_with_pdfs, pages_of
 
-MODEL = "claude-opus-5-5"
+MODEL = os.environ.get("LLM_MODEL", "")
 EFFORT = "high"
 MAX_CHARS = 400_000          # about 100k tokens; longer texts are sent in full up to this length and the cut is recorded
 
@@ -62,11 +62,11 @@ SYSTEM = ("You extract data from a scientific paper for a systematic review of r
 
 
 def api_key():
-    k = os.environ.get("ANTHROPIC_API_KEY")
+    k = os.environ.get("LLM_API_KEY")
     if not k:
         try:
             import local_settings
-            k = getattr(local_settings, "ANTHROPIC_API_KEY", None)
+            k = getattr(local_settings, "LLM_API_KEY", None)
         except ImportError:
             pass
     return k
@@ -99,11 +99,12 @@ def request(client, text):
 
 
 def run(cfg, P, limit=None, only_included=False):
-    import anthropic
+    import importlib
     key = api_key()
-    if not key:
-        raise SystemExit("No API key: set ANTHROPIC_API_KEY or add it to local_settings.py")
-    client = anthropic.Anthropic(api_key=key)
+    if not key or not MODEL or not os.environ.get("LLM_SDK") or not os.environ.get("LLM_CLIENT"):
+        raise SystemExit("Set LLM_API_KEY, LLM_MODEL, LLM_SDK and LLM_CLIENT")
+    sdk = importlib.import_module(os.environ["LLM_SDK"])
+    client = getattr(sdk, os.environ["LLM_CLIENT"])(api_key=key)
     cache = P["out"] / "llm_cache"; cache.mkdir(exist_ok=True)
     rows, log = [], []
     works = works_with_pdfs(cfg, P)
@@ -123,9 +124,9 @@ def run(cfg, P, limit=None, only_included=False):
         else:
             try:
                 msg = request(client, text)
-            except anthropic.RateLimitError:
+            except sdk.RateLimitError:
                 time.sleep(60); msg = request(client, text)
-            except anthropic.APIStatusError as e:
+            except sdk.APIStatusError as e:
                 log.append({"doi": d, "title": title, "error": f"{e.status_code} {e.message}"[:300]}); continue
             if msg.stop_reason == "refusal":
                 log.append({"doi": d, "title": title, "error": "refusal"}); continue

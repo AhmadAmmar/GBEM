@@ -5,4 +5,4 @@
 torch                      # CPU build is enough: pip install torch --index-url https://download.pytorch.org/whl/cpu
 sentence-transformers
 rapidocr-onnxruntime
-anthropic
+# client package of the chosen model provider (see LLM_SDK in s11_llm_extract.py)
