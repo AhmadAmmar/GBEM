@@ -1,5 +1,7 @@
 # GBEM: Geospatial Building Energy Mapping
 
+![The GBEM Atlas: an interactive map of housing energy performance](docs/screenshots/gbem.png)
+
 Code for estimating and mapping the energy efficiency of buildings from Earth observation and geospatial data, developed as part of a PhD project in the School of Geography and Environmental Sciences, Ulster University.
 
 ## Contents
