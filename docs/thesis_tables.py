@@ -565,11 +565,39 @@ def sap_bands():
     return table("sap_bands", "EPC bands as ranges of the SAP score \\citep{bre2022sap}.", ["Band", "SAP score", ""], rows, "lll")
 
 
+def stock():
+    """Predicted SAP and share in bands F-G for certified and uncertified dwellings, weighted by addresses, and the same
+    as macros for the text (generated/stock_values.tex)."""
+    sys.path.insert(0, str(pathlib.Path.home() / "dev/research-helpers/src"))
+    from research_helpers.autotex import write_values
+    rows, values = [], {}
+    for area in ("belfast", "london"):
+        f = DATA / area / "model/stock/stock_pred_2024.parquet"
+        if not f.exists():
+            continue
+        d = pd.read_parquet(f, columns=["n_uprn", "certified", "pred_sap", "p_FG"])
+        for label, m in (("All", np.ones(len(d), bool)), ("Certified", d.certified.to_numpy(bool)), ("Not certified", ~d.certified.to_numpy(bool))):
+            x = d[m]
+            w = x.n_uprn
+            sap, fg = (x.pred_sap * w).sum() / w.sum(), 100 * (x.p_FG * w).sum() / w.sum()
+            rows.append([AREA[area], label, f"{len(x):,}", f"{int(w.sum()):,}", num(sap, 1), num(fg, 1)])
+            key = AREA[area] + label.replace(" ", "")
+            values[key + "Sap"], values[key + "Fg"], values[key + "Buildings"] = round(sap, 1), round(fg, 1), f"{len(x):,}"
+        values[AREA[area] + "Gap"] = round(values[AREA[area] + "CertifiedSap"] - values[AREA[area] + "NotcertifiedSap"], 1)
+        rows.append("MID")
+    if not rows:
+        return missing("stock", "whole-stock estimates")
+    write_values(PHD / "Manuscripts/02_Thesis/generated/stock_values.tex", {"Stock" + k: v for k, v in values.items()})
+    return table("stock", "Predicted energy efficiency of every dwelling building, from the model trained on the certificates "
+                 "of 2024, for buildings with and without a 2024 certificate. Means are weighted by the number of addresses.",
+                 ["Area", "Buildings", "Count", "Addresses", "Mean SAP", "F--G (\\%)"], rows[:-1], "llrrrr")
+
+
 TABLES = {"sap_bands": sap_bands, "sap_stats": sap_stats, "baselines": baselines, "embeddings": embeddings, "validation_design": validation_design, "retest": retest, "scale": scale,
           "neighbours": neighbours, "targets": targets, "transfer": transfer, "adaptation": adaptation, "temporal": temporal,
           "typology": typology, "retrofit": retrofit, "need": need, "simulation": simulation, "repeat_cv": repeat_cv, "stability": stability, "software": software, "aoa": aoa, "calibration": calibration,
           "noise_eval": noise_eval, "physics": physics, "energy": energy, "applications": applications,
-          "targeting": targeting}
+          "targeting": targeting, "stock": stock}
 
 
 def main():
