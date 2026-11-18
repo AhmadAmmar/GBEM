@@ -1,3 +1,4 @@
+"""Workflow flowchart version 1 with planned improvements and outputs (Graphviz). Archived (2025)."""
 from graphviz import Digraph
 
 # Create a new directed graph

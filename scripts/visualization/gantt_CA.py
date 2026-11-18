@@ -1,3 +1,4 @@
+"""Gantt chart of the PhD timeline with milestones, categories shown by hatching. Early figure script (2025)."""
 # phd_gantt.py
 # Matplotlib-only, single figure (no subplots), no explicit colors.
 # Uses hatches/alpha for categories, title outside axes, and robust milestone placement.
@@ -73,6 +74,7 @@ milestones = [
 
 # ───────────────────────── Plotter ─────────────────────────
 def plot_gantt(tasks, milestones):
+    """Draw the tasks as bars and the milestones as markers on one figure."""
     df = pd.DataFrame(tasks, columns=["Task", "Start", "End", "Category"])
     df["Start"] = pd.to_datetime(df["Start"])
     df["End"] = pd.to_datetime(df["End"])

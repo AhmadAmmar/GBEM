@@ -1,3 +1,6 @@
+"""Top keywords per cluster in a 2 x 2 grid of panels (A-D), from the literature keyword export. Archived figure
+script (2025).
+"""
 # radiant_keywords_clusters.py  (compact, gapless grid)
 # -------------------------------------------------------------------
 # 2×2 panels (A/B/C/D) of top keywords per cluster — ultra-compact.
@@ -61,6 +64,7 @@ df.columns = [c.strip() for c in df.columns]
 lower_map = {c.lower(): c for c in df.columns}
 
 def pick_col(names):
+    """First of the names present as a column (case-insensitive)."""
     for n in names:
         if n in df.columns: return n
         if n.lower() in lower_map: return lower_map[n.lower()]
@@ -70,6 +74,7 @@ col_authkw = pick_col(["Author Keywords", "Author keywords", "DE"])
 col_indkw  = pick_col(["Index Keywords", "Index keywords", "ID"])
 
 def split_kw_cell(s):
+    """Keywords of one cell, split on ; , | and /."""
     if pd.isna(s): return []
     s = str(s)
     parts = re.split(r"[;,\|/]", s)
@@ -104,6 +109,7 @@ CANON_RULES = [
 ]
 
 def canonicalize(term: str) -> str:
+    """Keyword in a canonical form: lower case, rule replacements and simple plurals made singular."""
     t = term.strip().lower()
     for pat, rep in CANON_RULES: t = re.sub(pat, rep, t)
     # simple plural → singular
@@ -126,6 +132,7 @@ C_PATTERNS = [r"\b(remote sensing|earth observation|sentinel|landsat|modis|sar|l
 D_PATTERNS = [r"\b(random forest|xgboost|xgb|svm|cnn|rnn|gnn|deep learn|neural|gradient boost|regression|calibration|validation|cross[-\s]?validation|transfer learn|domain adapt|energyplus|trnsys|citysim|qgis|arcgis|geoai|citygml|graph|clustering|topic model)\b"]
 
 def cats_for(k: str) -> list[str]:
+    """Categories (A-D) whose patterns match a keyword."""
     cats = []
     for pat in A_PATTERNS:
         if re.search(pat, k): cats.append("A")
@@ -171,6 +178,7 @@ PROPER_CASE = {"energyplus":"EnergyPlus", "google earth engine":"Google Earth En
                "citysim":"CitySim"}
 
 def display_label(term: str) -> str:
+    """Keyword for display: proper case and forced acronyms."""
     t = term.strip().lower()
     if t in PROPER_CASE: return PROPER_CASE[t]
     out = [ACRONYM_FORCED.get(tok, tok.capitalize()) for tok in t.split()]
@@ -179,6 +187,7 @@ def display_label(term: str) -> str:
     return s
 
 def wrap2(s: str, width: int = 24) -> str:
+    """Text wrapped onto at most two lines of width characters."""
     words = s.split()
     l1, l2 = "", ""
     for w in words:
@@ -220,6 +229,7 @@ titles = {
 GLOBAL_MAX = max([n for items in selected.values() for _, n in items], default=1)
 
 def draw_panel(cat, items, rect):
+    """Draw one category panel of top keywords in its rectangle."""
     x0, x1, y0, y1 = rect
     # frame
     ax.add_patch(FancyBboxPatch((x0-PANEL_PAD, y0-PANEL_PAD),

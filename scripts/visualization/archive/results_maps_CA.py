@@ -104,9 +104,11 @@ def composite_fingerprint(paths: List[str]) -> str:
     return h.hexdigest()
 
 def make_dirs(*paths):
+    """Earlier version of make_dirs in results_maps_combined_CA.py: Create the folders if missing."""
     for p in paths: os.makedirs(p, exist_ok=True)
 
 def find_col(cols: List[str], cands: List[str]) -> Optional[str]:
+    """Earlier version of find_col in cfm_CA.py: First of the candidate column names present (case-insensitive), or None."""
     lower = {c.lower(): c for c in cols}
     for k in cands:
         if k.lower() in lower: return lower[k.lower()]
@@ -148,6 +150,7 @@ def as_points(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     out = gdf.copy(); out["geometry"] = out.geometry.representative_point(); return out
 
 def auto_markersize_pt2(ax, n_points, fig, target_fill=0.010, min_pt=1.0, max_pt=2.0):
+    """Earlier version of auto_markersize_pt2 in results_maps_combined_CA.py: Marker area (pt^2) so that n points cover about target_fill of the panel, within min_pt and max_pt."""
     if n_points <= 0: return min_pt**2
     bb = ax.get_position()
     fig_w, fig_h = fig.get_size_inches()
@@ -159,6 +162,9 @@ def auto_markersize_pt2(ax, n_points, fig, target_fill=0.010, min_pt=1.0, max_pt
     return r_pt**2
 
 def compute_confusion_and_metrics(df: pd.DataFrame, col_true: str, col_pred: str):
+    """Earlier version of compute_confusion_and_metrics in results_maps_combined_CA.py: Confusion matrix of actual against predicted bands, metrics (accuracy, balanced accuracy, macro and weighted F1,
+    kappa, quadratic kappa, exact, within one band, two or more off) and per-band recall.
+    """
     cm = pd.crosstab(df[col_true], df[col_pred], dropna=False).reindex(index=EPC_ORDER, columns=EPC_ORDER, fill_value=0)
     y_true = pd.Categorical(df[col_true], categories=EPC_ORDER)
     y_pred = pd.Categorical(df[col_pred], categories=EPC_ORDER)
@@ -258,6 +264,7 @@ def env_meta():
 
 # ───────── Main ─────────
 def main():
+    """Earlier version of main in belfast_2023_CA.py: Belfast 2023 certificates: join to UPRN coordinates, count bands and write a summary."""
     ap = argparse.ArgumentParser(description="Print-ready EPC vs RF maps with caching & provenance.")
     ap.add_argument("--boundary", default=BOUNDARY_DEF)
     ap.add_argument("--buildings", default=BUILDINGS_DEF)
@@ -550,6 +557,7 @@ def main():
             axCM.text(j, i, f"{val}", **kwargs)
 
     def card(ax, title: str):
+        """Earlier version of card in results_maps_combined_CA.py: Blank framed panel with a title, for text and tables."""
         ax.set_xlim(0,1); ax.set_ylim(0,1); ax.axis("off")
         ax.add_patch(Rectangle((0,0),1,1, facecolor="white", edgecolor="#dddddd",
                                transform=ax.transAxes, zorder=0))
@@ -578,6 +586,7 @@ def main():
 
     # Paragraph helper
     def draw_para(ax, lines: List[str], x=0.03, y=0.935, width=0.94, fs=8.5, linesp=1.16, colsplit=False):
+        """Write wrapped lines of text on an axis from the top down."""
         max_chars = max(18, int(58 * (width / 0.94)))
         wrapped = []
         for s in lines:

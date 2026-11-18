@@ -26,14 +26,17 @@ MISSING = []
 
 
 def tex(s):
+    """Text escaped for LaTeX."""
     return str(s).replace("&", r"\&").replace("%", r"\%").replace("_", r"\_").replace("#", r"\#")
 
 
 def num(v, d=2):
+    """A number with d decimals, or '--' when missing."""
     return "--" if v is None or (isinstance(v, float) and np.isnan(v)) else f"{v:.{d}f}"
 
 
 def table(name, caption, header, rows, align, note=None, size=r"\small"):
+    """A LaTeX table (booktabs, fitted to the line width) from a header and rows, with caption, label and note."""
     lines = [r"\begin{table}[htbp]", r"\centering", size, rf"\caption{{{caption}}}\label{{tab:{name}}}",
              r"\begin{adjustbox}{max width=\linewidth}", rf"\begin{{tabular}}{{{align}}}", r"\toprule",
              " & ".join(header) + r" \\", r"\midrule"]
@@ -47,6 +50,7 @@ def table(name, caption, header, rows, align, note=None, size=r"\small"):
 
 
 def missing(name, what):
+    """A placeholder table saying the results are pending, recorded in MISSING."""
     MISSING.append(name)
     return (f"% table {name}: {what} not available yet\n\\begin{{table}}[htbp]\\centering\\small\n"
             f"\\caption{{Results pending: {tex(what)}.}}\\label{{tab:{name}}}\n"
@@ -54,11 +58,13 @@ def missing(name, what):
 
 
 def read(p):
+    """A results CSV under the data folder, or None if it does not exist."""
     p = DATA / p
     return pd.read_csv(p) if p.exists() else None
 
 
 def baselines():
+    """Table: baseline model results by feature set, validation and area."""
     rows, notes = [], []
     for area, tag in (("london", "2024_s50k"), ("belfast", "2024")):
         frames = [read(f"{area}/model/results/baseline_{tag}.csv")] + \
@@ -94,6 +100,7 @@ def baselines():
 
 
 def embeddings():
+    """Table: results with the satellite embedding features."""
     rows = []
     for area, tag in (("london", "2024_s50k_embed"), ("belfast", "2024_embed")):
         b = read(f"{area}/model/results/baseline_{tag}.csv")
@@ -114,6 +121,7 @@ def embeddings():
 
 
 def validation_design():
+    """Table: random against spatial cross-validation."""
     rows = []
     for area, tag in (("london", "2024_s50k"), ("belfast", "2024")):
         frames = [read(f"{area}/model/results/baseline_{tag}.csv")] + \
@@ -138,6 +146,7 @@ def validation_design():
 
 
 def retest():
+    """Table: agreement between repeat certificates (the noise ceiling)."""
     rows = []
     for area in ("london", "belfast"):
         g = read(f"{area}/analysis/ground_truth_retest.csv")
@@ -155,6 +164,7 @@ def retest():
 
 
 def scale():
+    """Table: error by spatial scale of aggregation."""
     rows = []
     for area, tag in (("london", "2024_s50k"), ("belfast", "2024")):
         s = read(f"{area}/model/results/scale_{tag}.csv")
@@ -179,6 +189,7 @@ def scale():
 
 
 def neighbours():
+    """Table: nearest-neighbour baselines against the models."""
     rows = []
     for area in ("london", "belfast"):
         n, bs = read(f"{area}/model/results/neighbour_baseline_2024.csv"), read(f"{area}/model/results/neighbour_bootstrap_2024.csv")
@@ -206,6 +217,7 @@ def neighbours():
 
 
 def targets():
+    """Table: results for each home-energy metric target."""
     rows = []
     for area in ("london", "belfast"):
         t = read(f"{area}/model/results/metric_targets_{2024}.csv")
@@ -226,6 +238,7 @@ def targets():
 
 
 def transfer():
+    """Table: transfer between London and Belfast."""
     t = read("model_transfer/transfer_2024.csv")
     if t is None:
         return missing("transfer", "transfer results")
@@ -255,6 +268,7 @@ def transfer():
 
 
 def typology():
+    """Table: urban morphology types."""
     rows = []
     for area in ("london", "belfast"):
         s = read(f"{area}/analysis/morph_types_summary.csv")
@@ -273,6 +287,7 @@ def typology():
 
 
 def retrofit():
+    """Table: prediction of element retrofit needs."""
     rows = []
     label = {"walls": "Walls", "roof": "Roof", "windows": "Windows", "mainheat": "Main heating", "controls": "Heating controls",
              "hotwater": "Hot water", "fabric": "Any fabric element"}
@@ -292,6 +307,7 @@ def retrofit():
 
 
 def adaptation():
+    """Table: calibrated transfer (domain adaptation)."""
     c = read("model_transfer/calibration_2024.csv")
     if c is None:
         return missing("adaptation", "transfer calibration")
@@ -315,6 +331,7 @@ def adaptation():
 
 
 def temporal():
+    """Table: transfer across years."""
     t = read("model_transfer/transfer_2024.csv")
     if t is None:
         return missing("temporal", "temporal transfer")
@@ -336,6 +353,7 @@ def temporal():
 
 
 def aoa():
+    """Table: area of applicability."""
     a = read("model_transfer/aoa_2024.csv")
     if a is None:
         return missing("aoa", "area of applicability")
@@ -347,6 +365,7 @@ def aoa():
 
 
 def calibration():
+    """Table: probability calibration methods."""
     rows = []
     for area, f in (("london", "london/model/results/calibration_methods_2024_s50k_eo_morph_floor.csv"),
                     ("belfast", "belfast/model/results/calibration_methods_2024_eo_morph.csv")):
@@ -366,6 +385,7 @@ def calibration():
 
 
 def noise_eval():
+    """Table: model error against certificate noise."""
     rows = []
     for area, tag in (("london", "2024_s50k"), ("belfast", "2024")):
         n = read(f"{area}/model/results/noise_eval_{tag}.csv")
@@ -385,6 +405,7 @@ def noise_eval():
 
 
 def physics():
+    """Table: the physics indicator against SAP and the register's ratings."""
     rows = []
     for area in ("london", "belfast"):
         p = read(f"{area}/analysis/physics_check.csv")
@@ -403,6 +424,7 @@ def physics():
 
 
 def energy():
+    """Table: comparison with metered energy use."""
     g = read("london/analysis/ground_truth_energy.csv")
     if g is None:
         return missing("energy", "metered energy check")
@@ -414,6 +436,7 @@ def energy():
 
 
 def repeat_cv():
+    """Table: repeated spatial cross-validation over block sizes."""
     rows = []
     for area, tag in (("london", "2024_s50k"), ("belfast", "2024")):
         s = read(f"{area}/model/results/repeat_cv_{tag}_summary.csv")
@@ -432,6 +455,7 @@ def repeat_cv():
 
 
 def stability():
+    """Table: year-to-year stability of predictions."""
     rows = []
     for area in ("london", "belfast"):
         s = read(f"{area}/model/deploy/temporal_stability_stab2000.csv")
@@ -450,6 +474,7 @@ def stability():
 
 
 def simulation():
+    """Table: comparison with dynamic simulation."""
     s = read("national/ucd_synthetic_stock/simulation_check.csv")
     if s is None:
         return missing("simulation", "comparison with dynamic simulation")
@@ -464,6 +489,7 @@ def simulation():
 
 
 def software():
+    """Table: software and versions used."""
     import importlib, platform, subprocess
     rows = [["Python", platform.python_version()]]
     for m, label in (("numpy", "NumPy"), ("pandas", "pandas"), ("scipy", "SciPy"), ("sklearn", "scikit-learn"),
@@ -480,6 +506,7 @@ def software():
 
 
 def need():
+    """Table: the NEED analysis."""
     b, e = read("national/need_2024/need_band_summary.csv"), read("national/need_2024/need_explained.csv")
     if b is None or e is None:
         return missing("need", "NEED analysis")
@@ -500,6 +527,7 @@ def need():
 
 
 def applications():
+    """Table: applications (heat-pump readiness and others)."""
     rows = []
     h = read("london/analysis/hp_readiness_summary.csv")
     if h is not None:
@@ -525,6 +553,7 @@ def applications():
 
 
 def targeting():
+    """Table: retrofit targeting rules."""
     t = read("london/analysis/targeting_rules.csv")
     if t is None:
         return missing("targeting", "targeting rules")
@@ -601,6 +630,7 @@ TABLES = {"sap_bands": sap_bands, "sap_stats": sap_stats, "baselines": baselines
 
 
 def main():
+    """Write every thesis results table to --out as LaTeX, with placeholders for results not yet available."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=str(PHD / "Manuscripts/02_Thesis/generated/tables"))
     out = pathlib.Path(ap.parse_args().out); out.mkdir(parents=True, exist_ok=True)

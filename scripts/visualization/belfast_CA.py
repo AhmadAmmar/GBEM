@@ -81,18 +81,22 @@ BLACKLIST_EXACT = {"uid",".geo","lat","lon","x","y"}
 NUMERIC_EXCLUDE_LIKE = ("uprn", "uprn_", "gid")
 
 def now_tag() -> str:
+    """Current time as YYYYMMDD_HHMM."""
     return datetime.datetime.now().strftime("%Y%m%d_%H%M")
 
 def ensure_dir(p: Path):
+    """Create a folder if missing."""
     p.mkdir(parents=True, exist_ok=True)
 
 def read_any_table(path: str) -> pd.DataFrame:
+    """Read a table from CSV, Excel, parquet or a vector file by extension."""
     ext = Path(path).suffix.lower()
     if ext in (".geojson", ".json", ".shp") and gpd is not None:
         return gpd.read_file(path)
     return pd.read_csv(path, low_memory=False)
 
 def merge_on_uid(dfs: List[pd.DataFrame]) -> pd.DataFrame:
+    """Join several feature tables on their uid column (inner join)."""
     base = dfs[0].copy()
     if "uid" not in base.columns:
         raise RuntimeError("`uid` column not found in first dataframe.")
@@ -104,6 +108,7 @@ def merge_on_uid(dfs: List[pd.DataFrame]) -> pd.DataFrame:
     return base
 
 def harmonize_era5(df: pd.DataFrame) -> pd.DataFrame:
+    """Add ERA5 2 m temperature in deg C from kelvin when only kelvin is present."""
     if "era5_t2m_C" not in df.columns and "era5_t2m_K" in df.columns:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -115,6 +120,7 @@ def harmonize_era5(df: pd.DataFrame) -> pd.DataFrame:
 
 # ── Key/target helpers ──────────────────────────────────────────────────
 def normalize_name(name: str) -> str:
+    """Column name in lower snake case."""
     return re.sub(r"[^a-z0-9]+", "_", str(name).lower()).strip("_")
 
 def normalize_id_value(s: pd.Series) -> pd.Series:
@@ -129,6 +135,7 @@ UPRN_CANDS  = ["uprn"]
 EPC_CANDS   = ["epcw","epc_rrn","rrn","lmk_key","lmkkey","certificate_number","epc_id","rrn_key","lmk_key_rrn"]
 
 def find_key_col(df: pd.DataFrame, candidates: list[str], label: str) -> Optional[str]:
+    """First of the candidate key columns present (case-insensitive), reporting what was tried."""
     cols_lower = {c.lower(): c for c in df.columns}
     tried = []
     for c in candidates:
@@ -141,15 +148,19 @@ def find_key_col(df: pd.DataFrame, candidates: list[str], label: str) -> Optiona
     return None
 
 def pick_uid(df: pd.DataFrame, label: str) -> Optional[str]:
+    """The uid column, if any."""
     return find_key_col(df, UID_CANDS, label)
 
 def pick_uprn(df: pd.DataFrame, label: str) -> Optional[str]:
+    """The UPRN column, if any."""
     return find_key_col(df, UPRN_CANDS, label)
 
 def pick_epc_key(df: pd.DataFrame, label: str) -> Optional[str]:
+    """The certificate id column, if any."""
     return find_key_col(df, EPC_CANDS, label)
 
 def pick_target_column(df: pd.DataFrame) -> Optional[str]:
+    """The rating column, by its usual names."""
     norms = {normalize_name(c): c for c in df.columns}
     for key in ["current_energy_rating","epc_rating","energy_rating","efficiency_class"]:
         if key in norms:
@@ -204,6 +215,7 @@ def find_coordinate_pair(df: pd.DataFrame, label: str) -> tuple[Optional[str], O
 
 # ── Ratings discovery (scan all CSVs) ───────────────────────────────────
 def list_rating_files() -> List[str]:
+    """Rating CSVs in the labels folder."""
     if not os.path.isdir(LABELS_DIR):
         return []
     paths = sorted(glob.glob(os.path.join(LABELS_DIR, "*.csv")))
@@ -220,6 +232,7 @@ def list_rating_files() -> List[str]:
 
 # ── Feature selection & encoding ────────────────────────────────────────
 def select_features(df: pd.DataFrame, target_col: str) -> List[str]:
+    """Numeric feature columns other than the target, uid and excluded names; error if fewer than five."""
     feats = []
     for c in df.columns:
         cl = c.lower()
@@ -235,6 +248,7 @@ def select_features(df: pd.DataFrame, target_col: str) -> List[str]:
 
 # ── Main ────────────────────────────────────────────────────────────────
 def main():
+    """Belfast experiment run: join features and ratings, train and evaluate a classifier, write metrics and figures."""
     run_dir = Path(OUTROOT) / f"run_{now_tag()}"
     ensure_dir(run_dir)
 
@@ -422,6 +436,7 @@ def main():
 
     # Metrics helpers
     def summarize_scores(y_true, y_pred):
+        """Accuracy, balanced accuracy and weighted F1 of predicted bands."""
         acc = accuracy_score(y_true, y_pred)
         bacc = balanced_accuracy_score(y_true, y_pred)
         f1w = f1_score(y_true, y_pred, average=("weighted" if USE_TARGET=="multiclass" else "binary"))
@@ -439,6 +454,7 @@ def main():
     off_by = {}; off_by_cal = {}
     if USE_TARGET == "multiclass":
         def ob(y_true, y_pred):
+            """Ordinal agreement: shares exactly right, within one band and two or more off."""
             d = np.abs(np.array(y_true) - np.array(y_pred))
             return {
                 "exact": float(np.mean(d==0)),
@@ -471,6 +487,7 @@ def main():
     # Calibration curve/ECE
     calib_bins = {}
     def reliability_curve(y_true, prob, n_bins=10):
+        """Accuracy and mean confidence of the top class in n_bins confidence bins, with counts."""
         top_conf = prob.max(axis=1)
         top_pred = prob.argmax(axis=1)
         correct = (top_pred == y_true).astype(int)
@@ -489,6 +506,7 @@ def main():
         return centers, acc, conf, cnt
 
     def expected_calibration_error(acc, conf, cnt) -> float:
+        """Expected calibration error from per-bin accuracy, confidence and counts."""
         n = cnt.sum()
         if n <= 0: return np.nan
         ece = 0.0
@@ -516,6 +534,7 @@ def main():
     raw_shap = expl.shap_values(X_plot)
 
     def aggregate_multiclass_mean_abs(raw):
+        """Mean of absolute SHAP values over classes (list of matrices or a 3-D array)."""
         if isinstance(raw, list):
             mats = [np.asarray(m) for m in raw]
         else:

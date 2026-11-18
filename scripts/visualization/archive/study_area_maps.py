@@ -82,6 +82,7 @@ MAX_LAT_LABELS      = 6
 
 # ------------------------------- Utilities ----------------------------------
 def read_any(path, layer=None, crs=None):
+    """Earlier version of read_any in belfast_per_class_rating_CA.py: Read a CSV."""
     gdf = gpd.read_file(path, layer=layer)
     if crs: gdf = gdf.to_crs(crs)
     return gdf
@@ -147,6 +148,9 @@ def ensure_points(gdf):
     return g
 
 def thin_points_grid(gdf, cellsize, max_per_cell, seed):
+    """Earlier version of thin_points_grid in study_area_maps_CA.py: At most max_per_cell points per square grid cell of cellsize metres, chosen at random with seed (projected CRS
+    required), so dense areas do not hide sparse ones on the map.
+    """
     if gdf.empty: return gdf
     if not gdf.crs or gdf.crs.is_geographic:
         raise ValueError("Projected CRS in metres required.")
@@ -255,6 +259,7 @@ def fmt_lat(lat, dec=2):
     return f"{abs(lat):.{dec}f}°{'N' if lat>=0 else 'S'}"
 
 def north_arrow(ax, x=0.05, y=0.90, size=11):
+    """Earlier version of north_arrow in study_area_maps_CA.py: Draw a north arrow with 'N' at (x, y) in axes coordinates."""
     ax.annotate("", xy=(x, y), xytext=(x, y-0.06),
                 xycoords="axes fraction", textcoords="axes fraction",
                 arrowprops=dict(arrowstyle="-|>", linewidth=1.4, color=TEXT))
@@ -262,6 +267,7 @@ def north_arrow(ax, x=0.05, y=0.90, size=11):
             fontsize=size, color=TEXT, path_effects=[GRAT_LABEL_OUTLINE])
 
 def add_scalebar_segmented(ax, total_km=None, segments=2):
+    """Earlier version of add_scalebar_segmented in study_area_maps_CA.py: Draw a scale bar of total_km in alternating black and white segments, with labels."""
     if total_km is None: total_km = choose_scalebar_km(ax)
     xlim=ax.get_xlim(); ylim=ax.get_ylim()
     x0=xlim[0]+0.05*(xlim[1]-xlim[0]); y=ylim[0]+0.05*(ylim[1]-ylim[0])
@@ -277,6 +283,7 @@ def add_scalebar_segmented(ax, total_km=None, segments=2):
 # ---- Natural Earth loader + *explicit* UK/IE filter (robust & visible) ----
 _WORLD_4326 = None
 def _get_world_4326():
+    """Natural Earth countries in EPSG:4326, loaded once and cached."""
     global _WORLD_4326
     if _WORLD_4326 is None:
         try:
@@ -287,6 +294,7 @@ def _get_world_4326():
     return _WORLD_4326
 
 def _get_uk_ie():
+    """The UK and Ireland from the cached world layer, or None."""
     world = _get_world_4326()
     if world is None or world.empty:
         return None
@@ -305,6 +313,7 @@ def _get_uk_ie():
     return out if not out.empty else None
 
 def locator_inset(ax, boundary_proj, loc_box=(0.74, 0.08, 0.22, 0.22)):
+    """Earlier version of locator_inset in study_area_maps_CA.py: Locator map of the UK and Ireland in an inset, with the study area marked."""
     inset = ax.inset_axes(loc_box, zorder=12)
     inset.set_facecolor("#f3f3f3")
 
@@ -342,6 +351,7 @@ def label_decimals(step):
 
 def add_graticule(ax, boundary_proj, target_crs,
                   alpha=GRAT_ALPHA, lw=GRAT_LW, style=GRAT_STYLE, labels=GRAT_LABELS):
+    """Earlier version of add_graticule in study_area_maps_CA.py: Latitude and longitude lines and labels over the study area, drawn in the map's CRS."""
     b_wgs = boundary_proj.to_crs(4326)
     xmin, ymin, xmax, ymax = b_wgs.total_bounds
     lon_step = nice_step(xmax - xmin, max_labels=MAX_LONG_LABELS)
@@ -387,11 +397,13 @@ def add_graticule(ax, boundary_proj, target_crs,
 
 # ----------------------------- Loaders --------------------------------------
 def load_london_points_wgs84():
+    """Earlier version of load_london_points_wgs84 in study_area_maps_CA.py: London certificate points in EPSG:4326 with normalised ratings."""
     gdf = read_any(LONDON_EPC)
     gdf = gdf.set_crs(4326) if gdf.crs is None else gdf.to_crs(4326)
     return normalise_epc(ensure_points(gdf))
 
 def load_belfast_points_wgs84():
+    """Earlier version of load_belfast_points_wgs84 in study_area_maps_CA.py: Belfast certificate points in EPSG:4326 with normalised ratings, from CSV coordinates."""
     if os.path.exists(BELFAST_EPC_CSV):
         df = pd.read_csv(BELFAST_EPC_CSV)
         xcol, ycol = guess_xy_cols(df)
@@ -414,6 +426,7 @@ def _padded_extent(bounds, pad_frac):
 def plot_panel(ax, boundary_proj, pts_to_plot, target_crs,
                dot_size=DOT_SIZE, draw_north=False,
                scalebar_km=None, locator_pos=(0.74, 0.08, 0.22, 0.22)):
+    """Earlier version of plot_panel in study_area_maps_CA.py: One study-area panel: boundary, sampled points by band, scale bar, graticule, optional north arrow and locator."""
     ax.set_facecolor(AX_BG)
     x0p, y0p, x1p, y1p = _padded_extent(boundary_proj.total_bounds, PAD_FRAC)
     ax.set_xlim(x0p, x1p); ax.set_ylim(y0p, y1p)
@@ -443,6 +456,7 @@ def plot_panel(ax, boundary_proj, pts_to_plot, target_crs,
 
 # --------------------------------- Main -------------------------------------
 def main():
+    """Earlier version of main in belfast_2023_CA.py: Belfast 2023 certificates: join to UPRN coordinates, count bands and write a summary."""
     os.makedirs(OUTDIR, exist_ok=True)
 
     lon_pts_w = load_london_points_wgs84()

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Compact workflow flowchart (confirmation version) on one A4 page with Graphviz. Early figure script (2025)."""
 # workflow_flowchart_v2_compact_a4.py
 # Compact v2 (Confirmation) flowchart that fits on one A4 page.
 
@@ -19,6 +20,7 @@ THEME = {
 NODE_STYLE = {"shape": "box", "style": "rounded,filled", "fontname": FONT, "fontsize": "10"}
 
 def h(title, sub=""):
+    """Graphviz HTML label with a bold title and an optional subtitle."""
     title = (title.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;"))
     sub   = (sub.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;"))
     return f'''<
@@ -26,6 +28,7 @@ def h(title, sub=""):
 >'''
 
 def add(node_id, title, sub="", status="planned", graph=None, **kw):
+    """Add a node filled by status to the graph."""
     st = dict(NODE_STYLE, fillcolor=THEME[status], **kw)
     (graph or g).node(node_id, label=h(title, sub), **st)
 

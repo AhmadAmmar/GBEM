@@ -1,3 +1,4 @@
+"""Train rating and class models on the London dataset and map the test predictions with folium. Archived early script (2025)."""
 import geopandas as gpd
 import pandas as pd
 import folium

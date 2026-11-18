@@ -24,11 +24,13 @@ PY = sys.executable
 
 
 def run(cmd, cwd, timeout=1800):
+    """Run a command in cwd; returns (exit code, combined output)."""
     r = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=timeout, errors="replace")
     return r.returncode, r.stdout + r.stderr
 
 
 def pdf(report):
+    """Build the thesis PDF (pdflatex, BibTeX, makeglossaries, pdflatex twice) and record each step in the report."""
     job = "thesis_build"
     for step in (["pdflatex", "-interaction=nonstopmode", f"-jobname={job}", "main.tex"], ["bibtex", job],
                  ["makeglossaries", job], ["pdflatex", "-interaction=nonstopmode", f"-jobname={job}", "main.tex"],
@@ -57,6 +59,7 @@ def docx(dest, report):
 
 
 def main():
+    """Build the thesis: regenerate tables and records, the PDF and (unless --no-docx) the Word version, with a report."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--no-docx", action="store_true"); ap.add_argument("--no-tables", action="store_true")
     a = ap.parse_args()

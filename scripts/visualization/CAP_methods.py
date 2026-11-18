@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+"""Methods workflow flowchart for a vertical 16:9 slide with Graphviz: stages coloured by status, bullet points
+with status dots, and two legends. Early figure script (2025).
+"""
 # workflow_flowchart_v2_vertical_slide_status_bullets_fixed_readable.py
 # Vertical 16:9 slide — title at top, side-by-side legends at bottom.
 # Nodes use LEFT-aligned HTML tables with bold, larger text for readability.
@@ -28,10 +31,12 @@ DOT = {
 NODE = {"shape":"box","style":"rounded,filled","fontname":FONT,"fontsize":"12","penwidth":"1.2"}  # +1 pt
 
 def esc(s: str) -> str:
+    """Text escaped for Graphviz HTML labels (&, <, >)."""
     return s.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;")
 
 def bullet(label: str, status: str, pt: int = 11) -> str:
     # colored dot + bold text (slightly larger)
+    """One bullet line for a Graphviz HTML label: a dot coloured by status and bold text."""
     return f'<FONT COLOR="{DOT[status]}">●</FONT>&nbsp;<B><FONT POINT-SIZE="{pt}">{esc(label)}</FONT></B>'
 
 def table_label(title: str, rows: list[str]) -> str:
@@ -47,6 +52,7 @@ def table_label(title: str, rows: list[str]) -> str:
 
 def legend_html():
     # Two legends side-by-side: (left) Stage fill, (right) Bullet colors
+    """Graphviz HTML table with the stage-colour legend and the bullet-colour legend side by side."""
     return f"""<
 <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="8" CELLPADDING="0">
   <TR>
@@ -87,6 +93,7 @@ g.attr(rankdir="TB", splines="ortho", concentrate="true", compound="true",
 g.edge_attr.update({"arrowhead":"normal"})
 
 def add_node(nid, title, stage_status, items, **kw):
+    """Add a stage node with its title and bullet items, filled by the stage's status."""
     st = dict(NODE, fillcolor=THEME[stage_status])
     st.setdefault("width", "6.8")  # a bit wider so larger text wraps less
     st.update(kw)

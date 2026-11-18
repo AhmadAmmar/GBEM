@@ -1,3 +1,4 @@
+"""Sentinel-2 false-colour map of London with certificates, scale bar, north arrow and locator. Early figure script (2025)."""
 import geopandas as gpd
 import rasterio
 import matplotlib.pyplot as plt
@@ -40,6 +41,7 @@ rating_colors = {
 # Helper Functions
 # -------------------------------------------------------------------
 def load_band(band_path):
+    """One raster band as float and its bounds."""
     with rasterio.open(band_path) as src:
         band = src.read(1).astype(float)
         extent = src.bounds
@@ -49,12 +51,14 @@ def load_band(band_path):
 
 
 def stretch_band(band, low=2, high=98):
+    """Band scaled to 0-1 between two percentiles, for display."""
     b_min, b_max = np.nanpercentile(band, [low, high])
     stretched = (band - b_min) / (b_max - b_min)
     return np.clip(stretched, 0, 1)
 
 
 def add_scale_bar_with_cm_divisions(ax, extent, fig, distance_km=5, bar_y_frac=0.09, color="white", max_cm_ticks=5):
+    """Scale bar of distance_km with divisions, sized from the latitude of the map centre."""
     left, bottom, right, top = extent
     lat_center = (bottom + top) / 2.0
     km_per_deg_lon = 111.32 * math.cos(math.radians(lat_center))
@@ -111,6 +115,7 @@ def add_scale_bar_with_cm_divisions(ax, extent, fig, distance_km=5, bar_y_frac=0
 
 
 def add_north_arrow(ax, x=0.02, y=0.98, length=0.05, label="N"):
+    """Draw a north arrow at (x, y) in axes coordinates."""
     ax.annotate(
         label,
         xy=(x, y),
@@ -127,6 +132,7 @@ def add_north_arrow(ax, x=0.02, y=0.98, length=0.05, label="N"):
 
 
 def add_locator_inset(fig, ax, london_shp, inset_position=[0.875, 0.4, 0.12, 0.12]):
+    """Locator inset with the London boundary."""
     london_boundary = gpd.read_file(london_shp)
     if london_boundary.crs is None:
         london_boundary.set_crs(epsg=4326, inplace=True)
@@ -156,6 +162,7 @@ def add_locator_inset(fig, ax, london_shp, inset_position=[0.875, 0.4, 0.12, 0.1
 
 
 def plot_map(rgb_composite, extent, epc=None, title="", output_path="", show_legend=False, london_shp=None):
+    """Map of an RGB composite with optional certificate points, legend, scale bar, north arrow and locator."""
     fig, ax = plt.subplots(figsize=(12, 10))
     fig.patch.set_facecolor("black")
     ax.set_facecolor("black")

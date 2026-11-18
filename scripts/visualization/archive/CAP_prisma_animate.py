@@ -73,6 +73,7 @@ EASING_PAD_PX = 4        # extra crop padding (px) to hide blur seams
 
 # ---------------------- Helper: text widths ----------------------
 def _measure_line_width_in(text, fontsize, weight="normal"):
+    """Rendered width (inches) of a line of text at a font size and weight."""
     fig = plt.figure(figsize=(1, 1), dpi=DPI)
     canvas = FigureCanvas(fig)
     ax = fig.add_axes([0, 0, 1, 1]); ax.set_xlim(0,1); ax.set_ylim(0,1); ax.axis("off")
@@ -83,7 +84,9 @@ def _measure_line_width_in(text, fontsize, weight="normal"):
     plt.close(fig)
     return bbox.width / DPI
 
-def _line_h_in(fs): return fs/72.0
+def _line_h_in(fs):
+    """Height of one text line (inches) at font size fs (points)."""
+    return fs/72.0
 
 # ---------------------- Data & counts (light) --------------------
 RESOLVED_PATH = os.path.abspath(CSV_PATH)
@@ -144,6 +147,7 @@ BLOCKS = [
 
 # --------------------- Width auto & drawing ----------------------
 def compute_layout_width():
+    """Width needed for the longest line of any block."""
     longest = 0.0
     for blk in BLOCKS:
         longest = max(longest,
@@ -240,6 +244,7 @@ def inches_to_px(bbox_in, fig_px_size, W_IN, H_IN):
     return (x_px, y_px, w_px, h_px)
 
 def build_animation():
+    """Render the PRISMA diagram frame by frame and assemble the animation."""
     frames_dir = os.path.join(OUT_DIR, "frames")
     os.makedirs(frames_dir, exist_ok=True)
     base_png = os.path.join(frames_dir, "_base_full.png")

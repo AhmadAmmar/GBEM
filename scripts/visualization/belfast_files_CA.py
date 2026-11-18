@@ -1,3 +1,6 @@
+"""Inventory of the Belfast data folder: file types, sizes, row counts, columns and sample rows, as CSV and Markdown.
+Early script (2025).
+"""
 # inventory_belfast.py
 # Quick data inventory for Belfast folder (recursive).
 # Produces a CSV (+ markdown summary) with file types, row counts, columns, and small heads.
@@ -51,10 +54,12 @@ except Exception:
 
 
 def human_mb(bytes_):
+    """Bytes as megabytes to three decimals."""
     return round(bytes_ / (1024 * 1024), 3)
 
 
 def safe_read_csv_head_and_count(path: Path, sample_rows=SAMPLE_ROWS, chunk=CSV_CHUNK):
+    """Columns, sample rows and row count of a CSV (counted in chunks), with any error."""
     cols, head_df, nrows, error = [], None, None, None
     # Header & sample
     try:
@@ -141,6 +146,7 @@ def safe_excel_info(path: Path, sample_rows=SAMPLE_ROWS):
 
 
 def safe_dbf_info(path: Path, sample_rows=SAMPLE_ROWS):
+    """Columns, sample rows and record count of a DBF file (needs dbfread), with any error."""
     if DBF is None:
         return [], None, None, "dbfread not installed"
     try:
@@ -244,6 +250,7 @@ def safe_json_info(path: Path, sample_rows=SAMPLE_ROWS):
 
 
 def detect_flags(colnames, filename):
+    """Whether a file has UPRN, coordinate and rating columns, and whether its name mentions 2023."""
     colset = {c.lower() for c in colnames}
     has_uprn = any(c in colset for c in ["uprn", "propertyuprn", "udprn"])
     has_coords = any(c in colset for c in ["x", "y", "lon", "lat", "longitude", "latitude",
@@ -256,6 +263,7 @@ def detect_flags(colnames, filename):
 
 
 def abbreviate_cols(cols, limit=25):
+    """Column names joined, shortened after `limit` names."""
     if not cols:
         return ""
     if len(cols) <= limit:
@@ -265,12 +273,14 @@ def abbreviate_cols(cols, limit=25):
 
 def df_to_markdown(df, max_rows=30):
     # small human-readable summary
+    """First max_rows rows of a table as Markdown."""
     head = df.head(max_rows).copy()
     with pd.option_context("display.max_colwidth", 50):
         return head.to_markdown(index=False)
 
 
 def main():
+    """Scan the Belfast folder and write the inventory."""
     root = ROOT
     if not root.exists():
         print(f"Root not found: {root}", file=sys.stderr)

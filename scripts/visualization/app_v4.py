@@ -1,3 +1,6 @@
+"""Interactive folium map of predicted London ratings (A-G) with frequencies and misclassified buildings.
+Early figure script (2025).
+"""
 import geopandas as gpd
 import folium
 from collections import Counter
@@ -45,6 +48,7 @@ m = folium.Map(location=center, zoom_start=11, tiles="CartoDB positron")
 
 # === Add buildings layer with predicted color ===
 def style_function(feature):
+    """Folium style for a building: fill colour by predicted rating."""
     rating = feature['properties'].get('predicted_rating')
     return {
         'fillColor': rating_colors.get(rating, 'gray'),

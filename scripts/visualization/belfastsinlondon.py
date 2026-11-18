@@ -1,3 +1,4 @@
+"""Figure comparing the sizes of Belfast and London on one map, from Natural Earth outlines. Early figure script (2025)."""
 import geopandas as gpd
 import matplotlib.pyplot as plt
 from shapely.affinity import scale

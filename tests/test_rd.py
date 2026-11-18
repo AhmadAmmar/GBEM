@@ -14,6 +14,7 @@ CUT = pd.Timestamp("2025-06-15")
 
 
 def synthetic(jump=2.0, n=20000, seed=1, rush=0.0):
+    """Synthetic certificates around the cutoff with a known jump, optional pre-cutoff rush, and covariates."""
     g = np.random.default_rng(seed)
     d = pd.DataFrame({"date": CUT + pd.to_timedelta(g.integers(-180, 180, n), unit="D")})
     t = (d.date - CUT).dt.days / 30.0
@@ -31,18 +32,21 @@ def synthetic(jump=2.0, n=20000, seed=1, rush=0.0):
 
 @pytest.mark.parametrize("truth", [0.0, 2.0, -1.5])
 def test_independent_fit_recovers_a_known_jump(truth):
+    """The independent estimator recovers a known jump inside its interval."""
     r = V.estimate(synthetic(truth), str(CUT.date()), bw=180)
     assert r["hc_lo"] < truth < r["hc_hi"]
     assert abs(r["jump"] - truth) < 0.4
 
 
 def test_donut_removes_a_rush_that_would_bias_the_estimate():
+    """The donut removes a pre-cutoff rush that would otherwise bias the jump."""
     d = synthetic(0.0, rush=8.0)
     assert abs(V.estimate(d, str(CUT.date()), donut=14, bw=60)["jump"]) < 0.6
     assert V.estimate(d, str(CUT.date()), donut=0, bw=60)["jump"] < -1
 
 
 def test_both_implementations_give_the_same_estimate_and_interval():
+    """method_change_rd.jump() and verify_rd.estimate() agree on the jump and both intervals."""
     d = synthetic(1.0)
     w = R.window(d.drop(columns=["t", "post"]), CUT, 90, 14)
     a = R.jump(w, "sap", 1)
@@ -54,16 +58,19 @@ def test_both_implementations_give_the_same_estimate_and_interval():
 
 
 def test_window_excludes_the_donut_and_includes_the_cutoff_day():
+    """window() drops the donut days and keeps the cutoff day."""
     d = pd.DataFrame({"date": [CUT - pd.Timedelta(days=x) for x in (15, 14, 1, 0)]})
     assert list(R.window(d, CUT, 90, 14).date) == [CUT - pd.Timedelta(days=15), CUT]
 
 
 def test_placebo_with_no_jump_is_not_significant_on_average():
+    """Without a jump, intervals exclude zero in at most 4 of the placebo runs."""
     hits = sum(not (r["hc_lo"] < 0 < r["hc_hi"]) for r in (V.estimate(synthetic(0.0, 6000, s), str(CUT.date())) for s in range(20)))
     assert hits <= 4
 
 
 def test_age_band_groups_match_their_labels():
+    """Age-band grouping in method_change.py matches the band labels."""
     import method_change as M
     src = pathlib.Path(M.__file__).read_text(encoding="utf8")
     bands = {"England and Wales: 1900-1929": "before 1930", "England and Wales: 1930-1949": "1930-1949", "England and Wales: before 1900": "before 1930"}

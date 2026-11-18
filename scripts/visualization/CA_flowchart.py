@@ -33,6 +33,7 @@ FADED_FONT = "#808080"
 NODE_STYLE = {"shape": "box", "style": "rounded,filled", "fontname": FONT, "fontsize": "10"}
 
 def h(title, sub=""):
+    """Graphviz HTML label with a bold title and an optional subtitle."""
     esc = lambda s: s.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;")
     title, sub = esc(title), esc(sub)
     return f'''<
@@ -40,6 +41,7 @@ def h(title, sub=""):
 >'''
 
 def add(g, nid, title, sub="", status="planned", faded=False, **kw):
+    """Add a node to graph g, filled by status (optionally faded)."""
     st = dict(NODE_STYLE, **kw)
     st["fillcolor"] = THEME.get(status, THEME["planned"])
     if faded:
@@ -51,6 +53,7 @@ def add(g, nid, title, sub="", status="planned", faded=False, **kw):
 
 def legend_html():
     # Compact, readable legend as a single HTML table (always shown)
+    """Graphviz HTML table with the status legend."""
     return f"""<
 <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="2" CELLPADDING="2">
   <TR><TD ALIGN="LEFT"><B>Legend</B></TD></TR>

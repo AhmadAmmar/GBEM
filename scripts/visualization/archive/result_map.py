@@ -59,31 +59,40 @@ ERROR_COLORS  = {"Correct":"#4daf4a","Off-by-1":"#ffb74d","Off-by-2+":"#e41a1c"}
 TARGET_CRS = 27700  # BNG
 
 # ────────────────────────────── UTILITIES ───────────────────────────────
-def ensure_outdir(path: str): os.makedirs(path, exist_ok=True)
+def ensure_outdir(path: str):
+    """Create the output folder if missing."""
+    os.makedirs(path, exist_ok=True)
 
 def load_boundary(path: str) -> gpd.GeoDataFrame:
+    """Earlier version of load_boundary in results_maps_combined_CA.py: Study-area boundary (must have a CRS)."""
     gdf = gpd.read_file(path)
     if gdf.crs is None: raise ValueError("Boundary file has no CRS.")
     return gdf.to_crs(TARGET_CRS)
 
 def load_buildings(path: str, layer: Optional[str]) -> gpd.GeoDataFrame:
+    """Earlier version of load_buildings in results_maps_combined_CA.py: Building layer (optionally one layer of a multi-layer file)."""
     gdf = gpd.read_file(path, layer=layer) if layer else gpd.read_file(path)
     if gdf.crs is None: raise ValueError("Buildings file has no CRS.")
     return gdf.to_crs(TARGET_CRS)
 
 def load_predictions(path: str) -> pd.DataFrame:
+    """Earlier version of load_predictions in results_maps_combined_CA.py: Predictions from CSV, parquet or a vector file."""
     ext = os.path.splitext(path)[1].lower()
     if ext == ".csv": return pd.read_csv(path)
     if ext in (".parq", ".parquet"): return pd.read_parquet(path)
     raise ValueError(f"Unsupported predictions file type: {ext}")
 
 def find_first_column(cols: List[str], cands: List[str]) -> Optional[str]:
+    """First of the candidate column names present (case-insensitive), or None."""
     low = {c.lower(): c for c in cols}
     for k in cands:
         if k.lower() in low: return low[k.lower()]
     return None
 
 def normalise_epc(x) -> Optional[str]:
+    """Earlier version of normalise_epc in study_area_maps_CA.py: Table with the rating as one upper-case letter, from the rating column, a column named like RATING, or a SAP
+    score column converted with numeric_to_letter().
+    """
     if pd.isna(x): return None
     s = str(x).strip().upper()
     if s in EPC_TO_IDX: return s
@@ -91,6 +100,7 @@ def normalise_epc(x) -> Optional[str]:
     return None
 
 def add_scalebar(ax, length_km: Optional[float]=None, loc: Tuple[float,float]=(0.05,0.05)):
+    """Draw a scale bar of a round length (or length_km) on a projected map."""
     x0,x1 = ax.get_xlim(); y0,y1 = ax.get_ylim()
     extent_km = (x1-x0)/1000.0
     if length_km is None:
@@ -103,6 +113,7 @@ def add_scalebar(ax, length_km: Optional[float]=None, loc: Tuple[float,float]=(0
             color="k", path_effects=[pe.withStroke(linewidth=3, foreground="white")])
 
 def add_north_arrow(ax, loc: Tuple[float,float]=(0.95,0.12)):
+    """Earlier version of add_north_arrow in map_v1.py: Draw a north arrow at (x, y) in axes coordinates."""
     x0,x1 = ax.get_xlim(); y0,y1 = ax.get_ylim()
     px = x0 + loc[0]*(x1-x0); py = y0 + loc[1]*(y1-y0); size = (y1-y0)*0.06
     arr = FancyArrowPatch((px,py), (px,py+size), arrowstyle='-|>', mutation_scale=12,
@@ -112,9 +123,11 @@ def add_north_arrow(ax, loc: Tuple[float,float]=(0.95,0.12)):
             color='k', path_effects=[pe.withStroke(linewidth=3, foreground='white')])
 
 def epc_legend_patches() -> List[Rectangle]:
+    """Legend patches in the band colours A-G."""
     return [Rectangle((0,0),1,1,facecolor=EPC_COLORS[c], edgecolor='none') for c in EPC_ORDER]
 
 def compute_confusion_stats(df: pd.DataFrame, col_true: str, col_pred: str):
+    """Confusion matrix of actual against predicted bands with accuracy measures."""
     cm = pd.crosstab(df[col_true], df[col_pred], dropna=False)
     for c in EPC_ORDER:
         if c not in cm.index: cm.loc[c] = 0
@@ -129,6 +142,7 @@ def compute_confusion_stats(df: pd.DataFrame, col_true: str, col_pred: str):
     return cm, metrics
 
 def draw_confusion_matrix(ax, cm: pd.DataFrame):
+    """Draw a confusion matrix in grey with counts."""
     ax.imshow(cm.values, cmap="Greys", interpolation="nearest")
     ax.set_xticks(range(len(EPC_ORDER))); ax.set_yticks(range(len(EPC_ORDER)))
     ax.set_xticklabels(EPC_ORDER, fontsize=8); ax.set_yticklabels(EPC_ORDER, fontsize=8)
@@ -141,11 +155,13 @@ def draw_confusion_matrix(ax, cm: pd.DataFrame):
     ax.grid(False)
 
 def _as_points(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    """Representative points of the features (unchanged if all are points)."""
     if gdf.empty or gdf.geom_type.isin(["Point"]).all(): return gdf
     pts = gdf.copy(); pts["geometry"] = pts.geometry.representative_point(); return pts
 
 # ────────────────────────────── MAIN ───────────────────────────────
 def main():
+    """Earlier version of main in belfast_2023_CA.py: Belfast 2023 certificates: join to UPRN coordinates, count bands and write a summary."""
     ensure_outdir(OUTDIR)
 
     # 1) Boundary & buildings
@@ -221,10 +237,12 @@ def main():
 
     # Helper colorers
     def cseries(gdf, col, pal, default_key):
+        """Colour for each value of a column from a palette (default colour for unknowns)."""
         return gdf[col].map(lambda v: pal.get(v, pal[default_key]))
 
     # Auto markersize (pt^2) based on panel area & target fill
     def auto_markersize_pt2(ax, n_points, target_fill=TARGET_FILL, min_pt=MIN_PT, max_pt=MAX_PT):
+        """Earlier version of auto_markersize_pt2 in results_maps_combined_CA.py: Marker area (pt^2) so that n points cover about target_fill of the panel, within min_pt and max_pt."""
         if n_points <= 0: return (min_pt**2)
         bb = ax.get_position()  # figure fraction
         fig_w, fig_h = fig.get_size_inches()

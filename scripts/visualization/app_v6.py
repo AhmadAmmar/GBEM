@@ -1,3 +1,4 @@
+"""Interactive folium map of the binary prediction (efficient or not) for the whole London dataset. Early figure script (2025)."""
 import geopandas as gpd
 import folium
 from collections import Counter
@@ -31,6 +32,7 @@ m = folium.Map(location=center, zoom_start=11, tiles="CartoDB positron")
 
 # Style function
 def style_function(feature):
+    """Folium style for a building: fill colour by predicted class."""
     cls = feature['properties'].get('predicted_class')
     return {
         'fillColor': class_colors.get(cls, 'gray'),

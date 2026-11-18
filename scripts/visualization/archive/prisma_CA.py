@@ -91,11 +91,13 @@ if FOUND:
 
 # ───────────── Helpers (size in inches) ─────────────
 def line_h_in(fs_pt):  # text line height in inches
+    """Height of one text line (inches) at a font size (points)."""
     return (fs_pt / 72.0)
 
 def block_h_in(title_lines=1, meta_lines=1, bullet_lines=3,
                fs_head=FS_HEAD, fs_meta=FS_META, fs_text=FS_TEXT,
                line_spacing=LINE_SPACING, pad_top_in=0.03, pad_bottom_in=0.03):
+    """Height (inches) of a PRISMA box from its numbers of title, meta and bullet lines."""
     h  = line_h_in(fs_head) * (1.05 * title_lines)
     h += line_h_in(fs_meta) * (1.00 * meta_lines)
     # bullets (approximate; assumes no wraps — keep bullets concise)
@@ -146,6 +148,7 @@ def add_block(ax, x_in, y_top_in, w_in, fc, title, meta, bullets):
 
 def connect_gutter(ax, box_right_in, y_from_in, y_to_in, gutter_x_in):
     # small horizontal tick, then vertical arrow in the gutter
+    """Arrow from a box into the side gutter and down to the next level."""
     ax.annotate("", xy=(gutter_x_in, y_from_in), xytext=(box_right_in, y_from_in),
                 arrowprops=dict(arrowstyle="-", lw=0.7, color=C_GUTTER),
                 xycoords=ax.transData, textcoords=ax.transData)
@@ -260,6 +263,7 @@ gutter_x_in = box_right_in + 0.10  # small horizontal tick length
 
 # ───────────── Draw (TIGHT canvas in inches) ─────────────
 def draw_canvas(height_in, out_pdf, out_png):
+    """Draw the PRISMA diagram on a page of the given height and save PDF and PNG."""
     fig = plt.figure(figsize=(PAGE_W_IN, height_in), dpi=300)
     ax  = fig.add_axes([0, 0, 1, 1])
     ax.set_xlim(0, PAGE_W_IN); ax.set_ylim(0, height_in); ax.axis("off")

@@ -207,6 +207,7 @@ plt.tight_layout(rect=[0, 0, 1, 0.92])
 # ------------------------ 6. Voting helper ------------------------
 
 def votes_up_to_step(step_idx):
+    """Class votes of the trees and the leaves reached, after the given animation step."""
     vote_counts = np.zeros(n_classes, dtype=int)
     leaf_positions = []
     for t_idx in range(len(tree_paths)):
@@ -224,6 +225,7 @@ def votes_up_to_step(step_idx):
 # ------------------------ 7. Animation update ------------------------
 
 def update(frame):
+    """Draw one frame of the random-forest animation (a split, a leaf or the vote)."""
     step = steps[frame]
 
     if step["kind"] in ("split", "leaf"):

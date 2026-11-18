@@ -24,10 +24,12 @@ ZOTERO_DIR = pathlib.Path(r"D:\Zotero")
 
 
 def crossref(doi):
+    """Crossref metadata of a DOI."""
     return json.loads(urllib.request.urlopen(urllib.request.Request(f"https://api.crossref.org/works/{doi}", headers=HDR), timeout=60).read())["message"]
 
 
 def bibtex(key, doi):
+    """BibTeX for a DOI from doi.org content negotiation, with the given key and dashes as LaTeX."""
     bib = urllib.request.urlopen(urllib.request.Request(f"https://doi.org/{doi}", headers={**HDR, "Accept": "application/x-bibtex"}), timeout=60).read().decode("utf-8")
     bib = re.sub(r"@(\w+)\{[^,]+,", lambda x: f"@{x.group(1)}{{{key},", bib, count=1)
     bib = bib.replace("\u2013", "--").replace("\u2014", "---").replace("\u2010", "-").replace("\u2011", "-")
@@ -64,6 +66,7 @@ def zotero_dois():
 
 
 def connector(endpoint, payload):
+    """POST a JSON payload to the local Zotero connector."""
     req = urllib.request.Request(CONNECTOR + endpoint, data=json.dumps(payload).encode(), method="POST",
                                  headers={"Content-Type": "application/json", "X-Zotero-Connector-API-Version": "3"})
     with urllib.request.urlopen(req, timeout=60) as r:
@@ -99,6 +102,7 @@ def to_zotero(records, collection):
 
 
 def queue(records, collection):
+    """Append records to the queue file, to be sent to Zotero later."""
     new = not QUEUE.exists()
     with open(QUEUE, "a", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
@@ -110,6 +114,7 @@ def queue(records, collection):
 
 
 def push_queue():
+    """Send the queued records to Zotero through the connector, keeping those that fail."""
     if not QUEUE.exists():
         return
     rows = list(csv.DictReader(open(QUEUE, encoding="utf-8")))
@@ -126,6 +131,7 @@ def push_queue():
 
 
 def main():
+    """Write BibTeX for key=DOI arguments and add them to a Zotero collection; --push-queue sends queued records."""
     args = sys.argv[1:]
     if args == ["--push-queue"]:
         return push_queue()

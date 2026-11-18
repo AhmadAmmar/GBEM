@@ -1,3 +1,4 @@
+"""Belfast certificate points over a HotSat thermal image. Early figure script (2025)."""
 import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point

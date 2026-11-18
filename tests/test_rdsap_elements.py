@@ -35,11 +35,13 @@ EW = "England and Wales: "
     ("Pitched, insulated (assumed)", "Northern Ireland: 2007-2013", 0.16),  # S10 joists, K
 ])
 def test_roof(desc, age, u):
+    """Roof U-values for description and age-band cases (RdSAP Tables S9 and S10)."""
     assert re_.u_roof(pd.Series([desc]), pd.Series([age]), "NI" if "Northern" in age else "EW").iloc[0] == pytest.approx(u)
 
 
 def test_iso13370_solid_by_hand():
     # A 45 m2, exposed perimeter 19 m, w 0.22 m, uninsulated: B = 90/19 = 4.737; dt = 0.22 + 1.5 x 0.21 = 0.535 < B
+    """Solid ground floor by ISO 13370, worked by hand (45 m2, 19 m exposed, 0.22 m wall)."""
     B, dt = 90 / 19, 0.22 + 1.5 * (0.17 + 0.04)
     hand = round(2 * 1.5 * math.log(math.pi * B / dt + 1) / (math.pi * B + dt), 2)
     assert hand == 0.65
@@ -47,6 +49,7 @@ def test_iso13370_solid_by_hand():
 
 
 def test_iso13370_suspended_by_hand():
+    """Suspended ground floor by ISO 13370, worked by hand."""
     B, dg = 90 / 19, 0.22 + 1.5 * (0.17 + 0.04)
     ug = 2 * 1.5 * math.log(math.pi * B / dg + 1) / (math.pi * B + dg)
     ux = 2 * 0.3 * 1.5 / B + 1450 * 0.003 * 5 * 0.05 / B
@@ -55,6 +58,7 @@ def test_iso13370_suspended_by_hand():
 
 
 def test_floor_rules():
+    """Floor cases: dwelling below 0, premises below 0.7, exposed by Table S12, ground by ISO 13370."""
     desc = pd.Series(["(another dwelling below)", "(other premises below)", "To unheated space, no insulation (assumed)",
                       "To external air, insulated", "Solid, no insulation (assumed)"])
     age = pd.Series([EW + "1930-1949"] * 5)
@@ -65,6 +69,7 @@ def test_floor_rules():
 
 def test_floor_insulation_by_band():
     # S11, England and Wales: band K 100 mm -> Rf = 0.1/0.035
+    """Assumed floor insulation by age band (Table S11)."""
     u = re_.u_floor(pd.Series(["Solid, insulated (assumed)"]), pd.Series([EW + "2007-2011"]), "EW", [45.0], [19.0], pd.Series(["Cavity wall"]))
     assert u.iloc[0] == re_.iso13370([45], [19], [0.30], [0.1 / 0.035], [False])[0]
 
@@ -72,14 +77,17 @@ def test_floor_insulation_by_band():
 @pytest.mark.parametrize("age,nation,y", [(EW + "1996-2002", "EW", 0.15), (EW + "2003-2006", "EW", 0.11), (EW + "2007-2011", "EW", 0.08),
                                           ("Northern Ireland: 2000-2006", "NI", 0.15), ("Northern Ireland: 2007-2013", "NI", 0.08)])
 def test_bridging_table_s13(age, nation, y):
+    """Thermal bridging y by age band and nation (Table S13)."""
     assert re_.bridging_y(pd.Series([age]), nation)[0] == y
 
 
 def test_window_area_table_s4():
     # house, band D: 0.1294 x 90 + 5.515; flat, band A-C: 0.0801 x 60 + 5.580
+    """Window area from floor area for a house and a flat (Table S4)."""
     w = re_.window_area([90, 60], [False, True], pd.Series([EW + "1950-1966", EW + "1900-1929"]), "EW")
     assert w == pytest.approx([0.1294 * 90 + 5.515, 0.0801 * 60 + 5.580])
 
 
 def test_party_wall_table_s8b():
+    """Party wall U: 0.25 for a house, 0 for a flat (Table S8B)."""
     assert list(re_.u_party([False, True])) == [0.25, 0.0]

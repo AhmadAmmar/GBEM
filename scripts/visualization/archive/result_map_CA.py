@@ -88,9 +88,12 @@ TARGET_CRS = 27700  # British National Grid
 def log(path: str, label: str):
     """Print a label and an absolute path."""
     print(f"[{label}] {os.path.abspath(path)}")
-def ensure_outdir(path: str): os.makedirs(path, exist_ok=True)
+def ensure_outdir(path: str):
+    """Create the output folder if missing."""
+    os.makedirs(path, exist_ok=True)
 
 def load_boundary(path: str) -> gpd.GeoDataFrame:
+    """Earlier version of load_boundary in results_maps_combined_CA.py: Study-area boundary (must have a CRS)."""
     log(path, "LOAD boundary")
     gdf = gpd.read_file(path)
     if gdf.crs is None: raise ValueError("Boundary file has no CRS.")
@@ -112,12 +115,16 @@ def load_predictions(path: str) -> pd.DataFrame:
     raise ValueError(f"Unsupported predictions file type: {ext}")
 
 def find_first_column(cols: List[str], cands: List[str]) -> Optional[str]:
+    """First of the candidate column names present (case-insensitive), or None."""
     low = {c.lower(): c for c in cols}
     for k in cands:
         if k.lower() in low: return low[k.lower()]
     return None
 
 def normalise_epc(x) -> Optional[str]:
+    """Earlier version of normalise_epc in study_area_maps_CA.py: Table with the rating as one upper-case letter, from the rating column, a column named like RATING, or a SAP
+    score column converted with numeric_to_letter().
+    """
     if pd.isna(x): return None
     s = str(x).strip().upper()
     if s in EPC_TO_IDX: return s
@@ -125,6 +132,7 @@ def normalise_epc(x) -> Optional[str]:
     return None
 
 def add_scalebar(ax, length_km: Optional[float]=None, loc=(0.06,0.08)):
+    """Draw a scale bar of a round length (or length_km) on a projected map."""
     x0,x1 = ax.get_xlim(); y0,y1 = ax.get_ylim()
     extent_km = (x1-x0)/1000.0
     if length_km is None:
@@ -139,6 +147,7 @@ def add_scalebar(ax, length_km: Optional[float]=None, loc=(0.06,0.08)):
             color="k", path_effects=[pe.withStroke(linewidth=3, foreground="white")])
 
 def add_north_arrow_axfrac(ax, xy=(0.10,0.22), length_frac=0.11):
+    """Draw a north arrow in axes coordinates."""
     x, y = xy
     ax.annotate("", xy=(x, y+length_frac), xytext=(x, y),
                 xycoords="axes fraction", textcoords="axes fraction",
@@ -152,6 +161,9 @@ def fmt_pct(x):
     except Exception: return "NA"
 
 def compute_confusion_and_metrics(df: pd.DataFrame, col_true: str, col_pred: str):
+    """Earlier version of compute_confusion_and_metrics in results_maps_combined_CA.py: Confusion matrix of actual against predicted bands, metrics (accuracy, balanced accuracy, macro and weighted F1,
+    kappa, quadratic kappa, exact, within one band, two or more off) and per-band recall.
+    """
     cm = pd.crosstab(df[col_true], df[col_pred], dropna=False)
     for c in EPC_ORDER:
         if c not in cm.index: cm.loc[c] = 0
@@ -199,10 +211,12 @@ def compute_confusion_and_metrics(df: pd.DataFrame, col_true: str, col_pred: str
     return cm, metrics
 
 def _as_points(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    """Representative points of the features (unchanged if all are points)."""
     if gdf.empty or gdf.geom_type.isin(["Point"]).all(): return gdf
     pts = gdf.copy(); pts["geometry"] = pts.geometry.representative_point(); return pts
 
 def auto_markersize_pt2(ax, n_points, fig, target_fill=0.010, min_pt=1.0, max_pt=2.0):
+    """Earlier version of auto_markersize_pt2 in results_maps_combined_CA.py: Marker area (pt^2) so that n points cover about target_fill of the panel, within min_pt and max_pt."""
     if n_points <= 0: return min_pt**2
     bb = ax.get_position()
     fig_w, fig_h = fig.get_size_inches()
@@ -219,6 +233,9 @@ def compute_feature_importances_if_possible(
     candidates: List[str] = None,
     max_rows: int = MAX_IMPORTANCE_SAMPLE
 ) -> Tuple[Optional[pd.Series], Optional[int], Optional[Dict]]:
+    """Feature importances (percent): read from FEATURE_IMPORTANCE_FILE if present, else from a random forest on at
+    least five candidate columns (sample of at most max_rows). Returns (importances, rows used, info), or Nones.
+    """
     candidates = candidates or FEATURE_CANDIDATES
 
     if FEATURE_IMPORTANCE_FILE and os.path.exists(FEATURE_IMPORTANCE_FILE):
@@ -264,6 +281,7 @@ def compute_feature_importances_if_possible(
     return s, int(n_used), shown_params
 
 def compute_splits(df: pd.DataFrame, label_true="EPC_ACTUAL", label_pred="EPC_PRED") -> Optional[dict]:
+    """Earlier version of compute_splits in results_maps_combined_CA.py: Counts of rows per split (train, validation, test) overall and among rows with both bands."""
     cols = list(df.columns)
     split_col = find_first_column(cols, SPLIT_COLUMN_CANDIDATES)
     if split_col:
@@ -296,6 +314,7 @@ def compute_splits(df: pd.DataFrame, label_true="EPC_ACTUAL", label_pred="EPC_PR
 
 # ── PARAGRAPH RENDERER (width-aware wrap, no tables) ────────────────────
 def card(ax, title: str):
+    """Earlier version of card in results_maps_combined_CA.py: Blank framed panel with a title, for text and tables."""
     ax.set_xlim(0,1); ax.set_ylim(0,1); ax.axis("off")
     ax.add_patch(Rectangle((0,0),1,1, facecolor="white", edgecolor="#dddddd",
                            transform=ax.transAxes, zorder=0))
@@ -327,6 +346,7 @@ def draw_paragraph(ax, text_lines: List[str], x=0.03, y=0.935, width=0.94,
 
 # ── MAIN ────────────────────────────────────────────────────────────────
 def main():
+    """Earlier version of main in belfast_2023_CA.py: Belfast 2023 certificates: join to UPRN coordinates, count bands and write a summary."""
     ensure_outdir(OUTDIR)
 
     # Load
@@ -404,6 +424,7 @@ def main():
     DOT_AREA = auto_markersize_pt2(axA, len(plot_pts), fig, target_fill=TARGET_FILL, min_pt=MIN_PT, max_pt=MAX_PT)
 
     def cseries(gdf, col, pal, default_key):
+        """Colour for each value of a column from a palette (default colour for unknowns)."""
         return gdf[col].map(lambda v: pal.get(v, pal[default_key]))
 
     # draw maps
@@ -440,6 +461,7 @@ def main():
                       color="black", path_effects=[pe.withStroke(linewidth=2, foreground="white")])
 
     def card(ax, title: str):
+        """Blank framed panel with a title, for text and tables."""
         ax.set_xlim(0,1); ax.set_ylim(0,1); ax.axis("off")
         ax.add_patch(Rectangle((0,0),1,1, facecolor="white", edgecolor="#dddddd",
                                transform=ax.transAxes, zorder=0))
@@ -492,6 +514,7 @@ def main():
     split_lines = []
     if split_info:
         def fmt_counts(dd):
+            """Earlier version of fmt_counts in results_maps_combined_CA.py: Lines of text giving train, validation, test (and other) counts with percentages."""
             tot = sum(dd.values()) if dd else 0
             p = lambda v: f"{(100*v/tot):.1f}%" if tot else "0.0%"
             other = sum(v for k,v in dd.items() if k not in ("train","val","test"))

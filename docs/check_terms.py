@@ -21,6 +21,7 @@ def flatten(tex_path, seen=None):
     text = re.sub(r"(?<!\\)%.*", "", tex_path.read_text(encoding="utf-8"))
 
     def inc(m):
+        """Replace an input or include command with the file's text, once per file."""
         name = m.group(1)
         for c in (base / name, base / (name + ".tex")):
             if c.is_file() and c not in seen:
@@ -31,16 +32,21 @@ def flatten(tex_path, seen=None):
 
 
 def acronyms():
+    """Acronyms defined in the thesis abbreviations chapter: (key, short form, long form)."""
     t = (THESIS / "chapters/00_abbreviations.tex").read_text(encoding="utf-8")
     return re.findall(r"\\newacronym(?:\[[^\]]*\])?\{([^}]*)\}\{(.*?)\}\{(.*?)\}\s*$", t, re.M)
 
 
 def plain(s):
+    """LaTeX text with commands, braces and dollars removed, in lower case, for searching."""
     s = re.sub(r"\\[a-zA-Z]+\*?(\[[^\]]*\])?", " ", s)
     return re.sub(r"[{}$\\]", "", s).lower()
 
 
 def check(text, label, acr, window):
+    """Acronyms whose first use is not accompanied by their long form within `window` characters: (label, short
+    form, long form, context).
+    """
     out = []
     for key, short, long in acr:
         s = re.sub(r"[{}$\\]", "", short)
@@ -57,6 +63,7 @@ def check(text, label, acr, window):
 
 
 def main():
+    """Check the use of acronyms across the thesis chapters (or --tex files), following input and include commands."""
     ap = argparse.ArgumentParser(); ap.add_argument("--tex", nargs="*", default=[]); ap.add_argument("--window", type=int, default=250)
     a = ap.parse_args()
     acr = acronyms()

@@ -95,6 +95,7 @@ RESULTS = ["*/model/results/*.csv", "*/analysis/*.csv", "model_transfer/*.csv", 
 
 
 def tex(s):
+    """Text escaped for LaTeX."""
     return (str(s).replace("\\", r"\textbackslash{}").replace("&", r"\&").replace("%", r"\%").replace("_", r"\_")
             .replace("#", r"\#").replace("$", r"\$").replace("{", r"\{").replace("}", r"\}").replace("~", r"\textasciitilde{}").replace("^", r"\textasciicircum{}"))
 
@@ -200,6 +201,7 @@ def doc_tex(doc):
 
 
 def sha(p):
+    """SHA-256 of a file, read in 4 MB chunks."""
     h = hashlib.sha256()
     with open(p, "rb") as f:
         for b in iter(lambda: f.read(1 << 22), b""):
@@ -208,6 +210,7 @@ def sha(p):
 
 
 def data_register():
+    """One row per data folder: files, size, checksums and source notes, for the thesis data register."""
     rows = []
     for d in sorted({p.parent for p in DATA.rglob("*") if p.is_file() and "_archive" not in p.parts}):
         files = [p for p in d.iterdir() if p.is_file() and not p.name.endswith((".part", ".aux.xml"))]
@@ -232,10 +235,14 @@ def data_register():
 
 
 def git(*args):
+    """Output of a git command run in the code repository."""
     return subprocess.run(["git", "-C", str(CODE), *args], capture_output=True, text=True).stdout.strip()
 
 
 def pipeline_reference():
+    """The pipeline reference (stage, script, command, purpose from each docstring) as Markdown and LaTeX, with the
+    code version.
+    """
     md, tx = ["# Pipeline reference\n", f"Code version {git('describe', '--tags', '--always')} ({git('log', '-1', '--format=%h %cs')}).\n"], []
     stage = None
     for st, script, cmd in PIPELINE:
@@ -259,6 +266,7 @@ def pipeline_reference():
 
 
 def results_register(out):
+    """Every results table matched by RESULTS, gathered into results_register.xlsx with an index sheet."""
     files = sorted({p for pat in RESULTS for p in DATA.glob(pat) if "_archive" not in p.parts})
     index = []
     with pd.ExcelWriter(keep(out / "results_register.xlsx")) as xw:
@@ -278,6 +286,7 @@ def numbers():
     """key results as LaTeX macros; a missing file leaves its macros out (the thesis build then reports them)"""
     m = {}
     def put(k, v, d=1):
+        """Store one number as a LaTeX macro value: d decimals for floats, thousands separators for integers; skips missing."""
         if v is not None and v == v:
             m[k] = f"{v:.{d}f}" if isinstance(v, float) else f"{v:,}".replace(",", "{,}")
     for area, tag, key in (("london", "2024_s50k", "Lon"), ("belfast", "2024", "Bel")):
@@ -322,6 +331,7 @@ def numbers():
 
 
 def main():
+    """Write the thesis records (data register, pipeline reference, results register, key numbers) to --out."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=str(PHD / "Manuscripts/02_Thesis/generated"))
     a = ap.parse_args()

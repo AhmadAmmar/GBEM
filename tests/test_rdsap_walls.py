@@ -37,6 +37,7 @@ CASES = [
 
 @pytest.mark.parametrize("desc,age,nation,u,cell", CASES, ids=[c[4] for c in CASES])
 def test_table_cell(desc, age, nation, u, cell):
+    """One wall table cell per case, read by hand from the specification."""
     assert rw.u_wall_rdsap(pd.Series([desc]), pd.Series([age]), nation).iloc[0] == pytest.approx(u)
 
 
@@ -46,8 +47,10 @@ def test_table_cell(desc, age, nation, u, cell):
                                                ("Northern Ireland: 1974-1977", "NI", "E"), ("Northern Ireland: 2000-2006", "NI", "I"),
                                                ("Northern Ireland: 2007-2013", "NI", "K"), ("England and Wales: 1950-1966", "NI", "D")])
 def test_age_bands_follow_table_1(age, nation, letter):
+    """Age-band letters from the band text, by nation (Table 1)."""
     assert rw.band(pd.Series([age]), nation).iloc[0] == letter
 
 
 def test_no_wall_type_gives_nan():
+    """Descriptions without a recognised wall type give NaN."""
     assert rw.u_wall_rdsap(pd.Series(["Basement wall", "", None]), pd.Series(["2019"] * 3), "EW").isna().all()

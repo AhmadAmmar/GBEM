@@ -30,12 +30,15 @@ EPC_ORDER    = list("ABCDEFG")
 
 # --- Helpers -------------------------------------------------------------
 def normalize_name(name: str) -> str:
+    """Column name in lower snake case."""
     return re.sub(r"[^a-z0-9]+", "_", str(name).lower()).strip("_")
 
 def read_any(path: str) -> pd.DataFrame:
+    """Read a CSV."""
     return pd.read_csv(path, low_memory=False)
 
 def merge_on_uid(dfs):
+    """Join several feature tables on their uid column."""
     base = dfs[0].copy()
     if "uid" not in base.columns:
         raise RuntimeError("`uid` not found in first features file.")
@@ -51,6 +54,7 @@ TARGET_KEYS_EXACT = [
 ]
 
 def pick_target_column(df: pd.DataFrame) -> str | None:
+    """The rating column, by its usual names."""
     norms = {normalize_name(c): c for c in df.columns}
     for k in TARGET_KEYS_EXACT:
         if k in norms:
@@ -62,25 +66,30 @@ UPRN_CANDS = ["uprn"]
 EPC_CANDS  = ["epcw","epc_rrn","rrn","lmk_key","lmkkey","certificate_number","epc_id","rrn_key","lmk_key_rrn"]
 
 def find_key_col(df: pd.DataFrame, cands: list[str]) -> str | None:
+    """First of the candidate columns present (case-insensitive), or None."""
     low = {c.lower(): c for c in df.columns}
     for c in cands:
         if c.lower() in low: return low[c.lower()]
     return None
 
 def normalize_epc_id(s: pd.Series) -> pd.Series:
+    """Certificate ids in upper case with only letters and digits."""
     return (s.astype(str)
              .str.upper()
              .str.replace(r"[^A-Z0-9]", "", regex=True)
              .replace({"": np.nan}))
 
 def clean_epc_A2G(series: pd.Series) -> pd.Series:
+    """First letter of the rating in upper case, NaN unless A-G."""
     s = series.astype(str).str.strip().str.upper().str[0]
     return s.where(s.isin(EPC_ORDER))
 
 def class_counts_A2G(s: pd.Series) -> pd.Series:
+    """Counts of each band A-G."""
     return clean_epc_A2G(s).value_counts().reindex(EPC_ORDER, fill_value=0).astype(int)
 
 def list_ratings_csvs() -> list[str]:
+    """Rating CSVs in the labels folder."""
     if not os.path.isdir(LABELS_DIR): return []
     return sorted(glob.glob(os.path.join(LABELS_DIR, "*.csv")))
 

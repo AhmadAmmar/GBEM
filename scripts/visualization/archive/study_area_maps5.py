@@ -193,6 +193,9 @@ def ensure_points(gdf):
     return g
 
 def thin_points_grid(gdf, cellsize, max_per_cell, seed):
+    """Earlier version of thin_points_grid in study_area_maps_CA.py: At most max_per_cell points per square grid cell of cellsize metres, chosen at random with seed (projected CRS
+    required), so dense areas do not hide sparse ones on the map.
+    """
     if gdf.empty: return gdf
     if not gdf.crs or gdf.crs.is_geographic:
         raise ValueError("Projected CRS in metres required.")
@@ -442,6 +445,7 @@ def _annotate_inset_labels(ax, inset_crs):
 
 # ─────────── Locator inset (EPSG:4326, Code-1 look) ───────────
 def locator_inset(ax, boundary_proj, loc_box=(0.72, 0.06, 0.24, 0.24), inset_crs=INSET_CRS_CHOICE):
+    """Earlier version of locator_inset in study_area_maps_CA.py: Locator map of the UK and Ireland in an inset, with the study area marked."""
     inset = ax.inset_axes(loc_box, zorder=4)
     inset.set_facecolor(INSET_FACE)
 
@@ -544,11 +548,13 @@ def add_graticule(ax, boundary_proj, target_crs,
 
 # ─────────────────────────── Loaders ───────────────────────────
 def load_london_points_wgs84():
+    """Earlier version of load_london_points_wgs84 in study_area_maps_CA.py: London certificate points in EPSG:4326 with normalised ratings."""
     gdf = read_any(LONDON_EPC)
     gdf = gdf.set_crs(4326) if gdf.crs is None else gdf.to_crs(4326)
     return normalise_epc(ensure_points(gdf))
 
 def load_belfast_points_wgs84():
+    """Earlier version of load_belfast_points_wgs84 in study_area_maps_CA.py: Belfast certificate points in EPSG:4326 with normalised ratings, from CSV coordinates."""
     if os.path.exists(BELFAST_EPC_CSV):
         df = pd.read_csv(BELFAST_EPC_CSV)
         xcol, ycol = guess_xy_cols(df)
@@ -573,6 +579,7 @@ def plot_panel(ax, boundary_proj, pts_to_plot, target_crs,
                dot_size=DOT_SIZE, draw_north=False,
                scalebar_km=None, locator_pos=(0.72, 0.06, 0.24, 0.24),
                extra_pad_frac=0.0):
+    """Earlier version of plot_panel in study_area_maps_CA.py: One study-area panel: boundary, sampled points by band, scale bar, graticule, optional north arrow and locator."""
     ax.set_facecolor(AX_BG)
     x0p, y0p, x1p, y1p = _padded_extent(boundary_proj.total_bounds, PAD_FRAC + extra_pad_frac)
     ax.set_xlim(x0p, x1p); ax.set_ylim(y0p, y1p)
@@ -611,6 +618,7 @@ def plot_panel(ax, boundary_proj, pts_to_plot, target_crs,
 
 # ───────────────────────────── Main ─────────────────────────────
 def main():
+    """Earlier version of main in belfast_2023_CA.py: Belfast 2023 certificates: join to UPRN coordinates, count bands and write a summary."""
     os.makedirs(OUTDIR, exist_ok=True)
 
     lon_pts_w = load_london_points_wgs84()
@@ -699,7 +707,9 @@ def main():
              f"Thinning ≤{MAX_PER_CELL} points per ~{CELL_SIZE_M:.0f} m cell (seed {SEED}); "
              "dots are not proportional to totals.")
 
-    def _wrap(text, width=110): return "\n".join(textwrap.wrap(text, width))
+    def _wrap(text, width=110):
+        """Text wrapped at width characters."""
+        return "\n".join(textwrap.wrap(text, width))
     ax_leg.text(0.5, 0.42, _wrap(foot1), ha='center', va='center', color=TEXT, fontsize=8, transform=ax_leg.transAxes)
     ax_leg.text(0.5, 0.16, _wrap(foot2), ha='center', va='center', color="#222222", fontsize=8, transform=ax_leg.transAxes)
 

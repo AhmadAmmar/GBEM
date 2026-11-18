@@ -1,3 +1,4 @@
+"""First workflow flowchart (Graphviz): data, preprocessing, features, models, validation, analysis. Archived (2025)."""
 from graphviz import Digraph
 
 # Initialize the flowchart with a title

@@ -18,18 +18,22 @@ Y = np.array([1950.0])
     ("Timber frame, with additional insulation", 0.40), ("System built, with external insulation", 0.60),
     ("Granite or whinstone, as built, no insulation (assumed)", 2.3)])
 def test_wall_lookup(text, u):
+    """Wall U-values for description cases, through the RdSAP tables."""
     assert pc.u_wall(pd.Series([text]), Y).iloc[0] == pytest.approx(u)
 
 
 def test_loft_from_rdsap_table_s9():
+    """Loft U-value for 100 mm from RdSAP Table S9 (0.40)."""
     assert pc.u_roof(pd.Series(["Pitched, 100 mm loft insulation"]), Y).iloc[0] == pytest.approx(0.40)
 
 
 def test_dwelling_above_loses_no_heat():
+    """A roof with another dwelling above gets U = 0."""
     assert pc.u_roof(pd.Series(["(another dwelling above)"]), Y).iloc[0] == 0
 
 
 def test_heat_by_hand():
+    """heat() against a heat-loss coefficient worked by hand."""
     hlc, q = pc.heat((10.0, 20.0, 30.0, 5.0), (1.0, 0.5, 0.5, 2.0), np.array([1950.0]), 100.0, 2000.0)
     expected = 10 + 10 + 15 + 10 + 0.15 * 65 + 0.33 * 1.0 * 100
     assert hlc[0] == pytest.approx(expected)
@@ -38,5 +42,6 @@ def test_heat_by_hand():
 
 @pytest.mark.parametrize("year,y,n", [(1950, 0.15, 1.0), (1990, 0.15, 0.7), (2010, 0.08, 0.5)])
 def test_age_rules_for_bridging_and_air(year, y, n):
+    """Thermal bridging and air-change rates switch at the stated years."""
     hlc, _ = pc.heat((10.0, 0.0, 0.0, 0.0), (0.0, 0.0, 0.0, 0.0), np.array([float(year)]), 100.0, 0.0)
     assert hlc[0] == pytest.approx(y * 10 + 0.33 * n * 100)

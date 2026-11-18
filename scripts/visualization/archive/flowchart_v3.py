@@ -1,3 +1,4 @@
+"""Workflow flowchart version 3 (Graphviz). Archived (2025)."""
 from graphviz import Digraph
 
 # Create the flowchart object

@@ -112,6 +112,7 @@ CITY_DOT_OUTLINE = False        # no halo ring; just a red dot
 
 # ─────────────────────────── Utilities ───────────────────────────
 def read_any(path, layer=None, crs=None):
+    """Earlier version of read_any in belfast_per_class_rating_CA.py: Read a CSV."""
     gdf = gpd.read_file(path, layer=layer)
     if crs: gdf = gdf.to_crs(crs)
     return gdf
@@ -180,6 +181,9 @@ def ensure_points(gdf):
     return g
 
 def thin_points_grid(gdf, cellsize, max_per_cell, seed):
+    """Earlier version of thin_points_grid in study_area_maps_CA.py: At most max_per_cell points per square grid cell of cellsize metres, chosen at random with seed (projected CRS
+    required), so dense areas do not hide sparse ones on the map.
+    """
     if gdf.empty: return gdf
     if not gdf.crs or gdf.crs.is_geographic:
         raise ValueError("Projected CRS in metres required.")
@@ -342,6 +346,7 @@ def _clip_to_bbox(g, xmin, xmax, ymin, ymax):
 
 def load_uk_ie_outline():
     # 1) user-provided file
+    """Earlier version of load_uk_ie_outline in study_area_maps_CA.py: UK and Ireland outline from the first source that works, and its label."""
     if UK_IE_LOCATOR_PATH and os.path.exists(UK_IE_LOCATOR_PATH):
         g = gpd.read_file(UK_IE_LOCATOR_PATH)
         g = g.to_crs(4326) if g.crs else g.set_crs(4326)
@@ -362,6 +367,7 @@ def load_uk_ie_outline():
 
 # ─────────── Inset labels (halo only, no boxes) ───────────
 def _label(ax, txt, xy, big=True):
+    """Write a region label on the inset (large or small style)."""
     ax.text(*xy, txt, ha="center", va="center",
             fontsize=(8 if big else 7),
             color=("#111111" if big else "#444444"),
@@ -369,6 +375,7 @@ def _label(ax, txt, xy, big=True):
             zorder=5, clip_on=False)
 
 def _annotate_inset_labels(ax):
+    """Earlier version of _annotate_inset_labels in study_area_maps_CA.py: Write region labels on the locator inset."""
     if not INSET_LABELS: return
     # Country/region abbrevs
     for t,(x,y) in {
@@ -385,6 +392,7 @@ def _annotate_inset_labels(ax):
         _label(ax, t, (x,y), big=False)
 
 def locator_inset(ax, boundary_proj, loc_box=(0.72, 0.06, 0.24, 0.24)):
+    """Earlier version of locator_inset in study_area_maps_CA.py: Locator map of the UK and Ireland in an inset, with the study area marked."""
     inset = ax.inset_axes(loc_box, zorder=4)
     inset.set_facecolor(INSET_FACE)
 
@@ -473,11 +481,13 @@ def add_graticule(ax, boundary_proj, target_crs,
 
 # ─────────────────────────── Loaders ───────────────────────────
 def load_london_points_wgs84():
+    """Earlier version of load_london_points_wgs84 in study_area_maps_CA.py: London certificate points in EPSG:4326 with normalised ratings."""
     gdf = read_any(LONDON_EPC)
     gdf = gdf.set_crs(4326) if gdf.crs is None else gdf.to_crs(4326)
     return normalise_epc(ensure_points(gdf))
 
 def load_belfast_points_wgs84():
+    """Earlier version of load_belfast_points_wgs84 in study_area_maps_CA.py: Belfast certificate points in EPSG:4326 with normalised ratings, from CSV coordinates."""
     if os.path.exists(BELFAST_EPC_CSV):
         df = pd.read_csv(BELFAST_EPC_CSV)
         xcol, ycol = guess_xy_cols(df)
@@ -502,6 +512,7 @@ def plot_panel(ax, boundary_proj, pts_to_plot, target_crs,
                dot_size=DOT_SIZE, draw_north=False,
                scalebar_km=None, locator_pos=(0.72, 0.06, 0.24, 0.24),
                extra_pad_frac=0.0):
+    """Earlier version of plot_panel in study_area_maps_CA.py: One study-area panel: boundary, sampled points by band, scale bar, graticule, optional north arrow and locator."""
     ax.set_facecolor(AX_BG)
     x0p, y0p, x1p, y1p = _padded_extent(boundary_proj.total_bounds, PAD_FRAC + extra_pad_frac)
     ax.set_xlim(x0p, x1p); ax.set_ylim(y0p, y1p)
@@ -540,6 +551,7 @@ def plot_panel(ax, boundary_proj, pts_to_plot, target_crs,
 
 # ───────────────────────────── Main ─────────────────────────────
 def main():
+    """Earlier version of main in belfast_2023_CA.py: Belfast 2023 certificates: join to UPRN coordinates, count bands and write a summary."""
     os.makedirs(OUTDIR, exist_ok=True)
 
     lon_pts_w = load_london_points_wgs84()
@@ -627,7 +639,9 @@ def main():
              f"Sampling is stratified by EPC grade to match each city's original distribution. "
              f"Thinning ≲{max_eff} points per ~{cell_eff:.0f} m cell (seed {SEED}); "
              "dots are not proportional to totals.")
-    def _wrap(text, width=110): return "\n".join(textwrap.wrap(text, width))
+    def _wrap(text, width=110):
+        """Text wrapped at width characters."""
+        return "\n".join(textwrap.wrap(text, width))
     ax_leg.text(0.5, 0.42, _wrap(foot1), ha='center', va='center', color=TEXT, fontsize=8, transform=ax_leg.transAxes)
     ax_leg.text(0.5, 0.16, _wrap(foot2), ha='center', va='center', color="#222222", fontsize=8, transform=ax_leg.transAxes)
 

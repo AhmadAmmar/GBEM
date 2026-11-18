@@ -17,10 +17,12 @@ need = pytest.mark.skipif(not C.exists(), reason="campaign data not on this mach
 
 
 def hem(form, setting="london", v=0):
+    """One HEM input file of the campaign: built form, weather setting and variant number."""
     return json.load(open(C / f"{form}_{setting}/variant_{v:03d}.json"))
 
 
 def test_surface_accounting_on_a_small_case():
+    """Envelope accounting on a hand-made zone: exposed walls, windows and roof count; party walls do not."""
     d = {"Zone": {"z": {"BuildingElement": {
         "wall": {"type": "BuildingElementOpaque", "area": 10}, "win": {"type": "BuildingElementTransparent", "height": 2, "width": 2},
         "party wall": {"type": "BuildingElementAdjacentConditionedSpace", "area": 7},
@@ -30,6 +32,7 @@ def test_surface_accounting_on_a_small_case():
 
 
 def test_construction_resistance_inverts_to_u():
+    """r_construction() plus the surface resistances gives back the target U-value."""
     for u, pitch in ((2.1, 90), (0.45, 90), (0.16, 0)):
         assert 1 / (r_construction(u, pitch) + RSI_RSE[pitch]) == pytest.approx(u)
 
@@ -38,11 +41,15 @@ def test_construction_resistance_inverts_to_u():
 @pytest.mark.parametrize("form", FORMS)
 def test_envelope_does_not_depend_on_form(form):
     # re-typing a surface from party to exposed cannot change the dwelling's total envelope
+    """The dwelling's total envelope is the same whichever surfaces are typed party or exposed."""
     assert hg.envelope_area(hem(form)) == pytest.approx(hg.envelope_area(hem("flat_mid")), abs=0.01)
 
 
 @need
 def test_envelope_value_and_input_mismatch():
+    """Envelope area of the mid-floor flat is 124.6 m2, while the base file's leakage input still states 220 m2
+    (a known limitation of the base).
+    """
     assert hg.envelope_area(hem("flat_mid")) == pytest.approx(124.6, abs=0.1)
     assert hem("flat_mid")["InfiltrationVentilation"]["Leaks"]["env_area"] == 220     # known limitation of the base
 
@@ -50,6 +57,7 @@ def test_envelope_value_and_input_mismatch():
 @pytest.mark.skipif(not BENCH.exists(), reason="benchmark not on this machine")
 def test_exposed_area_matches_hem_own_form_factor():
     # independent check: the engine reports heat-loss form factor = exposed area / floor area
+    """Exposed area agrees with the heat-loss form factor HEM itself reports for the benchmark cases."""
     files = glob.glob(str(BENCH / "b*.json"))
     assert files
     for j in files:
@@ -61,6 +69,7 @@ def test_exposed_area_matches_hem_own_form_factor():
 
 @need
 def test_design_counts():
+    """Number of variants per built form, and that every variant has an input file."""
     n = {f: len(pd.read_csv(C / f"{f}_london/variants.csv")) for f in FORMS}
     assert n == dict(flat_mid=27, flat_ground=54, flat_top=81, bungalow_terrace=162, bungalow_semi=162, bungalow_detached=162)
     assert sum(len(glob.glob(str(C / f"{f}_{s}/variant_*.json"))) for f in FORMS for s in SETTINGS) == 2592
@@ -69,18 +78,21 @@ def test_design_counts():
 @need
 @pytest.mark.parametrize("form", FORMS)
 def test_inputs_cover_a_full_year_at_half_hours(form):
+    """Every input simulates 8,760 hours at half-hour steps."""
     assert hem(form)["SimulationTime"] == {"start": 0, "end": 8760, "step": 0.5}   # the January-June error
 
 
 @need
 @pytest.mark.parametrize("form", FORMS)
 def test_settings_differ_only_in_nothing_but_weather(form):
+    """The input files for London, Belfast and London with Belfast wind are identical: only the weather file differs."""
     assert hem(form, "london", 3) == hem(form, "belfast", 3) == hem(form, "londonwindbel", 3)
 
 
 @need
 @pytest.mark.parametrize("form", FORMS)
 def test_indicator_recomputed_from_the_input(form):
+    """The proxy recorded for a variant can be recomputed from its HEM input."""
     v = pd.read_csv(C / f"{form}_london/variants.csv")
     for i in (0, len(v) // 2, len(v) - 1):
         d = hem(form, v=i); r = v.iloc[i]; ua = env = 0.0
@@ -98,11 +110,13 @@ def test_indicator_recomputed_from_the_input(form):
 
 
 def epw(name):
+    """One EnergyPlus weather file of the campaign as a table (header lines skipped)."""
     return pd.read_csv(next((C / "weather").glob(name)), skiprows=8, header=None)
 
 
 @need
 def test_wind_swap_changes_only_wind():
+    """The London-with-Belfast-wind file differs from London only in the wind columns."""
     lon, bel, lb = epw("GBR_ENG*"), epw("GBR_NIR*"), epw("london_with*")
     other = [c for c in lon.columns if c not in (20, 21)]
     pd.testing.assert_frame_equal(lon[other], lb[other])
@@ -112,5 +126,6 @@ def test_wind_swap_changes_only_wind():
 
 @need
 def test_degree_days_by_hand_formula():
+    """Heating degree-days (base 15.5 deg C) of the London weather file, recomputed by hand: 1,599."""
     e = epw("GBR_ENG*"); d = e[6].groupby(np.arange(8760) // 24).mean()
     assert sum(max(0, 15.5 - x) for x in d) == pytest.approx(1599, abs=1)

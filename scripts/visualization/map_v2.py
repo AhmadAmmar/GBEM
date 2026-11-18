@@ -1,3 +1,4 @@
+"""Land surface temperature map of London with certificates. Early figure script (2025)."""
 import rasterio
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as PathEffects

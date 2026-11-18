@@ -1,3 +1,4 @@
+"""Pixel correlation of a HotSat thermal raster with a Landsat raster on the same grid. Early analysis script (2025)."""
 import rasterio
 import numpy as np
 import matplotlib.pyplot as plt

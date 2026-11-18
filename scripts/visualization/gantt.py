@@ -1,3 +1,4 @@
+"""Gantt chart of the PhD timeline by task category. Early figure script (2025)."""
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import pandas as pd

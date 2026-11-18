@@ -1,3 +1,4 @@
+"""Folium map of the London test predictions coloured by rating. Archived early script (2025)."""
 import geopandas as gpd
 import folium
 from branca.element import Template, MacroElement
@@ -25,6 +26,7 @@ m = folium.Map(location=center, zoom_start=11, tiles="CartoDB positron")
 
 # === Add buildings layer ===
 def style_function(feature):
+    """Earlier version of style_function in app_v4.py: Folium style for a building: fill colour by predicted rating."""
     rating = feature['properties']['predicted_rating']
     return {
         'fillColor': rating_colors.get(rating, 'gray'),

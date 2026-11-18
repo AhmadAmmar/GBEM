@@ -22,6 +22,7 @@ RUN_DIR   = Path(OUTROOT) / f"run_{datetime.datetime.now().strftime('%Y%m%d_%H%M
 RUN_DIR.mkdir(parents=True, exist_ok=True)
 
 def log(path, label="SAVE"):
+    """Print a label and the resolved path of a saved file."""
     print(f"[{label}] {Path(path).resolve()}")
 
 # ── Config ───────────────────────────────────────────────────────────────
@@ -57,6 +58,7 @@ df = gdf[feature_cols + [target_col]].dropna().copy()
 
 # Stratified 5% sample with per-class floor
 def stratified_fraction_sample(df, target, frac, min_per_class=1, random_state=RANDOM_SEED):
+    """A fraction of each class (at least min_per_class rows), for SHAP on a smaller sample."""
     parts = []
     for cls, sub in df.groupby(target, dropna=False):
         n_cls = len(sub)

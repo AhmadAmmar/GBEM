@@ -146,6 +146,7 @@ assert len(DOCX_COL_WIDTHS_IN) == len(DISPLAY_COLS)
 
 # ───────────────────────── HELPERS ─────────────────────────
 def ensure_dirs():
+    """Create the output folder."""
     os.makedirs(BASE_OUT, exist_ok=True)
 
 
@@ -202,6 +203,7 @@ def make_template_csv(path: str):
 
 
 def normalize_basic(s: str) -> str:
+    """Text transliterated to ASCII and stripped; empty for missing."""
     if pd.isna(s):
         return ""
     s = unidecode(str(s)).strip()
@@ -209,6 +211,7 @@ def normalize_basic(s: str) -> str:
 
 
 def map_to_vocab(value: str, mapping: Dict[str, List[str]], default: str) -> str:
+    """The controlled-vocabulary term a value or its alias maps to, else the default."""
     v = normalize_basic(value).lower()
     for canon, aliases in mapping.items():
         if v == canon:
@@ -220,11 +223,13 @@ def map_to_vocab(value: str, mapping: Dict[str, List[str]], default: str) -> str
 
 def normalize_row(row: pd.Series) -> pd.Series:
     # Scale & building_type controlled maps
+    """One literature row with scale, building type and other fields mapped to the controlled vocabulary."""
     row["scale"] = map_to_vocab(row.get("scale", ""), CONTROLLED_VOCAB["scale"], default="city")
     row["building_type"] = map_to_vocab(row.get("building_type", ""), CONTROLLED_VOCAB["building_type"], default="na")
 
     # Pipe‑separated sets — keep only allowed tokens, preserve original order
     def norm_tokens(val: str, allowed: List[str]) -> str:
+        """'|'-separated tokens normalised and kept only if allowed."""
         if pd.isna(val) or str(val).strip() == "":
             return ""
         items = [normalize_basic(t) for t in str(val).split("|")]
@@ -274,6 +279,7 @@ def normalize_row(row: pd.Series) -> pd.Series:
 
 
 def load_and_normalize(path: str) -> pd.DataFrame:
+    """The literature table with all columns present and every row normalised."""
     df = pd.read_csv(path, dtype=str).fillna("")
     # enforce all columns
     for c in COLUMNS:
@@ -290,6 +296,7 @@ def load_and_normalize(path: str) -> pd.DataFrame:
 
 
 def wrap_text(s: str, width: int) -> str:
+    """Text wrapped at width, keeping separators."""
     if not s:
         return s
     # keep pipes/newlines intact where used to separate tokens
@@ -299,6 +306,7 @@ def wrap_text(s: str, width: int) -> str:
 
 
 def df_for_display(df: pd.DataFrame) -> pd.DataFrame:
+    """Copy of the table with long columns wrapped for display."""
     d = df.copy()
     for c in WRAP_COLS:
         d[c] = d[c].apply(lambda x: wrap_text(x, 90))
@@ -314,6 +322,7 @@ def df_for_display(df: pd.DataFrame) -> pd.DataFrame:
 # ───────────────────────── EXPORTS ─────────────────────────
 
 def export_markdown(df: pd.DataFrame, out_path: str):
+    """Write the table as Markdown with a generated-file header."""
     md = tabulate(df, headers="keys", tablefmt="pipe", showindex=False)
     header = (
         f"<!-- Auto‑generated: {datetime.now().strftime('%Y-%m-%d %H:%M')} -->\n"
@@ -327,6 +336,7 @@ def export_markdown(df: pd.DataFrame, out_path: str):
 
 def set_cell_margins(cell, **kwargs):
     # kwargs: top, start, bottom, end in twips
+    """Set a Word table cell's margins (twips)."""
     tc = cell._tc
     tcPr = tc.get_or_add_tcPr()
     tcMar = OxmlElement('w:tcMar')
@@ -339,6 +349,7 @@ def set_cell_margins(cell, **kwargs):
 
 
 def export_docx(df_display: pd.DataFrame, out_path: str):
+    """Write the table to Word (needs python-docx)."""
     if Document is None:
         print("[SKIP] DOCX export — python-docx missing.")
         return
@@ -394,7 +405,9 @@ def export_docx(df_display: pd.DataFrame, out_path: str):
 def export_latex(df: pd.DataFrame, out_path: str):
     # Light‑weight LaTeX longtable for Overleaf; you can style further if needed.
     # Note: We escape only basic characters — adjust as necessary for your stack.
+    """Write the table as a LaTeX longtable."""
     def esc(s: str) -> str:
+        """Text escaped for LaTeX."""
         return (str(s)
                 .replace('&', r'\&')
                 .replace('%', r'\%')
@@ -420,6 +433,7 @@ def export_latex(df: pd.DataFrame, out_path: str):
 # ───────────────────────── SUMMARIES ─────────────────────────
 
 def tally_tokens(series: pd.Series) -> Counter:
+    """Counts of '|'-separated tokens in a column."""
     c = Counter()
     for s in series.dropna().astype(str):
         for t in [t.strip() for t in s.split("|") if t.strip()]:
@@ -428,6 +442,7 @@ def tally_tokens(series: pd.Series) -> Counter:
 
 
 def export_summaries(df: pd.DataFrame):
+    """Write counts of methods, data and other fields across the literature table."""
     out_txt = os.path.join(BASE_OUT, "literature_insights_summaries.txt")
 
     counts = {
@@ -455,6 +470,7 @@ def export_summaries(df: pd.DataFrame):
 # ───────────────────────── MAIN ─────────────────────────
 
 def main():
+    """Normalise the literature table and export it as Markdown, Word, LaTeX and summaries."""
     ensure_dirs()
 
     if not os.path.exists(SRC_CSV):

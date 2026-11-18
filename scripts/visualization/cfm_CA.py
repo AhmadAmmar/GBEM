@@ -46,15 +46,21 @@ EPC_TO_IDX  = {c:i for i,c in enumerate(EPC_ORDER)}
 DIST_CMAP   = ListedColormap(["#bfe7bf", "#ffd89a", "#f6b0b0"])  # correct / off-by-1 / off-by-2+
 
 # ───────────────────────── Helpers ─────────────────────────
-def log(msg: str): print(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}")
+def log(msg: str):
+    """Print a message with the time."""
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}")
 
-def safe_makedirs(p: str): os.makedirs(p, exist_ok=True)
+def safe_makedirs(p: str):
+    """Create a folder if missing."""
+    os.makedirs(p, exist_ok=True)
 
 def find_latest_cm_csv(outroot: str) -> Optional[str]:
+    """The confusion-matrix CSV in the latest/ folder, or None."""
     p = os.path.join(outroot, "latest", "confusion_matrix_counts.csv")
     return p if os.path.exists(p) else None
 
 def find_recent_run_cm(outroot: str) -> Optional[str]:
+    """The confusion-matrix CSV of the most recent run folder, or None."""
     run_dirs = sorted(glob.glob(os.path.join(outroot, "run_*")), key=os.path.getmtime, reverse=True)
     for rd in run_dirs:
         cand = os.path.join(rd, "confusion_matrix_counts.csv")
@@ -62,6 +68,7 @@ def find_recent_run_cm(outroot: str) -> Optional[str]:
     return None
 
 def find_newest_panel_parquet(outroot: str) -> Optional[str]:
+    """The newest cached prediction panel, or None."""
     panels = glob.glob(os.path.join(outroot, "cache", "fp_*", "panel.parquet"))
     if not panels: return None
     return max(panels, key=os.path.getmtime)
@@ -82,6 +89,7 @@ def normalize_epc(x) -> Optional[str]:
     return None
 
 def compute_cm_from_panel(panel_path: str) -> pd.DataFrame:
+    """Confusion matrix of actual against predicted bands from a prediction panel."""
     log(f"Loading panel: {panel_path}")
     bld = gpd.read_parquet(panel_path)
 
@@ -102,6 +110,7 @@ def compute_cm_from_panel(panel_path: str) -> pd.DataFrame:
     return cm.astype(int)
 
 def load_confusion_matrix(outroot: str) -> pd.DataFrame:
+    """The confusion matrix from latest/, else the most recent run, else computed from the newest panel."""
     p = find_latest_cm_csv(outroot)
     if p:
         log(f"Using CM from latest/: {p}")
@@ -181,6 +190,7 @@ def draw_confusion_matrix_large(cm: pd.DataFrame,
 
 # ───────────────────────── Main ─────────────────────────
 def main():
+    """Draw the confusion-matrix figure into latest/."""
     outroot = OUTROOT_DEFAULT
     latest_dir = os.path.join(outroot, "latest")
     safe_makedirs(latest_dir)

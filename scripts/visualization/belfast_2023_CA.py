@@ -68,6 +68,7 @@ def sniff_encoding(path: Path) -> str:
     return "latin1"
 
 def find_uprn_col_in_file(path: Path, enc: str) -> str:
+    """The file's UPRN column: the first whose name contains 'uprn'."""
     cols = pd.read_csv(path, nrows=0, encoding=enc).columns
     for c in cols:
         if "uprn" in c.lower():
@@ -84,6 +85,7 @@ def canonical_uprn(val):
     except ValueError: return None
 
 def detect_best_date_column(path: Path, enc: str, uprn_col: str) -> str:
+    """The date-like column with the highest share of values that parse as dates."""
     cols = pd.read_csv(path, nrows=0, encoding=enc).columns
     candidates = [c for c in cols if "date" in c.lower()]
     for p in PREFERRED_DATE_COLUMNS:
@@ -111,6 +113,7 @@ def detect_best_date_column(path: Path, enc: str, uprn_col: str) -> str:
     return best
 
 def rating_column(cols) -> str | None:
+    """The rating column among the usual names, or None."""
     pref = ["CURRENT_ENERGY_RATING", "EPC_RATING", "ENERGY_RATING"]
     for p in pref:
         if p in cols: return p
@@ -119,6 +122,7 @@ def rating_column(cols) -> str | None:
     return None
 
 def pick_union_file() -> Path:
+    """The first UPRN union file that exists among the candidates."""
     for p in UNION_CANDIDATES:
         path = Path(p)
         if path.exists():
@@ -126,11 +130,13 @@ def pick_union_file() -> Path:
     raise FileNotFoundError("No UPRN union-with-XY file found. Expected one of:\n" + "\n".join(UNION_CANDIDATES))
 
 def summarize_ag(series: pd.Series) -> dict:
+    """Counts of each band A-G in a series."""
     order = list("ABCDEFG")
     return {k:int(v) for k,v in series.value_counts().reindex(order, fill_value=0).items()}
 
 # ────────────────────── MAIN ──────────────────────
 def main():
+    """Belfast 2023 certificates: join to UPRN coordinates, count bands and write a summary."""
     t0 = datetime.now()
     print(f"=== EPC 2023 pipeline — {t0:%Y-%m-%d %H:%M} ===")
 
@@ -276,6 +282,7 @@ def main():
 
     # 4) Stats summary (A–G at each stage)
     def tidy_counts(raw_dict):
+        """Counts of bands A-G from a dict (missing as 0) and their total."""
         order = list("ABCDEFG")
         dd = {k:int(raw_dict.get(k, 0)) for k in order}
         return dd, sum(dd.values())

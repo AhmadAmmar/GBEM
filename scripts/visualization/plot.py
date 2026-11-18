@@ -1,3 +1,4 @@
+"""Scatter plots of selected indices against the binary label for the London samples. Early figure script (2025)."""
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns

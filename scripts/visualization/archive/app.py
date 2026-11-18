@@ -1,3 +1,4 @@
+"""Split-screen folium map of predicted A-G ratings and the binary class for London. Early figure script (2025), archived."""
 import geopandas as gpd
 import folium
 from folium.plugins import DualMap
@@ -35,6 +36,7 @@ binary_palette = {
 
 # === Helper: Style function ===
 def style_function_ag(feature):
+    """Folium style: fill colour by predicted rating."""
     code = feature['properties']['predicted_rating']
     return {
         'fillColor': ag_palette.get(code, '#cccccc'),
@@ -44,6 +46,7 @@ def style_function_ag(feature):
     }
 
 def style_function_binary(feature):
+    """Folium style: fill colour by predicted class."""
     cls = feature['properties']['predicted_class']
     return {
         'fillColor': binary_palette.get(cls, '#cccccc'),

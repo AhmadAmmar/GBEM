@@ -43,15 +43,18 @@ SCAN_EXTS     = {".csv", ".shp", ".xls", ".xlsx"}
 
 
 def norm(p: str) -> str:
+    """Absolute, normalised path."""
     return os.path.normpath(os.path.abspath(p))
 
 
 def should_skip_dir(dirpath: str, skip_substrings: list[str]) -> bool:
+    """True if the folder path contains any of the skip strings."""
     d = dirpath.lower()
     return any(s.lower() in d for s in skip_substrings)
 
 
 def classify(path: str) -> str:
+    """File kind from its extension (csv, shp, xlsx, xls, other)."""
     ext = os.path.splitext(path)[1].lower()
     if ext == ".csv":  return "csv"
     if ext == ".shp":  return "shp"
@@ -62,6 +65,7 @@ def classify(path: str) -> str:
 
 def read_csv_header(path: str) -> dict:
     # Only read the first non-empty line as header
+    """Column names from a CSV's first non-empty line."""
     try:
         with open(path, "r", encoding="utf-8", errors="replace", newline="") as f:
             reader = pycsv.reader(f)
@@ -74,6 +78,7 @@ def read_csv_header(path: str) -> dict:
 
 
 def read_xlsx_first_row(path: str) -> dict:
+    """First row of each sheet of an .xlsx file (needs openpyxl)."""
     if not HAVE_OPENPYXL:
         return {"error": "openpyxl not installed"}
     try:
@@ -93,6 +98,7 @@ def read_xlsx_first_row(path: str) -> dict:
 
 
 def read_xls_first_row(path: str) -> dict:
+    """First row of each sheet of an .xls file (needs xlrd)."""
     if not HAVE_XLRD:
         return {"error": "xlrd not installed"}
     try:
@@ -110,6 +116,7 @@ def read_xls_first_row(path: str) -> dict:
 
 
 def read_shp_schema(path: str) -> dict:
+    """Field names and geometry type of a shapefile (needs fiona)."""
     if not HAVE_FIONA:
         return {"error": "fiona not installed"}
     try:
@@ -123,6 +130,7 @@ def read_shp_schema(path: str) -> dict:
 
 
 def scan_file(path: str) -> dict:
+    """Header or schema of one file by its kind."""
     kind = classify(path)
     info = {"path": path, "kind": kind}
     if kind == "csv":
@@ -139,6 +147,7 @@ def scan_file(path: str) -> dict:
 
 
 def write_csv(rows: list[dict], out_dir: str) -> str:
+    """Write the scan rows to a timestamped CSV in out_dir; returns its path."""
     os.makedirs(out_dir, exist_ok=True)
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     out = os.path.join(out_dir, f"inventory_headers_{ts}.csv")
@@ -156,6 +165,7 @@ def write_csv(rows: list[dict], out_dir: str) -> str:
 
 
 def main():
+    """Scan the --roots folders for tables and record each file's header or schema."""
     ap = argparse.ArgumentParser(description="Fast first-row/schema scan for csv/shp/xls/xlsx.")
     ap.add_argument("--roots", nargs="+", default=DEFAULT_ROOTS, help="Root directory/ies to scan.")
     ap.add_argument("--skip",  nargs="*",  default=DEFAULT_SKIP,  help="Skip any directory whose path contains these substrings.")

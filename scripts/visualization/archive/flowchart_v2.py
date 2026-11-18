@@ -1,3 +1,4 @@
+"""Workflow flowchart version 2 in clusters by stage (Graphviz). Archived (2025)."""
 from graphviz import Digraph
 
 # Create the Digraph object
@@ -6,6 +7,7 @@ flowchart.attr(rankdir='TB', size='8', dpi='600', splines='ortho')  # Top-to-bot
 
 # Function to connect nodes horizontally without arrows
 def connect_horizontal(flowchart, nodes):
+    """Join consecutive nodes with lines without arrowheads."""
     for i in range(len(nodes) - 1):
         flowchart.edge(nodes[i], nodes[i + 1], arrowhead='none')  # Line without arrow
 

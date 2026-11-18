@@ -32,6 +32,7 @@ except ImportError:
 
 
 def main():
+    """Word version of the thesis: the LaTeX expanded and converted with pandoc, with the abbreviations and title page."""
     out = pathlib.Path(sys.argv[1])
     main_tex = (LATEX / "main.tex").read_text(encoding="utf-8")
     info = (LATEX / "chapters/00_abbreviations.tex").read_text(encoding="utf-8")

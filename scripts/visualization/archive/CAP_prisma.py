@@ -147,7 +147,9 @@ W_IN = max(MIN_W_IN, min(W_IN, MAX_W_IN))  # clamp gently
 # For height we keep a slide-friendly value; content will fit vertically
 H_IN = 7.5  # typical 16:9 height; you can tweak if you prefer shorter
 
-def line_h(fs): return fs / 72.0
+def line_h(fs):
+    """Height of one text line (inches) at font size fs (points)."""
+    return fs / 72.0
 
 # --------------------- draw Figure ----------------------
 fig = plt.figure(figsize=(W_IN, H_IN), dpi=DPI)
