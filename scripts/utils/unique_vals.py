@@ -1,3 +1,4 @@
+"""Print the unique values of FLAT_TOP_STOREY in reduced_merged_certificates.csv. Early inspection script (2025)."""
 import pandas as pd
 
 # Path to the certificates file

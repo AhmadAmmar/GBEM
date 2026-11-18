@@ -1,3 +1,6 @@
+"""Sample every index raster at the London 2024 certificate points in parallel and add them to the GeoJSON.
+Early feature-extraction script (2025).
+"""
 import os
 import geopandas as gpd
 import pandas as pd
@@ -13,6 +16,7 @@ output_path = r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_
 
 # === Point Sampling Function (Parallel) ===
 def process_point_raster(args):
+    """Values of one raster at the coordinates, for a parallel worker: (band name, values)."""
     band_name, raster_file, coords = args
     values = []
     try:

@@ -1,3 +1,4 @@
+"""Mosaic two Sentinel-2 composite tiles of London into one GeoTIFF through a virtual raster. Early script (2025)."""
 from osgeo import gdal
 import os
 

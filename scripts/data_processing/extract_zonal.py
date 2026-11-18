@@ -1,3 +1,6 @@
+"""Zonal statistics of each index raster within the London 2024 certificate footprints (rasterstats), added to
+the GeoJSON. Early feature-extraction script (2025); superseded by gee/extract.py.
+"""
 import os
 import geopandas as gpd
 from rasterstats import zonal_stats

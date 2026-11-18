@@ -1,3 +1,6 @@
+"""Add a binary label to the London 2024 samples: 1 for ratings A-C (efficient), 0 otherwise, with counts.
+Early analysis script (2025).
+"""
 import pandas as pd
 
 # Load data

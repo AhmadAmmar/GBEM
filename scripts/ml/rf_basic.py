@@ -1,3 +1,6 @@
+"""Random forest of the energy rating from the London satellite samples (columns from S2_B2 on), with accuracy.
+Early modelling script (2025); superseded by models/baseline.py.
+"""
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split

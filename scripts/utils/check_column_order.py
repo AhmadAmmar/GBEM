@@ -1,3 +1,8 @@
+"""Check that every certificates.csv under the England and Wales bulk download has the same columns in the same
+order, and report the first, second and last file's columns.
+
+Early inspection script (2025); the current pipeline reads the register in epc/certificates.py.
+"""
 import os
 import pandas as pd
 from tqdm import tqdm

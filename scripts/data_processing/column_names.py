@@ -17,6 +17,7 @@ FOOTPRINTS_SHP = r"D:\OneDrive - Ulster University\PhD\data\belfast\belfast-buil
 CANDIDATE_ENCODINGS = ("utf-8", "utf-8-sig", "cp1252", "latin1")
 
 def sniff_encoding(path: str) -> str:
+    """First encoding in CANDIDATE_ENCODINGS that reads the file's first row."""
     for enc in CANDIDATE_ENCODINGS:
         try:
             pd.read_csv(path, nrows=1, encoding=enc)
@@ -26,12 +27,14 @@ def sniff_encoding(path: str) -> str:
     return "latin1"
 
 def print_section(title: str):
+    """Print a title underlined and overlined with '='."""
     print("\n" + "="*len(title))
     print(title)
     print("="*len(title))
 
 def main():
     # ---------- EPC CSV ----------
+    """Print the columns and a few rows of the NI certificate and UPRN files."""
     print_section("ORIGINAL EPC CSV")
     if not Path(EPC_CSV).exists():
         raise FileNotFoundError(f"EPC file not found: {EPC_CSV}")

@@ -1,3 +1,6 @@
+"""Random forests for the rating targets: importance, then final models on the top features, predictions written to
+the GeoJSON. Early modelling script (2025).
+"""
 import geopandas as gpd
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier

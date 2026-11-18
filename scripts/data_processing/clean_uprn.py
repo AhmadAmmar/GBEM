@@ -8,6 +8,7 @@ UNION_OUT = Path(UNION_IN).with_name("uprn_union_with_xy_clean.csv")
 ENCODINGS = ("utf-8","utf-8-sig","cp1252","latin1")
 
 def sniff(p):
+    """First encoding in ENCODINGS that reads the file's first row."""
     for e in ENCODINGS:
         try:
             pd.read_csv(p, nrows=1, encoding=e); return e

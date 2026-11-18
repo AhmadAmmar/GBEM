@@ -1,3 +1,6 @@
+"""Write the header, first row and last row of the merged certificates file to header_first_last.csv.
+Early inspection script (2025).
+"""
 import pandas as pd
 import os
 

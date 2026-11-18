@@ -1,3 +1,4 @@
+"""Keep the certificates inside the London boundary, read in chunks, written to london_filtered.csv. Early script (2025)."""
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import Point
@@ -53,6 +54,7 @@ columns_to_export = [
 # Function to process each chunk and filter rows within the London boundary
 def filter_chunk(chunk, london_boundary):
     # Filter out rows with missing LATITUDE/LONGITUDE
+    """Rows of a chunk whose point falls inside the London boundary."""
     chunk = chunk.dropna(subset=["LATITUDE", "LONGITUDE"])
     # Create a GeoDataFrame from the chunk using LATITUDE and LONGITUDE columns
     chunk['geometry'] = [Point(xy) for xy in zip(chunk["LONGITUDE"], chunk["LATITUDE"])]

@@ -92,28 +92,38 @@ ERR_CLASSES = ["Correct","Off-by-1","Off-by-2+"]
 ERR_COLORS  = {"Correct":"#4daf4a","Off-by-1":"#ffb74d","Off-by-2+":"#e41a1c"}
 
 # ───────────────────────── Utilities ─────────────────────────
-def log(path: str, label: str): print(f"[{label}] {os.path.abspath(path)}")
-def now_stamp(): return datetime.now().strftime("%Y%m%d_%H%M")
-def make_dirs(*paths): [os.makedirs(p, exist_ok=True) for p in paths]
+def log(path: str, label: str):
+    """Print a label and an absolute path."""
+    print(f"[{label}] {os.path.abspath(path)}")
+def now_stamp():
+    """Current time as YYYYMMDD_HHMM."""
+    return datetime.now().strftime("%Y%m%d_%H%M")
+def make_dirs(*paths):
+    """Create the folders if missing."""
+    [os.makedirs(p, exist_ok=True) for p in paths]
 
 def file_fingerprint(path: str) -> str:
+    """MD5 of a file's path, size and modification time (a quick change check, not of the content)."""
     st = os.stat(path)
     s = f"{os.path.abspath(path)}|{st.st_size}|{int(st.st_mtime)}"
     return hashlib.md5(s.encode("utf-8")).hexdigest()
 
 def composite_fingerprint(paths: List[str]) -> str:
+    """MD5 combining several files' fingerprints."""
     h = hashlib.md5()
     for p in paths:
         h.update(file_fingerprint(p).encode("utf-8"))
     return h.hexdigest()
 
 def find_col(cols: List[str], cands: List[str]) -> Optional[str]:
+    """First of the candidate column names present (case-insensitive), or None."""
     low = {c.lower(): c for c in cols}
     for k in cands:
         if k.lower() in low: return low[k.lower()]
     return None
 
 def normalize_epc(x) -> Optional[str]:
+    """Band letter A-G from a letter or text, else None."""
     if pd.isna(x): return None
     s = str(x).strip().upper()
     if s in EPC_TO_IDX: return s
@@ -121,18 +131,21 @@ def normalize_epc(x) -> Optional[str]:
     return None
 
 def load_boundary(path: str) -> gpd.GeoDataFrame:
+    """Study-area boundary (must have a CRS)."""
     log(path, "LOAD boundary")
     gdf = gpd.read_file(path)
     if gdf.crs is None: raise ValueError("Boundary has no CRS.")
     return gdf.to_crs(TARGET_CRS)
 
 def load_buildings(path: str, layer: Optional[str]) -> gpd.GeoDataFrame:
+    """Building layer (optionally one layer of a multi-layer file)."""
     log(path, "LOAD buildings")
     gdf = gpd.read_file(path, layer=layer) if layer else gpd.read_file(path)
     if gdf.crs is None: raise ValueError("Buildings file has no CRS.")
     return gdf.to_crs(TARGET_CRS)
 
 def load_predictions(path: str) -> pd.DataFrame:
+    """Predictions from CSV, parquet or a vector file."""
     log(path, "LOAD predictions")
     ext = os.path.splitext(path)[1].lower()
     if ext == ".csv": return pd.read_csv(path)
@@ -140,10 +153,12 @@ def load_predictions(path: str) -> pd.DataFrame:
     raise ValueError(f"Unsupported predictions file type: {ext}")
 
 def as_points(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    """Representative points of the features (unchanged if all are points)."""
     if gdf.empty or gdf.geom_type.isin(["Point"]).all(): return gdf
     out = gdf.copy(); out["geometry"] = out.geometry.representative_point(); return out
 
 def auto_markersize_pt2(ax, n_points, fig, target_fill=0.010, min_pt=1.0, max_pt=2.0):
+    """Marker area (pt^2) so that n points cover about target_fill of the panel, within min_pt and max_pt."""
     if n_points <= 0: return min_pt**2
     bb = ax.get_position()
     fw, fh = fig.get_size_inches()
@@ -155,6 +170,9 @@ def auto_markersize_pt2(ax, n_points, fig, target_fill=0.010, min_pt=1.0, max_pt
     return r_pt**2
 
 def compute_confusion_and_metrics(df: pd.DataFrame, col_true: str, col_pred: str):
+    """Confusion matrix of actual against predicted bands, metrics (accuracy, balanced accuracy, macro and weighted F1,
+    kappa, quadratic kappa, exact, within one band, two or more off) and per-band recall.
+    """
     cm = pd.crosstab(df[col_true], df[col_pred], dropna=False).reindex(index=EPC_ORDER, columns=EPC_ORDER, fill_value=0)
     y_true = pd.Categorical(df[col_true], categories=EPC_ORDER)
     y_pred = pd.Categorical(df[col_pred], categories=EPC_ORDER)
@@ -189,6 +207,7 @@ def compute_confusion_and_metrics(df: pd.DataFrame, col_true: str, col_pred: str
     return cm.astype(int), metrics, per_class
 
 def compute_splits(df: pd.DataFrame, col_true="EPC_ACTUAL", col_pred="EPC_PRED") -> Optional[dict]:
+    """Counts of rows per split (train, validation, test) overall and among rows with both bands."""
     cols = df.columns.tolist()
     split_col = find_col(cols, SPLIT_CANDS)
     if split_col:
@@ -218,10 +237,12 @@ def compute_splits(df: pd.DataFrame, col_true="EPC_ACTUAL", col_pred="EPC_PRED")
     return None
 
 def fmt_pct(x):
+    """A share as a percentage with one decimal, or 'NA'."""
     try: return f"{100.0*float(x):.1f}%"
     except Exception: return "NA"
 
 def env_meta():
+    """Run metadata: UTC time, Python, platform and package versions."""
     import matplotlib
     return {
         "timestamp_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -237,6 +258,7 @@ def env_meta():
 
 # Text drawing (wrap + optional 2 columns)
 def draw_paragraph(ax, lines: List[str], x=0.03, y=0.935, width=0.94, fs=PARA_FS, linesp=PARA_SP, two_cols=False):
+    """Write wrapped lines of text on an axis from the top down."""
     max_chars = max(18, int(58 * (width / 0.94)))
     wrapped: List[str] = []
     for s in lines:
@@ -249,6 +271,7 @@ def draw_paragraph(ax, lines: List[str], x=0.03, y=0.935, width=0.94, fs=PARA_FS
         ax.text(x, y, "\n".join(wrapped), ha="left", va="top", fontsize=fs, linespacing=linesp)
 
 def card(ax, title: str):
+    """Blank framed panel with a title, for text and tables."""
     ax.set_xlim(0,1); ax.set_ylim(0,1); ax.axis("off")
     ax.add_patch(Rectangle((0,0),1,1, facecolor="white", edgecolor="#dddddd",
                            transform=ax.transAxes, zorder=0))
@@ -256,6 +279,7 @@ def card(ax, title: str):
 
 # Colored confusion matrix (by class distance) with readable labels
 def draw_confusion_matrix_colored(ax, cm: pd.DataFrame):
+    """Draw a confusion matrix shaded by distance from the diagonal (0, 1, 2+ bands) with counts."""
     n = len(EPC_ORDER)
     # Base heat by distance (0,1,>=2)
     dist = np.zeros((n,n), dtype=int)
@@ -291,6 +315,7 @@ def draw_confusion_matrix_colored(ax, cm: pd.DataFrame):
 
 # ───────────────────────── Main ─────────────────────────
 def main():
+    """Print-ready maps of actual and predicted bands with confusion matrix, metrics and split counts, and run records."""
     ap = argparse.ArgumentParser(description="Print-ready EPC vs RF maps with caching & provenance.")
     ap.add_argument("--boundary", default=BOUNDARY_DEF)
     ap.add_argument("--buildings", default=BUILDINGS_DEF)
@@ -450,6 +475,7 @@ def main():
     importances_meta = os.path.join(cache_dir, "importances_meta.json")
 
     def feature_signature(cols: List[str]) -> str:
+        """MD5 of the sorted feature names, to tell feature sets apart."""
         sig = ",".join(sorted(cols))
         return hashlib.md5(sig.encode("utf-8")).hexdigest()
 
@@ -540,6 +566,7 @@ def main():
                 if SIZE_MODE == "auto" else DOT_PT**2)
 
     def color_series(gdf, col, pal, fb="NA"):
+        """Colour for each value of a column from a palette (fallback colour for unknowns)."""
         return gdf[col].map(lambda v: pal.get(v, pal[fb]))
 
     axA.set_title("A) Actual EPC Rating (A–G)", fontsize=11, loc="left"); axA.set_axis_off()
@@ -560,6 +587,7 @@ def main():
 
     # Small scalebar + N arrow (on map A)
     def add_small_scalebar(ax, force_km: Optional[float]=None, loc=(0.06,0.08), max_frac=0.20):
+        """Draw a small scale bar of a round length on a projected map."""
         X0,X1 = ax.get_xlim(); Y0,Y1 = ax.get_ylim()
         width_m = (X1 - X0)
         candidates = [1,2,3,4,5]  # km
@@ -576,6 +604,7 @@ def main():
                 color="k", path_effects=[pe.withStroke(linewidth=3, foreground="white")])
 
     def add_north(ax, xy=(0.10,0.22), length_frac=0.11):
+        """Draw a north arrow in axes coordinates."""
         x, y = xy
         ax.annotate("", xy=(x, y+length_frac), xytext=(x, y),
                     xycoords="axes fraction", textcoords="axes fraction",
@@ -639,6 +668,7 @@ def main():
     # Splits + Model
     if split_info:
         def fmt_counts(d):
+            """Lines of text giving train, validation, test (and other) counts with percentages."""
             tot = sum(d.values()) if d else 0
             p = lambda v: f"{(100*v/tot):.1f}%" if tot else "0.0%"
             other = sum(v for k,v in d.items() if k not in ("train","val","test","other",None))
@@ -694,6 +724,7 @@ def main():
     # Export 'latest' (copy only if changed size or absent)
     latest_dir = os.path.join(OUTROOT, "latest"); make_dirs(latest_dir)
     def copy_if_new(src, dst_dir):
+        """Copy a file into a folder unless an identical-size copy is there."""
         if not src or (not os.path.exists(src)): return
         dst = os.path.join(dst_dir, os.path.basename(src))
         if (not os.path.exists(dst)) or (os.path.getsize(dst) != os.path.getsize(src)):

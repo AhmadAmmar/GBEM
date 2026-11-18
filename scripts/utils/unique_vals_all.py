@@ -1,3 +1,7 @@
+"""Summarise every column of reduced_merged_certificates.csv in chunks (numbers: min, max, mean, median, count,
+mode; text: unique values), written to
+column_summary.csv. Early inspection script (2025).
+"""
 import pandas as pd
 import numpy as np
 

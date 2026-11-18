@@ -1,3 +1,4 @@
+"""Count Northern Ireland certificates per inspection year in the January 2025 register. Early inspection script (2025)."""
 import pandas as pd
 
 # Load the filtered CSV

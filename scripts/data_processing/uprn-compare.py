@@ -28,6 +28,7 @@ Y_CANDIDATES = ["Y_COR","Y_COORD","YCOORD","Y","NORTHING","Y_COORDINATE","YCORD"
 # ----------------------------------
 
 def sniff_encoding(path: str) -> str:
+    """First encoding in CANDIDATE_ENCODINGS that reads the file's first row."""
     for enc in CANDIDATE_ENCODINGS:
         try:
             pd.read_csv(path, nrows=1, encoding=enc)
@@ -51,6 +52,7 @@ def canonical_uprn(val):
         return None
 
 def find_col(cols, candidates):
+    """First of the candidate column names present in cols (case-insensitive), or None."""
     lut = {c.lower(): c for c in cols}
     for name in candidates:
         if name.lower() in lut:
@@ -62,6 +64,7 @@ def find_col(cols, candidates):
     return None
 
 def find_uprn_col(path, enc):
+    """The file's UPRN column: the first whose name contains 'uprn'."""
     cols = pd.read_csv(path, nrows=0, encoding=enc).columns
     for c in cols:
         if "uprn" in c.lower():
@@ -69,16 +72,19 @@ def find_uprn_col(path, enc):
     raise ValueError(f"No UPRN-like column found in {path}\nColumns: {list(cols)}")
 
 def find_xy_cols(path, enc):
+    """The file's x and y columns from the candidate names."""
     cols = pd.read_csv(path, nrows=0, encoding=enc).columns
     x = find_col(cols, X_CANDIDATES)
     y = find_col(cols, Y_CANDIDATES)
     return x, y
 
 def to_num(s):
+    """Numbers from a column, invalid values as NaN."""
     return pd.to_numeric(s, errors="coerce")
 
 def looks_like_lonlat(x, y, sample=2000):
     # Heuristic: values mostly within lon/lat bounds
+    """True if most of a sample of (x, y) values fall within longitude and latitude ranges."""
     df = pd.DataFrame({"x": x, "y": y}).dropna().head(sample)
     if df.empty: return False
     frac_ll = ((df["x"].abs() <= 180) & (df["y"].abs() <= 90)).mean()
@@ -86,6 +92,7 @@ def looks_like_lonlat(x, y, sample=2000):
 
 def haversine_m(lon1, lat1, lon2, lat2):
     # lon/lat degrees -> meters
+    """Great-circle distance (m) between points given in degrees, on a sphere of radius 6,371 km."""
     R = 6371000.0
     lon1, lat1, lon2, lat2 = map(np.radians, [lon1, lat1, lon2, lat2])
     dlon = lon2 - lon1

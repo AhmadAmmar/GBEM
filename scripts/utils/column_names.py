@@ -1,3 +1,4 @@
+"""Print the column names of reduced_merged_certificates.csv (header only). Early inspection script (2025)."""
 import pandas as pd
 
 # Path to the merged certificates file with latitude and longitude

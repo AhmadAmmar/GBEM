@@ -1,3 +1,6 @@
+"""Statistics of every column of reduced_merged_certificates.csv read in chunks (numeric summaries and unique
+values). Early inspection script (2025).
+"""
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
@@ -8,6 +11,7 @@ output_file = "D:/OneDrive - Ulster University/PhD/data/column_statistics_with_a
 
 # Function to calculate stats for numeric data across chunks
 def update_numeric_stats(chunk, stats):
+    """Update running minimum, maximum, sum, count and kept values with one chunk."""
     chunk = chunk.dropna()
     stats["Min"] = min(stats["Min"], chunk.min()) if stats["Min"] is not None else chunk.min()
     stats["Max"] = max(stats["Max"], chunk.max()) if stats["Max"] is not None else chunk.max()
@@ -17,6 +21,7 @@ def update_numeric_stats(chunk, stats):
 
 # Function to finalize numeric stats
 def finalize_numeric_stats(stats):
+    """Mean and median from the running totals."""
     if stats["Count"] > 0:
         stats["Mean"] = stats["Sum"] / stats["Count"]
         stats["Median"] = np.median(stats["Values"])

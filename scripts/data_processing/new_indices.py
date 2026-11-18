@@ -1,3 +1,6 @@
+"""Add moisture and built-up indices (NDMI, LSWI, BUI and others) to the London 2024 certificate GeoJSON.
+Early script (2025).
+"""
 import geopandas as gpd
 import numpy as np
 
@@ -11,6 +14,7 @@ gdf = gpd.read_file(input_path)
 
 # === Define index calculations ===
 def safe_divide(numerator, denominator):
+    """Division with NaN where the denominator is zero or missing."""
     return np.where((denominator == 0) | (np.isnan(denominator)), np.nan, numerator / denominator)
 
 print("🧮 Calculating new indices...")

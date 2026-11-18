@@ -1,3 +1,4 @@
+"""Reproject the London boundary shapefile to WGS 84 (EPSG:4326). Early script (2025)."""
 import geopandas as gpd
 
 # File paths

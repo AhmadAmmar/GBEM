@@ -1,3 +1,6 @@
+"""Concatenate every certificates.csv of the bulk download into merged_certificates_with_latlon.csv.
+Early data-preparation script (2025).
+"""
 import os
 import pandas as pd
 from tqdm import tqdm

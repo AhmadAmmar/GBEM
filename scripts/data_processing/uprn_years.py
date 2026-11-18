@@ -24,6 +24,7 @@ PREFERRED_DATE_COLUMNS = [
 # ===================================
 
 def sniff_encoding(path: str) -> str:
+    """First encoding in CANDIDATE_ENCODINGS that reads the file's first row."""
     for enc in CANDIDATE_ENCODINGS:
         try:
             pd.read_csv(path, nrows=1, encoding=enc)
@@ -33,6 +34,7 @@ def sniff_encoding(path: str) -> str:
     return "latin1"
 
 def find_uprn_col(path: str, encoding: str) -> str:
+    """The file's UPRN column: the first whose name contains 'uprn'."""
     cols = pd.read_csv(path, nrows=0, encoding=encoding).columns
     for c in cols:
         if "uprn" in c.lower():
@@ -54,6 +56,9 @@ def canonical_uprn(val):
 
 def detect_best_date_column(path: str, encoding: str, uprn_col: str) -> str:
     # Find candidates from header
+    """The date-like column to count by: the one with the highest share of values that parse as dates (day first),
+    preferred names winning ties.
+    """
     cols = pd.read_csv(path, nrows=0, encoding=encoding).columns
     candidates = [c for c in cols if "date" in c.lower()]
     # also include preferred ones even if they don't contain 'date' exactly

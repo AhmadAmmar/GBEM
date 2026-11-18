@@ -1,3 +1,6 @@
+"""Sample new index rasters at the London 2024 certificate points in batches and add them to the GeoJSON.
+Early feature-extraction script (2025); superseded by gee/extract.py.
+"""
 import os
 import geopandas as gpd
 import rasterio
@@ -17,6 +20,7 @@ new_indices = [
 
 # === Point sampling with full tqdm (Index > Batch > Point) ===
 def extract_raster_values_batched(coords, raster_path, batch_size=5000, band_name=""):
+    """Raster values at (x, y) coordinates read in batches of batch_size; None for points that fail."""
     results = []
     try:
         with rasterio.open(raster_path) as src:

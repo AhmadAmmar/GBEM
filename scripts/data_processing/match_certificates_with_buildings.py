@@ -1,3 +1,6 @@
+"""Match certificates to the building that contains their point (Dask spatial join) in chunks. Early script (2025);
+superseded by epc/link.py.
+"""
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import Point
@@ -23,6 +26,7 @@ global_building_assignments = {}
 # Function to process a single chunk
 def process_chunk(chunk, buildings_dask):
     # Create a GeoDataFrame from the LATITUDE and LONGITUDE columns
+    """Certificates of a chunk joined to the buildings containing their point."""
     chunk_gdf = gpd.GeoDataFrame(
         chunk,
         geometry=gpd.points_from_xy(chunk['LONGITUDE'], chunk['LATITUDE']),

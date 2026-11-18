@@ -34,6 +34,7 @@ CANDIDATE_ENCODINGS = ("utf-8", "utf-8-sig", "cp1252", "latin1")
 # --------------------------------
 
 def sniff_encoding(path: Path) -> str:
+    """First encoding in CANDIDATE_ENCODINGS that reads the file's first row."""
     for enc in CANDIDATE_ENCODINGS:
         try:
             pd.read_csv(path, nrows=1, encoding=enc)
@@ -44,6 +45,7 @@ def sniff_encoding(path: Path) -> str:
 
 def find_col(cols, candidates):
     # case-insensitive lookup; returns the first match in candidates present in cols
+    """First of the candidate column names present in cols (case-insensitive), or None."""
     lut = {c.lower(): c for c in cols}
     for name in candidates:
         if name.lower() in lut:
@@ -57,6 +59,7 @@ def find_col(cols, candidates):
     return None
 
 def find_uprn_col(path: Path, encoding: str) -> str:
+    """The file's UPRN column: the first whose name contains 'uprn'."""
     cols = pd.read_csv(path, nrows=0, encoding=encoding).columns
     for c in cols:
         if "uprn" in c.lower():
@@ -64,6 +67,7 @@ def find_uprn_col(path: Path, encoding: str) -> str:
     raise ValueError(f"No UPRN-like column found in {path}\nColumns: {list(cols)}")
 
 def find_xy_cols(path: Path, encoding: str) -> Tuple[Optional[str], Optional[str]]:
+    """The file's x and y coordinate columns from the candidate names, or None for each."""
     cols = pd.read_csv(path, nrows=0, encoding=encoding).columns
     x = find_col(cols, X_CANDIDATES)
     y = find_col(cols, Y_CANDIDATES)
@@ -81,6 +85,7 @@ def norm_uprn(val):
     return s or None
 
 def to_numeric_safe(s):
+    """Numbers from a column, invalid values as NaN."""
     try:
         return pd.to_numeric(s, errors="coerce")
     except Exception:

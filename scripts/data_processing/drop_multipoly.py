@@ -1,3 +1,6 @@
+"""Keep only single polygons (no multipolygons, no empty geometries) of the London 2024 certificate footprints and
+write a shapefile for upload. Early data-preparation script (2025).
+"""
 import geopandas as gpd
 import os
 from shapely.geometry import Polygon

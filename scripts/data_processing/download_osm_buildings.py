@@ -1,3 +1,6 @@
+"""Download OSM building footprints within the London boundary with osmnx to a GeoJSON. Early script (2025);
+footprints now come from Overture and OSNI (epc/footprints.py).
+"""
 import geopandas as gpd
 import osmnx as ox
 

@@ -139,6 +139,7 @@ def inspect_path(path, recursive=False):
 
 
 def main(argv=None):
+    """Inspect a file or folder (recursively with -r) and print, or write as JSON with -o, its structure."""
     parser = argparse.ArgumentParser(description="Inspect dataset files")
     parser.add_argument("path", help="File or directory to inspect")
     parser.add_argument("-o", "--output", help="Optional JSON file to write results")

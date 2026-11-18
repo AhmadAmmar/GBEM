@@ -1,3 +1,4 @@
+"""Count the rows of the London certificates file and the filtered file with coordinates. Early inspection script (2025)."""
 import pandas as pd
 import os
 
@@ -7,6 +8,7 @@ latlon_file = "D:/OneDrive - Ulster University/PhD/data/reduced_merged_certifica
 
 # Function to count rows in a file
 def count_rows(file_path, file_description):
+    """Print the number of data rows (lines less the header) of a file, or that it does not exist."""
     if os.path.exists(file_path):
         try:
             # Load the file in chunks to avoid memory issues if files are large

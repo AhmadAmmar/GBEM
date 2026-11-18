@@ -1,3 +1,6 @@
+"""Keep the merged certificates that have latitude and longitude, written to merged_certificates_with_latlon.csv.
+Early data-preparation script (2025).
+"""
 import geopandas as gpd
 import pandas as pd
 import dask_geopandas as dgpd

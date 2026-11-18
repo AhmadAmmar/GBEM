@@ -1,3 +1,6 @@
+"""Offline folium map of rivers, dams, reservoirs and canals from the downloaded layers in the manifest, with
+labels shown by zoom. Side project kept with the early scripts.
+"""
 # iwt_map_offline_auto.py
 from __future__ import annotations
 import os, json, html
@@ -30,16 +33,20 @@ RIVER_STYLE = {
 OTHER_TRIB_STYLE={"color":"#2ca02c","weight":3}
 
 def safe_read(p):
+    """A GeoDataFrame in EPSG:4326 if the file exists, else an empty one."""
     if p and os.path.exists(p): return gpd.read_file(p).to_crs(4326)
     return gpd.GeoDataFrame(geometry=[], crs=4326)
 
 def add_river_with_glow(group, geom, color, label):
+    """Draw a river on a folium layer with a halo and a tooltip."""
     folium.GeoJson(geom.__geo_interface__, style_function=lambda _f: {"color":"#fff","weight":7,"opacity":0.65}).add_to(group)
     folium.GeoJson(geom.__geo_interface__, style_function=lambda _f, c=color: {"color":c,"weight":3,"opacity":0.95},
                    tooltip=folium.Tooltip(label), popup=folium.Popup(f"<b>{label}</b>")).add_to(group)
 
 def add_line_label(group, geom, text):
+    """Write a label along each part of a line on a folium layer."""
     def add_one(ls: LineString):
+        """Label one LineString part."""
         coords = [(y, x) for x, y in list(ls.coords)]
         carrier = folium.PolyLine(locations=coords, opacity=0); group.add_child(carrier)
         PolyLineTextPath(carrier, text, repeat=True, offset=7,
@@ -170,7 +177,9 @@ MousePosition(position="bottomright", prefix="Lat/Lon", separator=" , ", num_dig
 
 # Zoom-gated label visibility
 class BindZoomLabels(MacroElement):
+    """Folium element that shows labels only from a given zoom level."""
     def __init__(self, zoom:int):
+        """Set the zoom level and the JavaScript template."""
         super().__init__(); self.zoom=zoom
         self._template = Template("""
         {% macro script(this, kwargs) %}

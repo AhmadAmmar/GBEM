@@ -19,6 +19,7 @@ CANDIDATE_ENCODINGS = ("utf-8", "utf-8-sig", "cp1252", "latin1")
 # ====================
 
 def sniff_encoding(path: str) -> str:
+    """First encoding in CANDIDATE_ENCODINGS that reads the file's first row."""
     for enc in CANDIDATE_ENCODINGS:
         try:
             pd.read_csv(path, nrows=1, encoding=enc)

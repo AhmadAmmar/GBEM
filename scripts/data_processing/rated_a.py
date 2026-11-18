@@ -1,3 +1,4 @@
+"""Count A-rated London certificates in total and per year. Early inspection script (2025)."""
 import pandas as pd
 
 # Load the CSV file

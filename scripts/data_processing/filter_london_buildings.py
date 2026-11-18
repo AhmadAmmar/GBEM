@@ -1,3 +1,4 @@
+"""Clip the England OSM buildings to the London boundary and write a shapefile. Early script (2025)."""
 import geopandas as gpd
 from tqdm import tqdm
 

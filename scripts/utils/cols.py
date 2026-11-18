@@ -1,3 +1,4 @@
+"""Print the attribute columns of the OSM London buildings shapefile. Early inspection script (2025)."""
 import geopandas as gpd
 
 # Path to your shapefile

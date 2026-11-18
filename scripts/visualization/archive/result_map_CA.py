@@ -85,7 +85,9 @@ ERROR_COLORS  = {"Correct":"#4daf4a","Off-by-1":"#ffb74d","Off-by-2+":"#e41a1c"}
 TARGET_CRS = 27700  # British National Grid
 
 # ── UTILITIES ───────────────────────────────────────────────────────────
-def log(path: str, label: str): print(f"[{label}] {os.path.abspath(path)}")
+def log(path: str, label: str):
+    """Print a label and an absolute path."""
+    print(f"[{label}] {os.path.abspath(path)}")
 def ensure_outdir(path: str): os.makedirs(path, exist_ok=True)
 
 def load_boundary(path: str) -> gpd.GeoDataFrame:
@@ -95,12 +97,14 @@ def load_boundary(path: str) -> gpd.GeoDataFrame:
     return gdf.to_crs(TARGET_CRS)
 
 def load_buildings(path: str, layer: Optional[str]) -> gpd.GeoDataFrame:
+    """Building layer (optionally one layer of a multi-layer file)."""
     log(path, "LOAD buildings")
     gdf = gpd.read_file(path, layer=layer) if layer else gpd.read_file(path)
     if gdf.crs is None: raise ValueError("Buildings file has no CRS.")
     return gdf.to_crs(TARGET_CRS)
 
 def load_predictions(path: str) -> pd.DataFrame:
+    """Predictions from CSV, parquet or a vector file."""
     log(path, "LOAD predictions")
     ext = os.path.splitext(path)[1].lower()
     if ext == ".csv": return pd.read_csv(path)
@@ -143,6 +147,7 @@ def add_north_arrow_axfrac(ax, xy=(0.10,0.22), length_frac=0.11):
             fontsize=9, color="k", path_effects=[pe.withStroke(linewidth=3, foreground="white")])
 
 def fmt_pct(x):
+    """A share as a percentage with one decimal, or 'NA'."""
     try: return f"{100.0*float(x):.1f}%"
     except Exception: return "NA"
 

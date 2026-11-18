@@ -1,3 +1,6 @@
+"""Print the first latitude and longitude values of the London certificates file, to see which coordinate system
+they are in. Early inspection script (2025).
+"""
 import pandas as pd
 
 # File path

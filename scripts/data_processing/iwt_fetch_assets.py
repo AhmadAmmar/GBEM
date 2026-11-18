@@ -72,9 +72,11 @@ OVERPASS_ENDPOINTS = [
 # ------------------------------
 
 def ensure_dir(path: str) -> None:
+    """Create a folder if missing."""
     os.makedirs(path, exist_ok=True)
 
 def save_bytes(path: str, content: bytes, overwrite: bool = False) -> None:
+    """Write bytes to a file unless it exists (or overwrite)."""
     if os.path.exists(path) and not overwrite:
         print(f"Exists, skipping: {path}")
         return
@@ -83,6 +85,7 @@ def save_bytes(path: str, content: bytes, overwrite: bool = False) -> None:
     print(f"Wrote: {path}")
 
 def save_text(path: str, text: str, overwrite: bool = False) -> None:
+    """Write text to a file unless it exists (or overwrite)."""
     if os.path.exists(path) and not overwrite:
         print(f"Exists, skipping: {path}")
         return
@@ -91,14 +94,17 @@ def save_text(path: str, text: str, overwrite: bool = False) -> None:
     print(f"Wrote: {path}")
 
 def bbox_str() -> str:
+    """The bounding box as 'south,west,north,east' for Overpass."""
     s, w, n, e = BBOX
     return f"{s},{w},{n},{e}"
 
 def bbox_poly() -> Polygon:
+    """The bounding box as a polygon in longitude and latitude."""
     s, w, n, e = BBOX
     return Polygon([(w, s), (e, s), (e, n), (w, n)])
 
 def http_get_first_ok(urls: List[str], what: str) -> bytes:
+    """Bytes from the first URL that answers."""
     headers = {"User-Agent": "Mozilla/5.0 (IWT-Prep/1.0)"}
     last_err = None
     for url in urls:
@@ -114,6 +120,7 @@ def http_get_first_ok(urls: List[str], what: str) -> bytes:
     raise RuntimeError(f"All mirrors failed for {what}: {last_err}")
 
 def read_shp_from_zip_bytes(zip_bytes: bytes, shp_contains: str) -> gpd.GeoDataFrame:
+    """The shapefile whose name contains shp_contains from zip bytes, as a GeoDataFrame."""
     import tempfile
     with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
         with tempfile.TemporaryDirectory() as tmp:
@@ -130,6 +137,7 @@ def read_shp_from_zip_bytes(zip_bytes: bytes, shp_contains: str) -> gpd.GeoDataF
     return gdf
 
 def overpass_query(query: str) -> Dict:
+    """Run an Overpass query, trying each endpoint in turn; returns the JSON."""
     headers = {"User-Agent": "Mozilla/5.0 (IWT-Prep/1.0)"}
     last_err = None
     for ep in OVERPASS_ENDPOINTS:
@@ -142,6 +150,7 @@ def overpass_query(query: str) -> Dict:
     raise RuntimeError(f"Overpass failed on all endpoints: {last_err}")
 
 def elements_to_point_gdf(elements: List[Dict], feature_type: str) -> gpd.GeoDataFrame:
+    """Point features from Overpass elements, with tags."""
     rows = []
     for el in elements:
         t = el.get("type")
@@ -162,6 +171,7 @@ def elements_to_point_gdf(elements: List[Dict], feature_type: str) -> gpd.GeoDat
     return gpd.GeoDataFrame(rows, crs=4326) if rows else gpd.GeoDataFrame(columns=["name","feature_type","geometry","tags"], crs=4326)
 
 def elements_to_lines_gdf(elements: List[Dict], feature_type: str) -> gpd.GeoDataFrame:
+    """Line features from Overpass ways and relations, with tags."""
     rows = []
     for el in elements:
         if el.get("type") not in ("way", "relation"):
@@ -176,6 +186,7 @@ def elements_to_lines_gdf(elements: List[Dict], feature_type: str) -> gpd.GeoDat
     return gpd.GeoDataFrame(rows, crs=4326) if rows else gpd.GeoDataFrame(columns=["name","feature_type","geometry","tags"], crs=4326)
 
 def clip_to_bbox(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    """Features clipped to the bounding box."""
     if gdf.empty:
         return gdf
     poly = bbox_poly()
@@ -187,6 +198,7 @@ def clip_to_bbox(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
 # ------------------------------
 
 def fetch_natural_earth(manifest: dict) -> None:
+    """Download Natural Earth rivers and countries, clip them and record them in the manifest."""
     ne_dir = os.path.join(DATA_DIR, "natural_earth_raw")
     out_dir = os.path.join(DATA_DIR, "ne_filtered")
     ensure_dir(ne_dir); ensure_dir(out_dir)
@@ -224,6 +236,7 @@ def fetch_natural_earth(manifest: dict) -> None:
     manifest["ne_admin0_bbox"] = admin_path
 
 def fetch_overpass_layers(manifest: dict) -> None:
+    """Download OSM dams, reservoirs and canals with Overpass and record them in the manifest."""
     osm_dir = os.path.join(DATA_DIR, "osm")
     ensure_dir(osm_dir)
 
@@ -336,6 +349,7 @@ def fetch_overpass_layers(manifest: dict) -> None:
 # ------------------------------
 
 def main():
+    """Fetch every layer for the offline waterways map and write the manifest."""
     ensure_dir(DATA_DIR)
     manifest = {
         "bbox": {"south": BBOX[0], "west": BBOX[1], "north": BBOX[2], "east": BBOX[3]},

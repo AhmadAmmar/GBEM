@@ -1,3 +1,6 @@
+"""Join the London 2024 certificate samples to the OSM buildings containing them and write a GeoJSON.
+Early script (2025); superseded by epc/link.py.
+"""
 import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point

@@ -1,3 +1,6 @@
+"""Sample each satellite band raster at the London 2024 certificate points in parallel and write
+london_samples_2024.csv. Early feature-extraction script (2025).
+"""
 import pandas as pd
 import rasterio
 from multiprocessing import Pool, cpu_count

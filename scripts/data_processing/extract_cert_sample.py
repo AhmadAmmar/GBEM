@@ -1,3 +1,4 @@
+"""Stratified sample of the London certificates with at least 1,000 of each energy rating. Early script (2025)."""
 import pandas as pd
 
 # File paths

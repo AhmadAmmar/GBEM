@@ -1,3 +1,4 @@
+"""Print the geometry types of a London building shapefile (polygons only expected). Early inspection script (2025)."""
 import geopandas as gpd
 
 # Path to the shapefile

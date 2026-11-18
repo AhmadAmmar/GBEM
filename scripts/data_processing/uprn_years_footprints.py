@@ -21,6 +21,7 @@ PREFERRED_DATE_COLUMNS = [
 # ====================
 
 def canonical_uprn(val):
+    """UPRN as digits only (prefix and other characters removed), None if empty."""
     if pd.isna(val): return None
     s = str(val).strip().replace("UPRN-","").replace("uprn-","")
     s = re.sub(r"\D","", s)
@@ -29,6 +30,9 @@ def canonical_uprn(val):
     except ValueError: return None
 
 def detect_best_date_column(df: pd.DataFrame) -> str:
+    """The date-like column to count by: the one with the highest share of values that parse as dates (day first),
+    preferred names winning ties.
+    """
     cands = [c for c in df.columns if "date" in c.lower()]
     for p in PREFERRED_DATE_COLUMNS:
         if p in df.columns and p not in cands:

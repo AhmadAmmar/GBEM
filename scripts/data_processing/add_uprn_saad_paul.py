@@ -26,12 +26,14 @@ Y_CANDS = ["Y_COR","Y_COORD","YCOORD","Y","NORTHING","Y_COORDINATE","YCORD","LAT
 # -------------------------
 
 def sniff(p):
+    """First encoding in ENC that reads the file's first row."""
     for e in ENC:
         try: pd.read_csv(p, nrows=1, encoding=e); return e
         except UnicodeDecodeError: pass
     return "latin1"
 
 def find_col(cols, needles):
+    """First of the needle column names present in cols (case-insensitive), or None."""
     lut = {c.lower(): c for c in cols}
     for n in needles:
         if n.lower() in lut: return lut[n.lower()]
@@ -40,6 +42,7 @@ def find_col(cols, needles):
     return None
 
 def find_uprn_col(path, enc):
+    """The file's UPRN column: the first whose name contains 'uprn'."""
     cols = pd.read_csv(path, nrows=0, encoding=enc).columns
     for c in cols:
         if "uprn" in c.lower(): return c
@@ -53,7 +56,9 @@ def canonical_key(val):
     try: return str(int(s))
     except ValueError: return None
 
-def to_num(s): return pd.to_numeric(s, errors="coerce")
+def to_num(s):
+    """Numbers from a column, invalid values as NaN."""
+    return pd.to_numeric(s, errors="coerce")
 
 # ----- Load Paul -----
 enc_p = sniff(PAUL_CSV)

@@ -1,3 +1,4 @@
+"""Replace certificate points with their OSM building polygons (joined on osm_id) and write a GeoJSON. Early script (2025)."""
 import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point

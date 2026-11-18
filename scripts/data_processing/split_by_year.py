@@ -1,3 +1,4 @@
+"""Split certificate CSVs into one file per inspection year for the target years. Early script (2025)."""
 import pandas as pd
 import os
 

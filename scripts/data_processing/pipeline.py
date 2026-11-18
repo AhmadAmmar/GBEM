@@ -51,6 +51,7 @@ UUID_NAMESPACE = uuid.uuid5(uuid.NAMESPACE_URL, "https://ulster-epc-project/uid-
 
 # ---------- helpers ----------
 def canonical_uprn(v):
+    """UPRN as digits only (prefix and other characters removed), None if empty."""
     if pd.isna(v): return None
     s = str(v).strip().replace("UPRN-","").replace("uprn-","")
     s = re.sub(r"\D","", s)
@@ -59,6 +60,7 @@ def canonical_uprn(v):
     except ValueError: return None
 
 def parse_yes(val):
+    """True for yes-like values (y, yes, true, 1, top, top_storey)."""
     if pd.isna(val): return False
     s = str(val).strip().lower()
     return s in {"y","yes","true","t","1","top","top_storey"}
@@ -105,6 +107,7 @@ def nearest_polygon(epc_gdf: gpd.GeoDataFrame, foot_gdf: gpd.GeoDataFrame, poly_
     return res.reindex(epc_gdf.index)
 
 def write_shapefile_zipped(gdf: gpd.GeoDataFrame, out_dir: Path, out_zip: Path, layer="gee_epc_2024_polys"):
+    """Write a GeoDataFrame as a shapefile into out_dir (emptied first) and zip it to out_zip."""
     if out_dir.exists():
         for p in out_dir.glob("*"): p.unlink()
     else:
@@ -118,6 +121,7 @@ def write_shapefile_zipped(gdf: gpd.GeoDataFrame, out_dir: Path, out_zip: Path, 
     return shp, out_zip
 
 def build_uid(up, pid, lon, lat, dt):
+    """Stable id of a certificate point: UUID5 of UPRN, property id, coordinates (6 decimals) and date."""
     lon6 = round(lon, 6)
     lat6 = round(lat, 6)
     d = "nodate" if pd.isna(dt) else pd.Timestamp(dt).strftime("%Y%m%d")
@@ -128,6 +132,7 @@ def build_uid(up, pid, lon, lat, dt):
 # ---------- main pipeline ----------
 def main():
     # Footprints
+    """Build the Belfast 2024 certificate points and footprint polygons with ids for upload to Earth Engine."""
     foot = gpd.read_file(FOOT_SHP)
     if foot.crs is None:
         raise ValueError("Footprints CRS is missing; please define .prj.")

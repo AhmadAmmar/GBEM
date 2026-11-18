@@ -96,6 +96,7 @@ CURATED_IWT_SITES = [
 
 def add_river_with_glow(group, geom, color, label):
     # halo
+    """Draw a river on a folium layer with a white halo and a tooltip."""
     folium.GeoJson(
         geom.__geo_interface__,
         style_function=lambda _f: {"color": "#ffffff", "weight": 7, "opacity": 0.65}
@@ -109,7 +110,9 @@ def add_river_with_glow(group, geom, color, label):
     ).add_to(group)
 
 def add_line_label(group, geom, text):
+    """Write a label along each part of a line on a folium layer."""
     def add_one(ls: LineString):
+        """Label one LineString part."""
         coords = [(y, x) for x, y in list(ls.coords)]  # lon/lat -> lat/lon
         carrier = folium.PolyLine(locations=coords, opacity=0)
         group.add_child(carrier)
@@ -125,6 +128,7 @@ def add_line_label(group, geom, text):
             add_one(ls)
 
 def load_manifest(path: str) -> Dict:
+    """Read the JSON manifest of downloaded layers."""
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -147,6 +151,7 @@ kabul_lines_path= manifest.get("osm_kabul_lines")   # fallback
 
 # Load geodataframes (any missing file becomes empty gdf)
 def safe_read_geojson(p):
+    """A GeoDataFrame in EPSG:4326 if the file exists, else an empty one."""
     if p and os.path.exists(p):
         return gpd.read_file(p).to_crs(4326)
     return gpd.GeoDataFrame(geometry=[], crs=4326)

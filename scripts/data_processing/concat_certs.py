@@ -1,3 +1,6 @@
+"""Concatenate every certificates.csv of the England and Wales bulk download into merged_certificates.csv.
+Early data-preparation script (2025); the pipeline now reads the register with DuckDB (epc/certificates.py).
+"""
 import geopandas as gpd
 import pandas as pd
 import dask_geopandas as dgpd

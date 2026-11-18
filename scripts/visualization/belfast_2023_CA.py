@@ -58,6 +58,7 @@ EPC_CRS_CANDIDATES = ["EPSG:29902", "EPSG:27700", "EPSG:2157"]
 
 # ────────────────────── HELPERS ──────────────────────
 def sniff_encoding(path: Path) -> str:
+    """First encoding in CANDIDATE_ENCODINGS that reads the file's first row."""
     for enc in CANDIDATE_ENCODINGS:
         try:
             pd.read_csv(path, nrows=1, encoding=enc)

@@ -1,3 +1,4 @@
+"""Index rasters and SAR texture rasters from single-band GeoTIFFs in a folder. Early script (2025)."""
 import os
 import numpy as np
 import rasterio
@@ -11,6 +12,7 @@ base_folder = r"D:\OneDrive - Ulster University\PhD\data\london\Sat"
 
 # === Helpers ===
 def read_band(name):
+    """One band GeoTIFF from the folder as float32, and its profile."""
     path = os.path.join(base_folder, f"{name}.tif")
     with rasterio.open(path) as src:
         data = src.read(1).astype("float32")
@@ -18,6 +20,7 @@ def read_band(name):
     return data, profile
 
 def write_raster(data, profile, name):
+    """Write an array as an LZW-compressed float32 GeoTIFF in the folder."""
     out_path = os.path.join(base_folder, f"{name}.tif")
     profile.update(dtype='float32', count=1, compress='lzw')
     with rasterio.open(out_path, 'w', **profile) as dst:
@@ -25,6 +28,7 @@ def write_raster(data, profile, name):
     print(f"✅ Saved: {name}.tif")
 
 def safe_div(numer, denom):
+    """Division with NaN where the result is not finite."""
     with np.errstate(divide='ignore', invalid='ignore'):
         result = np.true_divide(numer, denom)
         result[~np.isfinite(result)] = np.nan
@@ -90,6 +94,7 @@ for name, arr in indices.items():
 
 # === SAR Texture Metrics ===
 def compute_texture_metrics(band, name_prefix, profile, window=5):
+    """Grey-level co-occurrence texture rasters (Haralick measures) of a SAR band in a moving window."""
     print(f"📊 Computing SAR texture metrics for {name_prefix}...")
 
     band_scaled = np.nan_to_num(img_as_ubyte(safe_div(band, np.nanmax(band))))

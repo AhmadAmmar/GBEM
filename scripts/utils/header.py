@@ -1,3 +1,4 @@
+"""Write the first five rows of the merged certificates file to first_five_rows.csv. Early inspection script (2025)."""
 import pandas as pd
 
 # Path to the merged certificates file

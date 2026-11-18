@@ -1,3 +1,6 @@
+"""Drop address, UPRN, date and administrative columns from the merged certificates to make
+reduced_merged_certificates.csv. Early data-preparation script (2025).
+"""
 import pandas as pd
 
 # Paths to the input and output files

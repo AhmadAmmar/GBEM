@@ -1,3 +1,4 @@
+"""Print the unique values of one column of reduced_merged_certificates.csv, read in chunks. Early inspection script (2025)."""
 import pandas as pd
 
 # File path

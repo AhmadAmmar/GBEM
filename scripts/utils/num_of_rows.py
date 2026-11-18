@@ -1,3 +1,4 @@
+"""Print the number of buildings in filtered_buildings.fgb. Early inspection script (2025)."""
 import fiona
 
 # File path to the filtered buildings file

@@ -1,3 +1,6 @@
+"""Print the number of fields in the first and last three rows of the merged certificates file, to find malformed
+rows. Early inspection script (2025).
+"""
 import pandas as pd
 import os
 

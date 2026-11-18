@@ -1,3 +1,4 @@
+"""Unique values of the county column of reduced_merged_certificates.csv, in chunks, written to a CSV. Early script (2025)."""
 import pandas as pd
 
 # File paths

@@ -1,3 +1,4 @@
+"""Split a multi-band Sentinel-2 GeoTIFF into one file per band. Early script (2025)."""
 import rasterio
 import os
 

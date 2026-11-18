@@ -1,3 +1,6 @@
+"""Correlation of each satellite band and index with the binary energy label in the London 2024 samples, sorted
+by absolute value. Early analysis script (2025); superseded by the models/ pipeline.
+"""
 import pandas as pd
 from scipy.stats import pearsonr
 

@@ -1,3 +1,4 @@
+"""Count all rows and rows with a UPRN across the England and Wales bulk download. Early inspection script (2025)."""
 import os
 import pandas as pd
 from tqdm import tqdm

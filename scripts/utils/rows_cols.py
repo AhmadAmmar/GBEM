@@ -1,3 +1,4 @@
+"""Print the number of rows and the columns of the London 2024 certificate GeoJSON. Early inspection script (2025)."""
 import geopandas as gpd
 
 # Path to your matched EPC GeoJSON

@@ -67,12 +67,14 @@ def find_newest_panel_parquet(outroot: str) -> Optional[str]:
     return max(panels, key=os.path.getmtime)
 
 def find_col(cols: List[str], cands: List[str]) -> Optional[str]:
+    """First of the candidate column names present (case-insensitive), or None."""
     low = {c.lower(): c for c in cols}
     for k in cands:
         if k.lower() in low: return low[k.lower()]
     return None
 
 def normalize_epc(x) -> Optional[str]:
+    """Band letter A-G from a letter or text, else None."""
     if pd.isna(x): return None
     s = str(x).strip().upper()
     if s in EPC_TO_IDX: return s

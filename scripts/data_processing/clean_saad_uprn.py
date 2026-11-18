@@ -12,12 +12,14 @@ ENC = ("utf-8","utf-8-sig","cp1252","latin1")
 UPRN_MINLEN, UPRN_MAXLEN = 9, 12
 
 def sniff(p):
+    """First encoding in ENC that reads the file's first row."""
     for e in ENC:
         try: pd.read_csv(p, nrows=1, encoding=e); return e
         except UnicodeDecodeError: pass
     return "latin1"
 
 def find_col(cols, needles):
+    """First of the needle column names present in cols (case-insensitive), or None."""
     lut = {c.lower(): c for c in cols}
     for n in needles:
         if n.lower() in lut: return lut[n.lower()]
@@ -26,12 +28,14 @@ def find_col(cols, needles):
     return None
 
 def find_uprn_col(path, enc):
+    """The file's UPRN column: the first whose name contains 'uprn'."""
     cols = pd.read_csv(path, nrows=0, encoding=enc).columns
     for c in cols:
         if "uprn" in c.lower(): return c
     raise ValueError(f"No UPRN-like column in {path}")
 
 def clean_uprn(s: str) -> str | None:
+    """UPRN as digits only: Excel's leading apostrophe, decimals and scientific notation removed; None if empty."""
     if pd.isna(s): return None
     s = str(s).strip()
     # strip leading apostrophe Excel adds to force Text
@@ -44,6 +48,7 @@ def clean_uprn(s: str) -> str | None:
     return s or None
 
 def canonical_key(digits: str) -> str | None:
+    """UPRN digits as an integer string (leading zeros dropped) for joining; None if not a number."""
     if not digits: return None
     try: return str(int(digits))   # drops leading zeros for joining
     except ValueError: return None

@@ -1,3 +1,6 @@
+"""Write the first 11 rows of the London 2024 certificates with calculated indices to a CSV, as a sample.
+Early inspection script (2025).
+"""
 import geopandas as gpd
 
 # === File Paths ===

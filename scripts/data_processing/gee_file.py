@@ -1,3 +1,6 @@
+"""Slim the London 2024 certificate polygons to the columns needed and write a GeoJSON for upload to Earth
+Engine. Early script (2025).
+"""
 import geopandas as gpd
 
 # === Input file (with polygon geometry and lat/lon columns) ===

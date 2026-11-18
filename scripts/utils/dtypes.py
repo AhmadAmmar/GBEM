@@ -1,3 +1,6 @@
+"""Infer the data type of every column of reduced_merged_certificates.csv and write them to column_datatypes.csv.
+Early inspection script (2025).
+"""
 import pandas as pd
 
 # File paths

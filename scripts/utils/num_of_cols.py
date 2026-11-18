@@ -1,3 +1,6 @@
+"""Print the number of columns of each certificates.csv in the England and Wales bulk download.
+Early inspection script (2025).
+"""
 import os
 import pandas as pd
 from tqdm import tqdm

@@ -1,3 +1,4 @@
+"""Print the minimum and maximum of every raster or image in a HotSat scene folder. Early inspection script (2025)."""
 import os
 import numpy as np
 import rasterio

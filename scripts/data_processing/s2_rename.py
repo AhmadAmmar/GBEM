@@ -1,3 +1,4 @@
+"""Copy Sentinel-2 band files with standard band names. Early script (2025)."""
 import os
 import shutil
 

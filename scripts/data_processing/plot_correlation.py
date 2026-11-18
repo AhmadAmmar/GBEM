@@ -1,3 +1,4 @@
+"""Scatter plots of energy efficiency against each satellite band, saved per band. Early analysis script (2025)."""
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns

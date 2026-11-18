@@ -1,3 +1,6 @@
+"""Minimal files for Earth Engine upload: points (uid, lon, lat) as CSV and polygons (uid, geometry) as a zipped
+shapefile. Early script (2025).
+"""
 # slim_for_gee.py
 # Make minimal GEE uploadables:
 # - Points: uid, lon, lat (CSV)

@@ -1,3 +1,4 @@
+"""Check which Belfast certificate UPRNs appear in OS Open UPRN. Early script (2025)."""
 # pip install pandas
 import pandas as pd
 import re
@@ -14,6 +15,7 @@ CHUNK_SIZE = 200_000  # adjust if needed
 # -------------------------------------------
 
 def find_uprn_col(path, candidates=("uprn", "primary_uprn", "uprn_key")):
+    """The file's UPRN column: any containing 'uprn', else one of the common names."""
     cols = pd.read_csv(path, nrows=0).columns
     # Prefer any column whose name contains 'uprn'
     uprn_like = [c for c in cols if "uprn" in c.lower()]

@@ -1,3 +1,4 @@
+"""As rf_predict_geojson.py, with each row tagged as training or test. Early modelling script (2025)."""
 import geopandas as gpd
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier

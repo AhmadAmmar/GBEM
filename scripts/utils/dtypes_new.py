@@ -1,3 +1,6 @@
+"""Infer column data types of reduced_merged_certificates.csv in chunks of 100,000 rows and write
+column_data_types_new.csv. Early inspection script (2025).
+"""
 import pandas as pd
 
 # File paths

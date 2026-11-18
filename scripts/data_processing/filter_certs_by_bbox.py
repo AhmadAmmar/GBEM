@@ -1,3 +1,4 @@
+"""Keep the certificates inside the bounding box of a HotSat-1 scene, read in chunks. Early script (2025)."""
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import Point, box
@@ -50,6 +51,7 @@ columns_to_export = [
 # Function to process each chunk and filter rows within the bbox
 def filter_chunk(chunk, bbox_polygon):
     # Filter out rows with missing LATITUDE/LONGITUDE values
+    """Rows of a chunk with coordinates inside the bounding polygon."""
     chunk = chunk.dropna(subset=["LATITUDE", "LONGITUDE"])
     # Create a geometry column from the LATITUDE and LONGITUDE columns
     chunk['geometry'] = [Point(xy) for xy in zip(chunk["LONGITUDE"], chunk["LATITUDE"])]

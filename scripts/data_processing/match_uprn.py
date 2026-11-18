@@ -1,3 +1,4 @@
+"""Fill certificate latitude and longitude from OS Open UPRN in every certificates.csv. Early script (2025)."""
 import geopandas as gpd
 import pandas as pd
 import dask_geopandas as dgpd
@@ -18,6 +19,7 @@ uprn_data = uprn_data.set_index("UPRN")  # Set UPRN as the index for faster look
 # Function to update LATITUDE and LONGITUDE in certificates.csv files
 def update_certificates_file(file_path):
     # Load the certificates.csv file
+    """Add coordinates from the UPRN table to one certificates.csv and save it in place."""
     certificates = pd.read_csv(file_path)
 
     # Check if UPRN column exists

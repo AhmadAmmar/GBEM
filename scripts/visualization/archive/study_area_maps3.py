@@ -119,9 +119,11 @@ def read_any(path, layer=None, crs=None):
     return gdf
 
 def to_wgs84(gdf):
+    """The layer in EPSG:4326 (assumed WGS 84 when it has no CRS)."""
     return gdf.set_crs(4326) if gdf.crs is None else gdf.to_crs(4326)
 
 def guess_xy_cols(df):
+    """Longitude/x and latitude/y column names of a table, found by name patterns."""
     import re
     rx_x = re.compile(r"(?:^|_)(lon|long|longitude|x|east|easting)\b", re.I)
     rx_y = re.compile(r"(?:^|_)(lat|latitude|y|north|northing)\b", re.I)
@@ -130,6 +132,7 @@ def guess_xy_cols(df):
     return x, y
 
 def numeric_to_letter(score):
+    """Energy band from a SAP score (A 92+, B 81-91, C 69-80, D 55-68, E 39-54, F 21-38, G 1-20); 'UNK' if not a number."""
     try:
         s = float(score)
     except Exception:
@@ -144,6 +147,9 @@ def numeric_to_letter(score):
     return "UNK"
 
 def normalise_epc(df):
+    """Table with the rating as one upper-case letter, from the rating column, a column named like RATING, or a SAP
+    score column converted with numeric_to_letter().
+    """
     cols = {c.upper(): c for c in df.columns}
     out = df.copy()
     if EPC_COL in out.columns:
@@ -163,6 +169,7 @@ def normalise_epc(df):
     return out
 
 def ensure_points(gdf):
+    """Point geometry for every feature (representative points of polygons); empty geometries dropped."""
     if gdf.empty: return gdf
     g = gdf.loc[gdf.geometry.notna() & ~gdf.geometry.is_empty].copy()
     try:
@@ -192,6 +199,7 @@ def thin_points_grid(gdf, cellsize, max_per_cell, seed):
     return g.iloc[keep].drop(columns=["_cell"])
 
 def clip_safe(points, boundary, use_sjoin=True):
+    """Points within the boundary, by spatial join (or overlay); the points unchanged if both fail."""
     try:
         if use_sjoin:
             boundary = boundary[["geometry"]].copy(); boundary["__one"]=1
@@ -204,6 +212,7 @@ def clip_safe(points, boundary, use_sjoin=True):
         return gpd.overlay(points, b[["geometry"]], how="intersection")
 
 def maybe_jitter_points(pts, jitter_m, seed=SEED):
+    """Points moved by a random offset of up to jitter_m metres in x and y (for privacy on maps); unchanged if 0."""
     if jitter_m and jitter_m>0:
         rngx=np.random.default_rng(seed); rngy=np.random.default_rng(seed+1)
         x=pts.geometry.x.values + rngx.normal(0,jitter_m,len(pts))
@@ -213,11 +222,13 @@ def maybe_jitter_points(pts, jitter_m, seed=SEED):
     return pts
 
 def rating_counts(pts):
+    """Number of points of each band A-G, unknown, and the total."""
     out={k:int((pts[EPC_COL]==k).sum()) for k in EPC_ORDER}
     out["UNK"]=int((pts[EPC_COL]=="UNK").sum()); out["_total"]=int(len(pts))
     return out
 
 def proportional_target_counts(counts_dict, N):
+    """Integer counts per band summing to N, proportional to the observed counts (largest remainders get the extra)."""
     tot = max(int(counts_dict.get("_total", 0)), 1)
     wanted, frac = {}, {}; base_sum = 0
     for k in EPC_ALL:
@@ -232,6 +243,7 @@ def proportional_target_counts(counts_dict, N):
     return wanted
 
 def stratified_sample(thin_gdf, target_by_class, seed=SEED):
+    """Random sample of points with the target count of each band (fewer if a band has fewer points)."""
     rng = np.random.default_rng(seed)
     chosen = []; chosen_set=set()
     for k in EPC_ALL:
@@ -260,16 +272,22 @@ def stratified_sample(thin_gdf, target_by_class, seed=SEED):
     return thin_gdf.loc[chosen].copy()
 
 def choose_scalebar_km(ax, target_frac=0.18):
+    """A round scale-bar length (km) about target_frac of the map width."""
     xmin, xmax = ax.get_xlim(); width_m = xmax - xmin
     desired = width_m * target_frac / 1000.0
     nice = [0.2, 0.5, 1, 2, 3, 5, 10, 20, 30]
     cand = [v for v in nice if v <= desired]
     return cand[-1] if cand else nice[0]
 
-def fmt_lon(lon, dec=2): return f"{abs(lon):.{dec}f}°{'E' if lon>=0 else 'W'}"
-def fmt_lat(lat, dec=2): return f"{abs(lat):.{dec}f}°{'N' if lat>=0 else 'S'}"
+def fmt_lon(lon, dec=2):
+    """Longitude as text with E or W."""
+    return f"{abs(lon):.{dec}f}°{'E' if lon>=0 else 'W'}"
+def fmt_lat(lat, dec=2):
+    """Latitude as text with N or S."""
+    return f"{abs(lat):.{dec}f}°{'N' if lat>=0 else 'S'}"
 
 def north_arrow(ax, x=0.05, y=0.90, size=11):
+    """Draw a north arrow with 'N' at (x, y) in axes coordinates."""
     ax.annotate("", xy=(x, y), xytext=(x, y-0.06),
                 xycoords="axes fraction", textcoords="axes fraction",
                 arrowprops=dict(arrowstyle="-|>", linewidth=1.2, color=TEXT))
@@ -279,6 +297,7 @@ def north_arrow(ax, x=0.05, y=0.90, size=11):
 # ───────── scalebar with *figure*-aligned y (perfect cross-panel line) ─────────
 def add_scalebar_segmented(ax, total_km=None, segments=2,
                            x_left_frac=0.05, fig=None, y_fig=None, y_axes_frac=0.08):
+    """Draw a scale bar of total_km in alternating black and white segments, with labels."""
     if total_km is None: total_km = choose_scalebar_km(ax)
     Lm = total_km * 1000.0
     seg = Lm / segments
@@ -316,6 +335,7 @@ def add_scalebar_segmented(ax, total_km=None, segments=2,
 
 # ─────────── Helpers for inset data (no fragile bool masks) ───────────
 def _clip_to_bbox(g, xmin, xmax, ymin, ymax):
+    """Features clipped to a box (overlay, falling back to the clip function)."""
     bbox = gpd.GeoDataFrame(geometry=[shp_box(xmin, ymin, xmax, ymax)], crs=4326)
     try:
         return g.overlay(bbox, how="intersection")
@@ -460,18 +480,21 @@ def locator_inset(ax, boundary_proj, loc_box=(0.72, 0.06, 0.24, 0.24)):
 
 # ─────────────────────────── Graticule ───────────────────────────
 def nice_step(span, max_labels=5):
+    """A round graticule step (degrees) giving at most max_labels lines over span."""
     if span <= 0: return 1.0
     raw = span / max(2, max_labels)
     nice = np.array([0.05, 0.1, 0.2, 0.5, 1.0, 2.0])
     return float(nice[np.searchsorted(nice, raw)])
 
 def label_decimals(step):
+    """Decimals to print graticule labels with for a step."""
     if step < 0.11: return 2
     if step < 0.55: return 1
     return 0
 
 def add_graticule(ax, boundary_proj, target_crs,
                   alpha=GRAT_ALPHA, lw=GRAT_LW, style=GRAT_STYLE, labels=GRAT_LABELS):
+    """Latitude and longitude lines and labels over the study area, drawn in the map's CRS."""
     b_wgs = boundary_proj.to_crs(4326)
     xmin, ymin, xmax, ymax = b_wgs.total_bounds
     lon_step = nice_step(xmax - xmin, max_labels=MAX_LONG_LABELS)
@@ -537,6 +560,7 @@ def load_belfast_points_wgs84():
 
 # ───────────────────────── Panel plotting ─────────────────────────
 def _padded_extent(bounds, pad_frac):
+    """Bounds enlarged by pad_frac of their width and height on each side."""
     x0,y0,x1,y1 = bounds
     dx=(x1-x0)*pad_frac; dy=(y1-y0)*pad_frac
     return (x0-dx, y0-dy, x1+dx, y1+dy)

@@ -1,3 +1,4 @@
+"""Random forests for the rating targets with 1 to 100 trees on chosen features, to pick a size. Early modelling script (2025)."""
 import geopandas as gpd
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier

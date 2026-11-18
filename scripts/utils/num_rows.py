@@ -11,6 +11,7 @@ folder_path = r"D:\OneDrive - Ulster University\PhD\data"
 extensions = ['.parquet', '.pkl', '.fgb', '.pbf', '.json', '.geojson', '.csv', '.gpkg']
 
 def get_row_count(filepath, ext):
+    """Number of data rows of a CSV, Excel, JSON or GeoJSON file by its extension; None with a message on failure."""
     try:
         if ext == '.csv':
             return sum(1 for _ in open(filepath, encoding='utf-8')) - 1  # subtract header

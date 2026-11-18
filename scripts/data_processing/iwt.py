@@ -136,10 +136,12 @@ CURATED_IWT_SITES = [
 # ------------------------------
 
 def bbox_str() -> str:
+    """The bounding box as 'south,west,north,east' for Overpass."""
     s, w, n, e = BBOX  # Overpass expects south,west,north,east
     return f"{s},{w},{n},{e}"
 
 def _download_zip(urls: List[str], local_path: str = "", what: str = "") -> bytes:
+    """Bytes of a zip from a local copy, else the first URL that answers."""
     import os
     if local_path and os.path.exists(local_path):
         print(f"Loading {what} (local): {local_path}")
@@ -162,6 +164,7 @@ def _download_zip(urls: List[str], local_path: str = "", what: str = "") -> byte
     raise RuntimeError(f"{what} download failed from all mirrors. Last error: {last_err}")
 
 def _read_shp_from_zip_bytes(zip_bytes: bytes, shp_contains: str) -> gpd.GeoDataFrame:
+    """The shapefile whose name contains shp_contains from zip bytes, as a GeoDataFrame."""
     import tempfile, os
     with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
         with tempfile.TemporaryDirectory() as tmp:
@@ -178,6 +181,7 @@ def _read_shp_from_zip_bytes(zip_bytes: bytes, shp_contains: str) -> gpd.GeoData
     return gdf
 
 def download_and_read_ne_rivers() -> gpd.GeoDataFrame:
+    """Natural Earth river centrelines clipped to the bounding box."""
     content = _download_zip(NE_RIVERS_URLS, LOCAL_NE_RIVERS_ZIP, "Natural Earth rivers")
     gdf = _read_shp_from_zip_bytes(content, "rivers_lake_centerlines")
     south, west, north, east = BBOX
@@ -193,6 +197,7 @@ def download_and_read_ne_rivers() -> gpd.GeoDataFrame:
     return gdf[["name", "geometry"]]
 
 def download_and_read_ne_admin0() -> gpd.GeoDataFrame:
+    """Natural Earth country outlines clipped to the bounding box."""
     content = _download_zip(NE_ADMIN0_URLS, LOCAL_NE_ADMIN0_ZIP, "NE Admin-0 countries")
     gdf = _read_shp_from_zip_bytes(content, "admin_0_countries")
     south, west, north, east = BBOX
@@ -202,6 +207,7 @@ def download_and_read_ne_admin0() -> gpd.GeoDataFrame:
     return gdf[["ADMIN", "geometry"]]
 
 def overpass_query(query: str) -> Dict:
+    """Run an Overpass query, trying each endpoint in turn; returns the JSON."""
     last_err = None
     for ep in OVERPASS_ENDPOINTS:
         try:
@@ -215,6 +221,7 @@ def overpass_query(query: str) -> Dict:
     raise RuntimeError(f"All Overpass endpoints failed. Last error: {last_err}")
 
 def elements_to_point_gdf(elements: List[Dict], feature_type: str) -> gpd.GeoDataFrame:
+    """Point features (nodes, and centres of ways) from Overpass elements, with tags."""
     rows = []
     for el in elements:
         osm_type = el.get("type")
@@ -246,6 +253,7 @@ def elements_to_point_gdf(elements: List[Dict], feature_type: str) -> gpd.GeoDat
     )
 
 def elements_to_lines_gdf(elements: List[Dict], feature_type: str) -> gpd.GeoDataFrame:
+    """Line features from Overpass ways and relations, with tags."""
     rows = []
     for el in elements:
         if el.get("type") not in ("way", "relation"):
@@ -264,6 +272,7 @@ def elements_to_lines_gdf(elements: List[Dict], feature_type: str) -> gpd.GeoDat
 # Pretty rivers
 def add_river_with_glow(group, geom, color, label):
     # white halo
+    """Draw a river on a folium layer with a white halo and a tooltip."""
     folium.GeoJson(
         geom.__geo_interface__,
         style_function=lambda _f: {"color": "#ffffff", "weight": 7, "opacity": 0.65}
@@ -277,7 +286,9 @@ def add_river_with_glow(group, geom, color, label):
     ).add_to(group)
 
 def add_line_label(group, geom, text):
+    """Write a label along each part of a line on a folium layer."""
     def add_one(ls: LineString):
+        """Label one LineString part."""
         coords = [(y, x) for x, y in list(ls.coords)]  # lon/lat -> lat/lon
         pl = folium.PolyLine(locations=coords, opacity=0)
         group.add_child(pl)

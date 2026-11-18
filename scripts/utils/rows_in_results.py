@@ -79,6 +79,7 @@ def count_rows(path: Path):
         return None, f"ERROR: {e}"
 
 def exists(path: Path) -> bool:
+    """True if the path exists; False instead of an error for unreadable paths."""
     try:
         return path.exists()
     except Exception:
@@ -106,6 +107,7 @@ REF_POLY = r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_wit
 REF_PRED = r"D:\OneDrive - Ulster University\PhD\data\london\london_2024_epc_predictions.geojson"
 
 def _get_ref_count(summary_df: pd.DataFrame, path: str):
+    """Reference row count of a file from an earlier summary table, or None."""
     row = summary_df.loc[summary_df["file"].str.lower() == Path(path).as_posix().lower()]
     if not row.empty and pd.notna(row.iloc[0]["row_count"]):
         try:

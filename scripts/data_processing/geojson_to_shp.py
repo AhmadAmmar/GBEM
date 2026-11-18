@@ -1,3 +1,4 @@
+"""Convert a GeoJSON to an ESRI shapefile folder. Early script (2025)."""
 import geopandas as gpd
 
 # Load your GeoJSON

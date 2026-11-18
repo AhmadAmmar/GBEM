@@ -1,3 +1,6 @@
+"""Add an id column to the London 2024 certificate GeoJSON and write a full copy and a light copy for Earth
+Engine. Early script (2025).
+"""
 import geopandas as gpd
 
 # === File Paths ===

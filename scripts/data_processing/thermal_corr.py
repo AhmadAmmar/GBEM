@@ -1,3 +1,4 @@
+"""Sample a HotSat thermal image at Belfast certificate points and correlate with the ratings. Early script (2025)."""
 import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point

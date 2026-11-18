@@ -1,3 +1,4 @@
+"""As stats.py, also writing the unique values of each column to a separate file. Early inspection script (2025)."""
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
@@ -9,6 +10,7 @@ unique_values_output = "D:/OneDrive - Ulster University/PhD/data/column_unique_v
 
 # Function to calculate stats for numeric data across chunks
 def update_numeric_stats(chunk, stats):
+    """Update running minimum, maximum, sum, count and kept values with one chunk."""
     chunk = chunk.dropna()
     stats["Min"] = min(stats["Min"], chunk.min()) if stats["Min"] is not None else chunk.min()
     stats["Max"] = max(stats["Max"], chunk.max()) if stats["Max"] is not None else chunk.max()
@@ -18,6 +20,7 @@ def update_numeric_stats(chunk, stats):
 
 # Function to finalize numeric stats
 def finalize_numeric_stats(stats):
+    """Mean and median from the running totals."""
     if stats["Count"] > 0:
         stats["Mean"] = stats["Sum"] / stats["Count"]
         stats["Median"] = np.median(stats["Values"])

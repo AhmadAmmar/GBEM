@@ -1,3 +1,6 @@
+"""Spectral indices (NDVI, NDBI, UI and others) from the Sentinel-2 band samples of the London 2024
+certificates. Early script (2025); indices now come from gee/extract.py and research_helpers.indices.
+"""
 import pandas as pd
 import numpy as np
 

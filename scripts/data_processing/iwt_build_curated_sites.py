@@ -1,3 +1,6 @@
+"""Curated list of water structures (dams, barrages, headworks) for the waterways map: OSM features near rivers,
+named, classified and de-duplicated. Side project kept with the early scripts.
+"""
 from __future__ import annotations
 import os, json, re, warnings
 from typing import Dict, List, Tuple
@@ -11,7 +14,9 @@ from shapely.ops import unary_union
 try:
     from unidecode import unidecode
 except Exception:
-    def unidecode(x): return x
+    def unidecode(x):
+        """Fallback when the unidecode package is missing: text unchanged."""
+        return x
 
 try:
     from rapidfuzz.fuzz import token_set_ratio
@@ -32,6 +37,7 @@ os.makedirs(OUT_DIR, exist_ok=True)
 # Load
 # -------------------------
 def safe_read(p):
+    """A GeoDataFrame in EPSG:4326 if the file exists, else an empty one."""
     if p and os.path.exists(p):
         return gpd.read_file(p).to_crs(4326)
     return gpd.GeoDataFrame(geometry=[], crs=4326)
@@ -64,6 +70,7 @@ NEG_KEYS = {"road","rd","bridge","flyover","service area","office","authority","
 NAME_CLEAN_RX = re.compile(r"\b(dam|barrage|head\s*works?|weir|hydel|power\s*(station|plant)?|project|reservoir)\b", re.I)
 
 def parse_tags(val) -> Dict:
+    """OSM tags as a dict from a dict or JSON text; empty if neither."""
     if isinstance(val, dict): return val
     if isinstance(val, str):
         try: return json.loads(val)
@@ -72,6 +79,7 @@ def parse_tags(val) -> Dict:
 
 def best_name(tags: Dict, fallback: str) -> str:
     # try English/romanized first
+    """Best English or romanised name from the tags, else the fallback."""
     for k in ("name:en","official_name:en","alt_name:en","short_name:en","int_name"):
         if tags.get(k): return str(tags[k])
     # then generic name/official/alt
@@ -80,6 +88,7 @@ def best_name(tags: Dict, fallback: str) -> str:
     return fallback or ""
 
 def normalize_name(n: str) -> str:
+    """Name transliterated, lower case, with generic words and punctuation removed, for grouping."""
     if not n: return ""
     n = unidecode(n)  # transliterate Urdu/Arabic etc.
     n = NAME_CLEAN_RX.sub("", n.lower())
@@ -88,6 +97,7 @@ def normalize_name(n: str) -> str:
     return n
 
 def looks_positive(name: str, tags: Dict) -> bool:
+    """True if the name or tags mark a water structure of interest (dam, barrage, headworks)."""
     nlow = (unidecode(name) or "").lower()
     if any(k in nlow for k in POS_KEYS): return True
     if tags.get("dam:type") == "barrage": return True
@@ -97,6 +107,7 @@ def looks_positive(name: str, tags: Dict) -> bool:
     return False
 
 def looks_noise(name: str, tags: Dict) -> bool:
+    """True if the name or tags mark something to drop (roads and similar)."""
     nlow = (unidecode(name) or "").lower()
     if any(k in nlow for k in NEG_KEYS): return True
     if tags.get("highway"): return True
@@ -107,6 +118,7 @@ def looks_noise(name: str, tags: Dict) -> bool:
 # Build a water buffer (5 km) to keep only near-water features
 # -------------------------
 def build_water_buffer(meters=5000):
+    """Union of rivers, reservoir lines and the Kabul fallback, buffered by `meters`."""
     pieces = []
     for g in (ne_riv, res_lines, kabul_fb):
         if len(g) > 0: pieces.append(g)
@@ -152,6 +164,7 @@ if df.empty:
 # Deduplicate by name + proximity
 # -------------------------
 def classify_kind(name: str, tags: Dict) -> str:
+    """Kind of structure from name and tags: barrage or headworks, dam, and so on."""
     n = (unidecode(name) or "").lower()
     if tags.get("dam:type") == "barrage" or "barrage" in n or "headworks" in n or "head works" in n:
         return "Barrage/Headworks"
@@ -164,6 +177,7 @@ def classify_kind(name: str, tags: Dict) -> str:
     return "Dam/Weir/Barrage"
 
 def feature_score(tags: Dict, osm_type: str, kind: str) -> int:
+    """Score for choosing among duplicates: kind, tags and OSM type."""
     s = 0
     if kind == "Barrage/Headworks": s += 12
     if kind == "Dam": s += 10
@@ -177,6 +191,7 @@ def feature_score(tags: Dict, osm_type: str, kind: str) -> int:
 
 def groups_by_name(df: gpd.GeoDataFrame) -> Dict[str, pd.Index]:
     # normalized (transliterated) names for grouping
+    """Row indices grouped by normalised name."""
     norm = df["name_best"].apply(normalize_name)
     # Fallback: if empty after normalization, fall back to original transliterated
     norm = norm.mask(norm == "", df["name_best"].apply(lambda x: unidecode(x).lower()))
@@ -193,6 +208,7 @@ def groups_by_name(df: gpd.GeoDataFrame) -> Dict[str, pd.Index]:
     return {k: v.index for k, v in df.groupby("norm_name")}
 
 def dedupe(df0: gpd.GeoDataFrame, distance_m=800) -> gpd.GeoDataFrame:
+    """One feature per structure: features of the same name within distance_m metres merged, the best score kept."""
     if df0.empty: return df0
     df0 = df0.copy()
     df0["kind"] = [classify_kind(n, t) for n, t in zip(df0["name_best"], df0["tags_dict"])]

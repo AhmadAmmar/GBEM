@@ -1,3 +1,4 @@
+"""Divide Sentinel-2 band rasters by 10,000 (digital numbers to reflectance) into a new folder. Early script (2025)."""
 import os
 import rasterio
 from rasterio.enums import Resampling

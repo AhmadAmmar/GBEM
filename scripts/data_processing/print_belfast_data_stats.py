@@ -41,6 +41,7 @@ CANDIDATE_ENCODINGS = ("utf-8", "utf-8-sig", "cp1252", "latin1")
 # ===================================
 
 def sniff_encoding(path: str) -> str:
+    """First encoding in CANDIDATE_ENCODINGS that reads the file's first row."""
     for enc in CANDIDATE_ENCODINGS:
         try:
             pd.read_csv(path, nrows=1, encoding=enc)
@@ -50,6 +51,7 @@ def sniff_encoding(path: str) -> str:
     return "latin1"
 
 def find_uprn_col(path: str, encoding: str) -> str:
+    """The file's UPRN column: the first whose name contains 'uprn'."""
     cols = pd.read_csv(path, nrows=0, encoding=encoding).columns
     for c in cols:
         if "uprn" in c.lower():
@@ -75,7 +77,9 @@ def canonical_uprn(val):
     except ValueError:
         return None
 
-def pretty(n): return f"{n:,}"
+def pretty(n):
+    """An integer with thousands separators."""
+    return f"{n:,}"
 
 # ---------- EPC: row-level & unique ----------
 epc_enc = sniff_encoding(EPC_CSV)

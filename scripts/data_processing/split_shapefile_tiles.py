@@ -1,3 +1,4 @@
+"""Split a shapefile into four tiles and zip each, for upload size limits. Early script (2025)."""
 import geopandas as gpd
 import shutil
 import os

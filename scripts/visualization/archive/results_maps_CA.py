@@ -83,17 +83,21 @@ ERR_COLORS  = {"Correct":"#4daf4a","Off-by-1":"#ffb74d","Off-by-2+":"#e41a1c"}
 
 # ───────── Utilities ─────────
 def log(path: str, label: str):
+    """Print a label and an absolute path."""
     print(f"[{label}] {os.path.abspath(path)}")
 
 def now_stamp():
+    """Current time as YYYYMMDD_HHMM."""
     return datetime.now().strftime("%Y%m%d_%H%M")
 
 def file_fingerprint(path: str) -> str:
+    """MD5 of a file's path, size and modification time (a quick change check, not of the content)."""
     st = os.stat(path)
     s = f"{os.path.abspath(path)}|{st.st_size}|{int(st.st_mtime)}"
     return hashlib.md5(s.encode("utf-8")).hexdigest()
 
 def composite_fingerprint(paths: List[str]) -> str:
+    """MD5 combining several files' fingerprints."""
     h = hashlib.md5()
     for p in paths:
         h.update(file_fingerprint(p).encode("utf-8"))
@@ -109,6 +113,7 @@ def find_col(cols: List[str], cands: List[str]) -> Optional[str]:
     return None
 
 def normalize_epc(x) -> Optional[str]:
+    """Band letter A-G from a letter or text, else None."""
     if pd.isna(x): return None
     s = str(x).strip().upper()
     if s in EPC_TO_IDX: return s
@@ -116,18 +121,21 @@ def normalize_epc(x) -> Optional[str]:
     return None
 
 def load_boundary(path: str) -> gpd.GeoDataFrame:
+    """Study-area boundary (must have a CRS)."""
     log(path, "LOAD boundary")
     gdf = gpd.read_file(path)
     if gdf.crs is None: raise ValueError("Boundary has no CRS.")
     return gdf.to_crs(TARGET_CRS)
 
 def load_buildings(path: str, layer: Optional[str]) -> gpd.GeoDataFrame:
+    """Building layer (optionally one layer of a multi-layer file)."""
     log(path, "LOAD buildings")
     gdf = gpd.read_file(path, layer=layer) if layer else gpd.read_file(path)
     if gdf.crs is None: raise ValueError("Buildings file has no CRS.")
     return gdf.to_crs(TARGET_CRS)
 
 def load_predictions(path: str) -> pd.DataFrame:
+    """Predictions from CSV, parquet or a vector file."""
     log(path, "LOAD predictions")
     ext = os.path.splitext(path)[1].lower()
     if ext == ".csv": return pd.read_csv(path)
@@ -135,6 +143,7 @@ def load_predictions(path: str) -> pd.DataFrame:
     raise ValueError(f"Unsupported predictions file type: {ext}")
 
 def as_points(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    """Representative points of the features (unchanged if all are points)."""
     if gdf.empty or gdf.geom_type.isin(["Point"]).all(): return gdf
     out = gdf.copy(); out["geometry"] = out.geometry.representative_point(); return out
 
@@ -198,6 +207,7 @@ def compute_confusion_and_metrics(df: pd.DataFrame, col_true: str, col_pred: str
     return cm.astype(int), metrics, per_class
 
 def compute_splits(df: pd.DataFrame, col_true="EPC_ACTUAL", col_pred="EPC_PRED") -> Optional[dict]:
+    """Counts of rows per split (train, validation, test) overall and among rows with both bands."""
     cols = df.columns.tolist()
     split_col = find_col(cols, SPLIT_CANDS)
     if split_col:
@@ -227,10 +237,12 @@ def compute_splits(df: pd.DataFrame, col_true="EPC_ACTUAL", col_pred="EPC_PRED")
     return None
 
 def fmt_pct(x):
+    """A share as a percentage with one decimal, or 'NA'."""
     try: return f"{100.0*float(x):.1f}%"
     except Exception: return "NA"
 
 def env_meta():
+    """Run metadata: UTC time, Python, platform and package versions."""
     import matplotlib
     return {
         "timestamp_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -452,6 +464,7 @@ def main():
                 if SIZE_MODE == "auto" else DOT_PT**2)
 
     def color_series(gdf, col, pal, fb="NA"):
+        """Colour for each value of a column from a palette (fallback colour for unknowns)."""
         return gdf[col].map(lambda v: pal.get(v, pal[fb]))
 
     axA.set_title("A) Actual EPC Rating (A–G)", fontsize=11, loc="left"); axA.set_axis_off()
@@ -472,6 +485,7 @@ def main():
 
     # Small scalebar (1–5 km) + N arrow
     def add_small_scalebar(ax, force_km: Optional[float]=None, loc=(0.06,0.08), max_frac=0.20):
+        """Draw a small scale bar of a round length on a projected map."""
         X0,X1 = ax.get_xlim(); Y0,Y1 = ax.get_ylim()
         width_m = (X1 - X0)
         candidates = [1,2,3,4,5]  # km
@@ -488,6 +502,7 @@ def main():
                 color="k", path_effects=[pe.withStroke(linewidth=3, foreground="white")])
 
     def add_north(ax, xy=(0.10,0.22), length_frac=0.11):
+        """Draw a north arrow in axes coordinates."""
         x, y = xy
         ax.annotate("", xy=(x, y+length_frac), xytext=(x, y),
                     xycoords="axes fraction", textcoords="axes fraction",
@@ -602,6 +617,7 @@ def main():
     splits_left = []
     if split_info:
         def fmt_counts(d):
+            """Lines of text giving train, validation, test (and other) counts with percentages."""
             tot = sum(d.values()) if d else 0
             p = lambda v: f"{(100*v/tot):.1f}%" if tot else "0.0%"
             other = sum(v for k,v in d.items() if k not in ("train","val","test","other",None))
