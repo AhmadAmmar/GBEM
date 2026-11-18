@@ -24,6 +24,7 @@ FILES = {"gas": "https://assets.publishing.service.gov.uk/media/694578171a2e540c
 
 
 def download():
+    """Download the DESNZ LSOA gas and electricity consumption files once (written via a .part file)."""
     raw = OUT / "raw"; raw.mkdir(parents=True, exist_ok=True)
     for fuel, url in FILES.items():
         dest = raw / url.rsplit("/", 1)[-1]
@@ -69,6 +70,7 @@ def read(fuel, path, lsoas):
 
 
 def main():
+    """London LSOA gas and electricity consumption by year as one table, with a summary."""
     download()
     lsoas = set(gpd.read_file(PHD / "data/london/boundaries_ons/lsoa21_bgc_v5_london.gpkg")["LSOA21CD"])
     frames = [read(f, OUT / "raw" / u.rsplit("/", 1)[-1], lsoas) for f, u in FILES.items()]

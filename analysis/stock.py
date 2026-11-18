@@ -58,6 +58,9 @@ COLS = ["cert_id", "UPRN", "x", "y", "fp_id", "year", "inspection_date", "sap_sc
 
 
 def fuel_class(fuel, heat):
+    """Heating fuel class from MAIN_FUEL and MAINHEAT_DESCRIPTION: heat pump, community, LPG, gas, electricity, oil,
+    solid or other; NaN where both are blank.
+    """
     f, h = fuel.fillna("").str.lower(), heat.fillna("").str.lower()
     # "mains gas (not community)" is the usual wording: only a positive "community" counts as community heating
     community = f.str.replace("not community", "", regex=False).str.contains("community") | h.str.contains("community scheme|community heating")
@@ -69,6 +72,9 @@ def fuel_class(fuel, heat):
 
 
 def floor_position(ptype, level, top):
+    """Position of a dwelling: 'house' for houses; 'top', 'ground', 'middle' or 'unknown' for flats and maisonettes
+    from FLAT_LEVEL and FLAT_TOP_STOREY; NaN where the property type is blank.
+    """
     p = ptype.fillna("").str.lower()
     lv = level.fillna("").astype(str).str.strip().str.lower()
     t = top.fillna("").astype(str).str.upper()
@@ -82,11 +88,15 @@ def floor_position(ptype, level, top):
 
 
 def poor(s):
+    """1 for 'poor' or 'very poor', 0 for average to very good, NaN otherwise (element energy-efficiency ratings)."""
     v = s.fillna("").astype(str).str.strip().str.lower()
     return pd.Series(np.select([v.isin(["poor", "very poor"]), v.isin(["average", "good", "very good"])], [1.0, 0.0], np.nan), index=s.index)
 
 
 def load(area):
+    """Certificates with a location for one area, as the analysis columns: ids, coordinates, year, date, SAP, band,
+    fuel, type, floor position, age band and the poor_<element> flags.
+    """
     import pyarrow.parquet as pq
     have = pq.ParquetFile(DATA / area / "epc/certificates_linked.parquet").schema.names
     c = pd.read_parquet(DATA / area / "epc/certificates_linked.parquet", columns=[k for k in COLS if k in have])
@@ -118,6 +128,7 @@ def load(area):
 
 
 def add_nbhd(area, d):
+    """Neighbourhood of each certificate: LSOA 2021 in London, 2012 ward in Belfast, by point in polygon."""
     pts = gpd.GeoDataFrame(d[["cert_id"]], geometry=gpd.points_from_xy(d["x"], d["y"]), crs=EPSG[area])
     if area == "london":
         b = gpd.read_file(DATA / "london/boundaries_ons/lsoa21_bgc_v5_london.gpkg").to_crs(EPSG[area])
@@ -216,6 +227,9 @@ def recommendations(ids):
 
 
 def main():
+    """Current certified stock for one area: latest valid certificate per dwelling from --valid-from, with neighbourhood
+    and --grid metre cell, written to stock_current.parquet with summaries.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--valid-from", default="2016-10-23")
     ap.add_argument("--grid", type=int, default=250); ap.add_argument("--no-recs", action="store_true")

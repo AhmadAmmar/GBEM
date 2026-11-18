@@ -48,6 +48,7 @@ U_WIN_AGE = [(0, 2.8), (2003, 2.0), (2010, 1.6)]
 
 
 def by_year(table, year):
+    """Look up a value by year from a table of (start year, value) in ascending order; missing years count as 1950."""
     y = np.nan_to_num(np.asarray(year, float), nan=1950)
     out = np.full(len(y), table[0][1])
     for start, u in table:
@@ -56,6 +57,7 @@ def by_year(table, year):
 
 
 def first_year(age):
+    """First year of an age band text ('1930-1949' gives 1930; 'before 1900' gives 1870)."""
     s = pd.Series(age).astype("string").fillna("")
     y = pd.to_numeric(s.str.extract(r"(\d{4})")[0], errors="coerce")
     return y.where(~s.str.contains("before", case=False), y - 30)
@@ -79,6 +81,7 @@ def u_wall(desc, year, nation="EW", age_band=None):
 
 
 def _age(year, age_band):
+    """Age band strings to pass to the RdSAP tables: the bands themselves when given, else the year as text."""
     if age_band is not None:
         return pd.Series(np.asarray(age_band, object))
     return pd.Series(np.asarray(year, float)).map(lambda v: "" if np.isnan(v) else str(int(v)))
@@ -101,6 +104,9 @@ def u_floor(desc, year, nation="EW", age_band=None, area=45.0, perim=19.0, wall_
 
 
 def u_window(glazed, year):
+    """Window U-value (W/m2K) from the glazing description: triple 1.6, double after 2002 or secondary 2.0, double 2.8,
+    single 4.8; otherwise by year.
+    """
     g = glazed.fillna("").str.lower()
     u = np.select([g.str.contains("triple"), g.str.contains("during or after|after 2002|secondary") & g.str.contains("double"),
                    g.str.contains("double"), g.str.contains("single")], [1.6, 2.0, 2.8, 4.8], by_year(U_WIN_AGE, year))
@@ -108,6 +114,9 @@ def u_window(glazed, year):
 
 
 def heat(env, U, year, volume, hdd):
+    """Simple heat-loss model kept for comparison: fabric UA plus bridging (0.08 or 0.15 by year) and ventilation
+    (0.33 x air changes x volume). Returns HLC (W/K) and annual demand (kWh) for degree-days hdd.
+    """
     wall, roof, floor, win = env
     uw, ur, uf, uwin = U
     y = np.nan_to_num(np.asarray(year, float), nan=1950)
@@ -129,6 +138,9 @@ def heat_rdsap(env, U, u_party, y, year, volume, hdd):
 
 
 def main():
+    """Physics indicator for every current certificate in one area: U-values from the RdSAP tables, envelope areas,
+    heat-loss coefficient and demand per m2, written to physics_cert.parquet with checks against SAP.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True)
     a = ap.parse_args()

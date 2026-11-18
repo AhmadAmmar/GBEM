@@ -23,6 +23,7 @@ import pandas as pd
 from rdsap_walls import BANDS, band  # noqa: F401  (band re-exported for callers)
 
 def _bi(b):
+    """Age-band letters to column indices 0-12 (A-M); unknown bands give -1."""
     return pd.Series(b).map({c: i for i, c in enumerate(BANDS)}).fillna(-1).astype(int).to_numpy()
 
 
@@ -103,6 +104,7 @@ def u_roof(desc, age_band, nation):
 
 
 def roof_loses_heat(desc):
+    """True where the roof description does not say another dwelling or premises is above."""
     return ~pd.Series(desc).astype(object).fillna("").astype(str).str.lower().str.contains(NO_ROOF_LOSS)
 
 
@@ -129,6 +131,7 @@ NO_FLOOR_LOSS = r"dwelling below"
 
 
 def wall_thickness_m(wall_desc, age_band, nation):
+    """Wall thickness (m) from RdSAP Table S3, by wall type read from the description and age band."""
     d = pd.Series(wall_desc).astype(object).fillna("").astype(str).str.lower()
     kind = np.select([d.str.contains("granite|whin|sandstone|limestone|stone"), d.str.contains("solid brick"), d.str.contains(r"\bcob\b"),
                       d.str.contains("timber"), d.str.contains("system built")], ["stone", "solid", "cob", "timber", "system"], "cavity")
@@ -153,6 +156,7 @@ def iso13370(area, perim, w, r_f, suspended):
 
 
 def _floor_one(t):
+    """Floor case from one description: none (another dwelling below), premises (0.7, S5.7), exposed (Table S12) or ground."""
     t = t.lower()
     if re.search(NO_FLOOR_LOSS, t):
         return "none"
@@ -194,6 +198,7 @@ def u_floor(desc, age_band, nation, area, perim, wall_desc):
 
 
 def floor_loses_heat(desc):
+    """True where the floor description does not say another dwelling is below."""
     return ~pd.Series(desc).astype(object).fillna("").astype(str).str.lower().str.contains(NO_FLOOR_LOSS)
 
 
@@ -207,6 +212,7 @@ S13 = [0.15] * 9 + [0.11, 0.08, 0.08, 0.08]                        # y by band A
 
 
 def bridging_y(age_band, nation):
+    """Thermal bridging factor y (W/m2K) by age band, RdSAP Table S13; NI band J is treated as K."""
     b = band(age_band, nation)
     if nation == "NI":
         b = b.replace("J", "K")
@@ -222,6 +228,7 @@ S4 = {   # window area = a x TFA + c, bands A..M (M as J-L); Table S4
 
 
 def window_area(tfa, is_flat, age_band, nation):
+    """Window area (m2) = a x TFA + c by age band and house or flat, RdSAP Table S4, not below zero."""
     b = band(age_band, nation)
     if nation == "NI":
         b = b.replace("J", "K")

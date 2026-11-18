@@ -28,6 +28,7 @@ def outline(ground_rings, v):
 
 
 def profile(model, ext, holes, origin):
+    """IFC area profile of a footprint ring (with holes when given), in coordinates relative to the site origin."""
     pts = lambda r: model.createIfcCartesianPointList2D([tuple(map(float, p - origin)) for p in np.vstack([r, r[:1]])])
     curve = lambda r: model.createIfcIndexedPolyCurve(pts(r), None, False)
     if holes:
@@ -36,6 +37,9 @@ def profile(model, ext, holes, origin):
 
 
 def main():
+    """Convert a CityJSON file of extruded buildings to IFC (default IFC4): one IfcBuilding per object, extruded from
+    its footprint to its roof height, positioned from the site origin (the CityJSON translate).
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("cityjson"); ap.add_argument("--out"); ap.add_argument("--schema", default="IFC4")
     a = ap.parse_args()

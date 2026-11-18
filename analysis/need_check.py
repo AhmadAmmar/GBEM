@@ -30,6 +30,7 @@ def r2_groups(y, keys):
 
 
 def r2_additive(y, frame):
+    """R-squared of an additive model of y on the categorical columns of frame (dummy coded, least squares)."""
     X = pd.get_dummies(frame.astype(str), drop_first=True).astype(float)
     X.insert(0, "c", 1.0)
     beta, *_ = np.linalg.lstsq(X.to_numpy(), y.to_numpy(), rcond=None)
@@ -38,6 +39,9 @@ def r2_additive(y, frame):
 
 
 def main():
+    """Check against the NEED 4-million anonymised sample: how much of metered gas use dwelling attributes explain, for
+    --year (see the module description).
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--year", type=int, default=2022)
     a = ap.parse_args()
@@ -80,6 +84,8 @@ def main():
         for yi in range(2010, 2018):
             treated = d[(d[f"{m}_FLAG"] == 1) & (pd.to_numeric(d[f"{m}_DATE"], errors="coerce") == yi)]
             def change(s):
+                """Homes with valid gas readings the year before and two years after the measure year yi (more than
+                2,000 kWh before), and their percentage change in gas use. Returns (homes, changes)."""
                 ok = (s[f"GasValFlag{yi - 1}"] == "V") & (s[f"GasValFlag{yi + 2}"] == "V") & (s[f"Gcons{yi - 1}"] > 2000)
                 s = s[ok]
                 return s, 100 * (s[f"Gcons{yi + 2}"] / s[f"Gcons{yi - 1}"] - 1)

@@ -33,6 +33,7 @@ ATTR = ["PROPERTY_TYPE", "BUILT_FORM", "TOTAL_FLOOR_AREA", "CONSTRUCTION_AGE_BAN
 
 
 def metrics(y, p):
+    """Band metrics: accuracy, balanced accuracy, macro and weighted F1, within one band, quadratic weighted kappa."""
     yi, pi = np.array([BANDS.index(v) for v in y]), np.array([BANDS.index(v) for v in p])
     return {"accuracy": accuracy_score(y, p), "balanced_accuracy": balanced_accuracy_score(y, p),
             "macro_f1": f1_score(y, p, average="macro"), "weighted_f1": f1_score(y, p, average="weighted"),
@@ -40,6 +41,7 @@ def metrics(y, p):
 
 
 def run(X, y, train, test, label):
+    """Random forest on all features and on its 10 most important ones; returns two result rows."""
     rf = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1).fit(X.iloc[train], y.iloc[train])
     out = [{"variant": label, "features": X.shape[1], **metrics(y.iloc[test], rf.predict(X.iloc[test]))}]
     top = pd.Series(rf.feature_importances_, X.columns).nlargest(10).index
@@ -49,6 +51,7 @@ def run(X, y, train, test, label):
 
 
 def encode(d, cols):
+    """Text columns as integer category codes."""
     X = d[cols].copy()
     for c in X.columns:
         if X[c].dtype == object:
@@ -57,6 +60,9 @@ def encode(d, cols):
 
 
 def area(name, d, sat_cols, xy):
+    """Reproduce the earlier random 70/30 split results for one area (satellite only, and with certificate attributes),
+    and compare with a spatial split.
+    """
     d = d[d["CURRENT_ENERGY_RATING"].isin(BANDS)].dropna(subset=sat_cols).reset_index(drop=True)
     y = d["CURRENT_ENERGY_RATING"]
     Xs = d[sat_cols]
@@ -80,6 +86,7 @@ def area(name, d, sat_cols, xy):
 
 
 def main():
+    """Reproduce the earlier (pre-pipeline) London and Belfast results from their original sample files."""
     ld = pd.read_csv(DATA / "london/london_samples_indices_2024.csv", low_memory=False)
     sat = list(ld.columns[ld.columns.get_loc("B2"):])
     area("london", ld, sat, ("LONGITUDE", "LATITUDE"))

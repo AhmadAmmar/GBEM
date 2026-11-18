@@ -28,6 +28,7 @@ ELEMENTS = {"walls": "WALLS_ENERGY_EFF", "roof": "ROOF_ENERGY_EFF", "windows": "
 
 
 def targets(area, cert_ids):
+    """Poor (1) or not (0) for each element rating, and a fabric need flag from walls, roof and windows."""
     c = pd.read_parquet(B.DATA / area / "epc/certificates_linked.parquet", columns=["cert_id"] + list(ELEMENTS.values()))
     c["cert_id"] = c["cert_id"].astype(str)
     c = c.drop_duplicates("cert_id").set_index("cert_id").reindex(cert_ids)
@@ -41,6 +42,7 @@ def targets(area, cert_ids):
 
 
 def main():
+    """Blocked cross-validation of models predicting element retrofit needs for one area."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--years", nargs="+", type=int, required=True)
     ap.add_argument("--sample", type=int); ap.add_argument("--featureset", default="eo_morph")

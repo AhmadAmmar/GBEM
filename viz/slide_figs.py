@@ -31,6 +31,7 @@ SEQ = LinearSegmentedColormap.from_list("blue", ["#cde2fb", "#9ec5f4", "#6da7ec"
 
 
 def save(fig, fid, data, note):
+    """Save a slide version of a figure (PNG, PDF, data CSV and source note) beside the paper figure."""
     d = P.PUB / fid; d.mkdir(parents=True, exist_ok=True)
     fig.savefig(d / f"{fid}_slide.png", dpi=300, bbox_inches="tight"); fig.savefig(d / f"{fid}_slide.pdf", bbox_inches="tight")
     data.to_csv(d / f"{fid}_slide_data.csv", index=False)
@@ -39,6 +40,7 @@ def save(fig, fid, data, note):
 
 
 def ceiling(M, rt):
+    """Slide: band agreement (QWK) of each feature set against the certificate re-test ceiling, per area."""
     fig, ax = plt.subplots(figsize=(11, 5.6)); x = np.arange(len(P.FS)); w = 0.38; rows = []
     for i, area in enumerate(P.TAG):
         m = M[area]
@@ -56,6 +58,7 @@ def ceiling(M, rt):
 
 
 def random_vs_spatial(M):
+    """Slide: accuracy with random against spatial folds for each feature set, per area."""
     fig, ax = plt.subplots(figsize=(11, 5.6)); rows = []; labels = []
     for area in P.TAG:
         m = M[area]
@@ -75,6 +78,7 @@ def random_vs_spatial(M):
 
 
 def scale():
+    """Slide: R-squared of SAP from certificate to neighbourhood scale, EO only and EO with morphology."""
     fig, axs = plt.subplots(1, 2, figsize=(11, 5.4), sharey=True); rows = []
     order = ["certificate", "building", "street", "250 m cell", "neighbourhood"]
     for ax, area in zip(axs, P.TAG):
@@ -104,11 +108,13 @@ def scalebar(ax, x0, y0, km, label_y_off, h=450):
 
 
 def north(ax, x, y, size):
+    """Draw a north arrow at (x, y) of the given length in axes coordinates."""
     ax.annotate("N", xy=(x, y + size), xytext=(x, y), ha="center", va="center", fontsize=14, fontweight="bold", color=INK,
                 arrowprops=dict(arrowstyle="-|>", color=INK, lw=2))
 
 
 def belfast_map():
+    """Slide: Belfast ward map of actual against predicted mean SAP; returns the ward-level R-squared."""
     oof = pd.read_parquet(P.DATA / "belfast/model/results/oof_2024.parquet")
     oof["id_cert"] = oof["id_cert"].astype(str)
     e = pd.read_parquet(P.DATA / "belfast/analysis/cert_enriched.parquet", columns=["cert_id", "nbhd"]).rename(columns={"cert_id": "id_cert"})
@@ -137,6 +143,7 @@ def belfast_map():
 
 
 def main():
+    """Make the slide figures."""
     M = {k: P.metrics(k) for k in P.TAG}
     rt = {k: pd.read_csv(P.DATA / k / "analysis/ground_truth_retest.csv").iloc[0] for k in P.TAG}
     ceiling(M, rt); random_vs_spatial(M); scale()

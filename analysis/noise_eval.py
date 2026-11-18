@@ -25,6 +25,9 @@ TAG = {"london": "2024_s50k", "belfast": "2024"}
 
 
 def main():
+    """Model error compared with certificate re-test noise for one area: repeat certificates within --days of each other
+    set the floor any model can reach.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--tag"); ap.add_argument("--days", type=int, default=365)
     a = ap.parse_args()

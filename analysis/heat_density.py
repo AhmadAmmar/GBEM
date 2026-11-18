@@ -25,6 +25,9 @@ CELL = 250
 
 
 def main():
+    """Heat demand density for one area: certified demand per m2 from physics_cert.parquet summed by grid cell and
+    neighbourhood, written to the analysis folder (see the module description).
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True)
     a = ap.parse_args()

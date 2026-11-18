@@ -22,6 +22,7 @@ DATA = pathlib.Path(__file__).resolve().parents[2] / "data"
 
 
 def main():
+    """Year-to-year stability of predicted SAP per footprint for one area (standard deviation across years)."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--name", default="stab2000")
     a = ap.parse_args()

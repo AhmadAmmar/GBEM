@@ -18,6 +18,9 @@ from safeio import keep                      # existing outputs are archived, ne
 
 
 def main():
+    """Year-to-year stability of each feature for one area and feature tag: Spearman correlation of the same records
+    between pairs of years (where more than 30 records and more than one value).
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--tag", required=True); ap.add_argument("--years", nargs="+", type=int)
     a = ap.parse_args()

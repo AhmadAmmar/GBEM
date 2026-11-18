@@ -69,6 +69,7 @@ def footprints(out):
 
 
 def dem_heights(points):
+    """Ground elevation (m) at each point from the 30 m DEM export; NaN if no DEM."""
     dem = next((DATA / "belfast/gee_v2/raw").glob("*_dem_30m.tif"), None)
     if dem is None:
         return np.full(len(points), np.nan)
@@ -81,6 +82,9 @@ def dem_heights(points):
 
 
 def heights(g, lid):
+    """Building height and its source: lidar median where at least half valid and 2 m or more, else Overture height,
+    else Overture floors x 3 m.
+    """
     d = g.merge(lid, on="fp_id", how="left")
     ok_lidar = (d["lidar_valid_share"] >= 0.5) & (d["lidar_height_med_m"] >= 2.0)
     h = pd.Series(np.nan, index=d.index); src = pd.Series("none", index=d.index)
@@ -101,6 +105,7 @@ def heights(g, lid):
 
 
 def write_tiles(d, out, version):
+    """Write the buildings as CityJSON tiles, one per tile id, with ground, roof and wall surfaces."""
     tiles = out / "tiles"; tiles.mkdir(exist_ok=True)
     sem = {"surfaces": [{"type": "GroundSurface"}, {"type": "RoofSurface"}, {"type": "WallSurface"}]}
     n_tiles, n_bldg = 0, 0
@@ -142,6 +147,9 @@ def write_tiles(d, out, version):
 
 
 def quality(d):
+    """Quality summary: sources of heights, ground and footprints, changes since the lidar survey, survey years, and
+    agreement of lidar with Overture heights and floors.
+    """
     both = d[(d["height_source"] == "lidar") & (d["overture_height_m"] > 2)]
     fl = d[(d["height_source"] == "lidar") & (d["overture_floors"] >= 1)]
     q = {"buildings": int(len(d)), "height_sources": d["height_source"].value_counts().to_dict(),
@@ -194,6 +202,9 @@ Vice-Chancellor's Research Scholarship). (c) Ulster University. Draft: not yet p
 
 
 def main():
+    """Build the open 3D model of Belfast (--version): footprints, lidar heights (recomputed with --relidar), tiles and
+    quality report.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--version", default="v0.1"); ap.add_argument("--relidar", action="store_true")
     ap.add_argument("--tiles-only", action="store_true")

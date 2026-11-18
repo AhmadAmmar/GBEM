@@ -61,10 +61,14 @@ def make_form(base, form):
 
 
 def r_construction(u, pitch):
+    """Construction resistance (m2K/W) for a target U: 1/U less the surface resistances for the element's pitch, at
+    least 0.01.
+    """
     return max(1.0 / u - RSI_RSE.get(pitch, 0.17), 0.01)
 
 
 def main():
+    """Make HEM input variants (archetypes) from a demo flat, for a built form and optionally a full year."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--demo", required=True); ap.add_argument("--out", required=True)
     ap.add_argument("--full-year", action="store_true", help="simulate 8,760 hours, keeping the base's time step (only if the base has full-year schedules)")

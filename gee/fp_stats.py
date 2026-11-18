@@ -24,12 +24,14 @@ S2_KEEP = ["B2", "B4", "B8", "B11", "B12", "NDVI", "NDBI", "BSI", "MNDWI"]
 
 
 def s2_vars(b):
+    """Annual Sentinel-2 reflectance and indices kept for footprint statistics (S2_KEEP)."""
     refl = {k: b[f"{k}_annual"] / 10000 for k in spec.S2_BANDS}
     idx = E.s2_indices(refl)
     return {f"s2_{k}": (refl.get(k) if k in refl else idx[k]) for k in S2_KEEP}
 
 
 def s1_vars(b):
+    """Annual Sentinel-1 VV and VH in dB (stored as dB x 100)."""
     out = {}
     for pol in ("VV", "VH"):
         v = b[f"{pol}_annual"] / 100                                 # stored as dB x 100
@@ -38,6 +40,7 @@ def s1_vars(b):
 
 
 def stats(path, grid, compute, n_lab):
+    """Footprint-weighted mean, standard deviation, minimum and maximum of each computed variable, read strip by strip."""
     s, s2, w = {}, {}, {}
     mn, mx = {}, {}
     with rasterio.open(path) as r:
@@ -73,6 +76,7 @@ def stats(path, grid, compute, n_lab):
 
 
 def main():
+    """Within-footprint statistics of Sentinel-2 and Sentinel-1 variables for the certificates of one area and year."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--year", type=int, required=True)
     a = ap.parse_args()

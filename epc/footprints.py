@@ -34,6 +34,9 @@ COUNCIL = DATA / "belfast/belfast-dissolved/belfast-dissolved.shp"
 
 
 def overture_buildings(area):
+    """Overture building footprints for an area, projected and clipped to the study extent, with source dataset,
+    height, floors and class.
+    """
     epsg, ext = EXTENT[area]
     o = pd.read_parquet(OVERTURE[area])
     g = gpd.GeoDataFrame(o.drop(columns="geometry_wkb"), geometry=gpd.GeoSeries.from_wkb(o["geometry_wkb"]), crs=4326).to_crs(epsg)
@@ -45,6 +48,9 @@ def overture_buildings(area):
 
 
 def clean(df, epsg):
+    """Valid 2D polygons only: repairs geometry, drops lines and points, keeps the polygon parts of collections, and drops
+    empty or zero-area shapes.
+    """
     g = gpd.GeoDataFrame(df, geometry="geometry", crs=epsg)
     g["geometry"] = shapely.make_valid(shapely.force_2d(g.geometry.values))
     g = g[g.geometry.type.isin(["Polygon", "MultiPolygon", "GeometryCollection"])]
@@ -55,6 +61,9 @@ def clean(df, epsg):
 
 
 def main():
+    """Footprints per area: Overture for London; OSNI inside Belfast council area and Overture outside it for Belfast.
+    Cleaned, given ids (L0000001, B0000001, ...) and written to footprints.parquet with a log.
+    """
     ap = argparse.ArgumentParser(); ap.add_argument("--areas", nargs="+", default=["london", "belfast"])
     for area in ap.parse_args().areas:
         epsg, _ = EXTENT[area]

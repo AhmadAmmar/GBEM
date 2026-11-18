@@ -39,10 +39,12 @@ SETS = {"eo": "EO only", "eo_morph": "EO + morphology", "eo_morph_ctx": "EO + mo
 
 
 def b64(a):
+    """Array bytes as base64 text."""
     return base64.b64encode(np.ascontiguousarray(a).tobytes()).decode()
 
 
 def u1(codes, missing):
+    """Category codes as uint8 with 255 for missing."""
     a = np.asarray(codes, dtype="float64")
     return np.where(np.isnan(a) | missing, 255, a).astype("uint8")
 
@@ -63,6 +65,7 @@ def quad_fit(epsg, x, y):
 
 
 def main():
+    """Build the model-results dashboard for one area and run tag from its out-of-fold predictions."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--tag", required=True)
     a = ap.parse_args()

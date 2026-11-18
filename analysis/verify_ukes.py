@@ -13,6 +13,7 @@ ROOT = V.ROOT
 
 
 def show(name, r):
+    """Print one estimate: jump with HC1 and day-clustered intervals."""
     print(f"{name:42s} n={r['n']:7d} jump={r['jump']:+.3f} HC1 [{r['hc_lo']:+.3f}, {r['hc_hi']:+.3f}] by day [{r['day_lo']:+.3f}, {r['day_hi']:+.3f}]")
 
 

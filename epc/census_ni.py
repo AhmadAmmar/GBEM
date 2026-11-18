@@ -36,6 +36,9 @@ TABLES = {   # table: {output name: start of the census column header}
 
 
 def ward_sheet(t):
+    """One NI Census 2021 table (e.g. 'tenure') at ward level: finds the header row, keeps ward codes (N + 8 digits) and
+    the first copy of each ward, which holds counts (the second copy holds percentages).
+    """
     x = pd.read_excel(CEN / f"census-2021-ms-{t}.xlsx", sheet_name="Ward", header=None)
     hdr = next(i for i in range(15) if x.iloc[i].astype(str).str.contains("Code", case=False).any())
     x.columns = [str(c) for c in x.iloc[hdr]]
@@ -47,6 +50,9 @@ def ward_sheet(t):
 
 
 def main():
+    """Ward shares of households for the census variables in TABLES, written per ward and joined to every Belfast
+    certificate by the ward its point falls in (census_ward.parquet, census_cert.parquet).
+    """
     out = None
     for t, cols in TABLES.items():
         x = ward_sheet(t)

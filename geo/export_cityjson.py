@@ -106,9 +106,11 @@ def clean_polygons(g):
 class Vertices:
     """shared, de-duplicated vertex list in integer millimetres"""
     def __init__(self, origin):
+        """Shared vertex list for a CityJSON file, quantised relative to origin."""
         self.origin, self.index, self.list = origin, {}, []
 
     def add(self, x, y, z):
+        """Index of the vertex (x, y, z), stored as integers in SCALE units from the origin; repeated vertices share one index."""
         key = (int(round((x - self.origin[0]) / SCALE)), int(round((y - self.origin[1]) / SCALE)), int(round((z - self.origin[2]) / SCALE)))
         if key not in self.index:
             self.index[key] = len(self.list)
@@ -133,10 +135,12 @@ def solid(poly, z0, z1, V):
 
 
 def num(v, nd=2):
+    """A number rounded to nd decimals, or None for missing and non-finite values (valid JSON)."""
     return None if v is None or (isinstance(v, float) and not np.isfinite(v)) or pd.isna(v) else round(float(v), nd)
 
 
 def main():
+    """Export the dwelling buildings of a district (neighbourhood, name or box) as LoD1 CityJSON with energy attributes."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True, choices=list(EPSG)); ap.add_argument("--year", type=int, default=2024)
     ap.add_argument("--nbhd"); ap.add_argument("--name"); ap.add_argument("--bbox", nargs=4, type=float)

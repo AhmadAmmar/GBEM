@@ -65,9 +65,11 @@ TOP_NEED = ("top_need", "Most common weak element", "cat", 0)
 class Blob:
     """Typed arrays packed into one buffer (4-byte aligned); gzip + base64 for the page."""
     def __init__(self):
+        """Binary store of typed arrays for the web atlas."""
         self.parts, self.size = [], 0
 
     def add(self, a, t):
+        """Append an array as float32, uint32, uint8 or int16 at a 4-byte boundary; returns its offset, length and type."""
         a = np.ascontiguousarray(np.asarray(a, dtype={"f4": "float32", "u4": "uint32", "u1": "uint8", "i2": "int16"}[t]))
         pad = (-self.size) % 4
         if pad:
@@ -77,6 +79,7 @@ class Blob:
         return ref
 
     def b64(self):
+        """All arrays gzip-compressed and base64-encoded for embedding in the page."""
         return base64.b64encode(gzip.compress(b"".join(self.parts), 6)).decode()
 
 
@@ -114,6 +117,7 @@ def table(df, blob, cols):
 
 
 def top_need(u):
+    """The element with the highest share of poor ratings in each unit, or 'none' when below 25%."""
     cols = [f"poor_{e}" for e in ELEMENTS if e not in ("floor", "lighting") and f"poor_{e}" in u]
     m = u[cols].to_numpy("float64")
     idx = np.nanargmax(np.where(np.isnan(m), -1, m), axis=1)
@@ -177,6 +181,7 @@ def extra_units(area, unit):
     A = DATA / area / "analysis"
     parts = []
     def add(p, key, cols, rename=None):
+        """Add the columns of a unit table to the parts list when its file exists."""
         if p.exists():
             t = pd.read_parquet(p).rename(columns=rename or {})
             parts.append(t.set_index(key)[[c for c in cols if c in t]])
@@ -219,6 +224,7 @@ def energy_lsoa(area):
 
 
 def stock_total(area):
+    """Totals of the latest stock prediction: buildings, dwellings and mean predicted SAP (all and certified)."""
     f = sorted((DATA / area / "model/stock").glob("stock_pred_*.parquet"))
     if not f:
         return None
@@ -231,10 +237,12 @@ def stock_total(area):
 
 
 def read_csv(p):
+    """A CSV as a list of records rounded to 4 decimals, or an empty list if the file is missing."""
     return json.loads(pd.read_csv(p).round(4).to_json(orient="records")) if p.exists() else []
 
 
 def area_pack(area, public, domains):
+    """Everything the web atlas shows for one area: points, units, metrics and colour domains, packed into a Blob."""
     a_dir = DATA / area / "analysis"
     blob = Blob()
     cur = pd.read_parquet(a_dir / "stock_current.parquet", columns=["x", "y", "band", "sap", "property_type", "floor_pos", "cell",
@@ -364,6 +372,7 @@ def area_pack(area, public, domains):
 
 
 def main():
+    """Build the web atlas for the areas, with colour domains shared across areas (2nd-98th percentile of cells)."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--areas", nargs="+", default=["london", "belfast"]); ap.add_argument("--public", action="store_true")
     a = ap.parse_args()

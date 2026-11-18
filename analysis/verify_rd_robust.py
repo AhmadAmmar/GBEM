@@ -13,6 +13,7 @@ CUT = pd.Timestamp("2025-06-15")
 
 
 def show(name, r):
+    """Print one estimate: jump and its day-clustered interval."""
     print(f"{name:40s} n={r['n']:6d} jump={r['jump']:+.3f} by day [{r['day_lo']:+.3f}, {r['day_hi']:+.3f}]")
 
 

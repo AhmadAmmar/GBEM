@@ -31,6 +31,7 @@ BANDS = "ABCDEFG"
 
 
 def load(area):
+    """Certificates for existing dwellings (report type 2) with a valid SAP (1-150), date and UPRN, with fuel and age groups."""
     cols = ["UPRN", "LODGEMENT_DATE", "REPORT_TYPE", "sap_score", "CURRENT_ENERGY_RATING", "MAIN_FUEL", "PROPERTY_TYPE",
             "BUILT_FORM", "TOTAL_FLOOR_AREA", "CONSTRUCTION_AGE_BAND", "MAINHEAT_DESCRIPTION"]
     e = pd.read_parquet(DATA / area / "epc/certificates_linked.parquet", columns=cols)
@@ -50,6 +51,9 @@ def load(area):
 
 
 def pairs(e, cutoff, lo=30, hi=730):
+    """Consecutive certificates of the same dwelling, unchanged in fuel, type, built form and floor area (within 10%),
+    lodged lo to hi days apart; each pair is marked as spanning the cutoff or lying before it.
+    """
     prev = e.groupby("uprn").shift()
     p = pd.DataFrame({"uprn": e["uprn"], "d0": prev["date"], "d1": e["date"], "sap0": prev["sap"], "sap1": e["sap"],
                       "band0": prev["CURRENT_ENERGY_RATING"], "band1": e["CURRENT_ENERGY_RATING"],
@@ -74,6 +78,9 @@ def fit(p):
 
 
 def estimate(p, label, value, rng, reps=500):
+    """Difference in SAP change between pairs spanning the cutoff and pairs before it, with a bootstrap interval over
+    dwellings (reps resamples). None when either group has fewer than 30 pairs.
+    """
     n = p["kind"].value_counts()
     if n.get("spanning", 0) < 30 or n.get("before", 0) < 30:
         return None
@@ -111,6 +118,7 @@ def monthly(e, start="2023-01-01"):
 
 
 def main():
+    """Paired-certificate estimate of the methodology change at --cutoff, overall and by property type, fuel and age group."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--cutoff", default="2025-06-15")
     a = ap.parse_args()

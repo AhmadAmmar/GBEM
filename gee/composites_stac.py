@@ -40,6 +40,7 @@ NODATA = -32768
 
 
 def window(win, year):
+    """Dates (first, last inclusive) of a named window in a year: annual, summer, winter or an event in EVENTS."""
     if win == "annual":
         return f"{year}-01-01", f"{year}-12-31"
     if win == "summer":
@@ -50,6 +51,7 @@ def window(win, year):
 
 
 def windows(product, year):
+    """Window names for a product and year: the product's windows plus, for Landsat and MODIS, that year's events."""
     w = list(WINDOWS[product])
     if product in ("landsat", "modis"):
         w += [k for k, (s, _) in EVENTS.items() if s.startswith(str(year))]
@@ -57,11 +59,13 @@ def windows(product, year):
 
 
 def geobox(crs, box, res):
+    """odc-geo GeoBox for a box (x0, y0, x1, y1) in crs at resolution res."""
     from odc.geo.geobox import GeoBox
     return GeoBox.from_bbox(box, crs=crs, resolution=res)
 
 
 def lonlat(crs, box):
+    """Bounding box in longitude and latitude of a projected box (its four corners transformed)."""
     from pyproj import Transformer
     t = Transformer.from_crs(crs, "EPSG:4326", always_xy=True)
     xs, ys = t.transform([box[0], box[2], box[0], box[2]], [box[1], box[1], box[3], box[3]])
@@ -69,6 +73,10 @@ def lonlat(crs, box):
 
 
 def load(gee_id, crs, box, dates, bands, res, route=0, keep=None, **query):
+    """Load a collection from the open archives (STAC route of research_helpers.eodata) as an xarray cube on the area's
+    grid: items found for the box and dates, optionally filtered by keep(item), bands renamed to Earth Engine names.
+    Returns (cube or None, items).
+    """
     import odc.stac
     r = [x for x in eodata.routes(gee_id) if x.kind == "stac"][route]
     items = eodata.search(gee_id, lonlat(crs, box), f"{dates[0]}/{dates[1]}", route, **query)
@@ -82,6 +90,9 @@ def load(gee_id, crs, box, dates, bands, res, route=0, keep=None, **query):
 
 
 def s2(crs, box, year):
+    """Sentinel-2 median composites per window: SCL clear classes (vegetation, bare, water, unclassified), the 1000
+    offset removed for processing baseline 4 and later, reflectance x 10000.
+    """
     out = {}
     for win in windows("s2", year):
         cube, items = load("COPERNICUS/S2_SR_HARMONIZED", crs, box, window(win, year), S2 + ["SCL"], 10, query={"eo:cloud_cover": {"lt": 80}})
@@ -98,6 +109,7 @@ def s2(crs, box, year):
 
 
 def s1(crs, box, year):
+    """Sentinel-1 median backscatter in dB x 100 per window for VV and VH, from GRD power (ascending and descending)."""
     out = {}
     for win in windows("s1", year):
         cube, _ = load("COPERNICUS/S1_GRD", crs, box, window(win, year), ["VV", "VH"], 10, query={"sat:orbit_state": {"in": ["ascending", "descending"]}})
@@ -111,6 +123,7 @@ def s1(crs, box, year):
 
 
 def landsat(crs, box, year):
+    """Landsat 8 and 9 Tier 1 land surface temperature medians per window, cloud, shadow and snow masked from QA_PIXEL."""
     out = {}
     for win in windows("landsat", year):
         cube, _ = load("LANDSAT/LC08/C02/T1_L2", crs, box, window(win, year), ["ST_B10", "QA_PIXEL"], 30,
@@ -150,6 +163,9 @@ PRODUCTS = {"s2": s2, "s1": s1, "landsat": landsat, "modis": modis}
 
 
 def write(bands, path):
+    """Write named bands as an int16 GeoTIFF (values rounded, NaN as NODATA) with band descriptions, as the Earth Engine
+    exports are.
+    """
     import rioxarray  # noqa: F401, adds .rio to xarray
     import xarray as xr
     stack = xr.concat([v.astype("float32") for v in bands.values()], dim="band").assign_coords(band=list(bands))
@@ -184,6 +200,9 @@ def compare(area, product, year, path):
 
 
 def main():
+    """Build the composites from the open archives instead of Earth Engine for an area, year and products (a second route
+    to the same inputs).
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True, choices=AREAS); ap.add_argument("--year", type=int, required=True)
     ap.add_argument("--products", nargs="+", default=list(PRODUCTS)); ap.add_argument("--extent", default="core", choices=["core", "context"])

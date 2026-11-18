@@ -33,6 +33,7 @@ plt.rcParams.update({"font.family": "sans-serif", "font.size": 7.5, "axes.spines
 
 
 def metrics(area):
+    """All baseline result rows for an area's tag, latest kept for each feature set, validation, model and target."""
     res = DATA / area / "model/results"
     files = [res / f"baseline_{TAG[area]}.csv"] + sorted(res.glob(f"baseline_{TAG[area]}_*.csv"))
     b = pd.concat([pd.read_csv(f) for f in files if f.exists()])
@@ -40,6 +41,7 @@ def metrics(area):
 
 
 def save(fig, fid, data, note):
+    """Save a figure as PDF and 300 dpi PNG with its data CSV and a SOURCE.txt naming the script and code version."""
     d = PUB / fid; d.mkdir(parents=True, exist_ok=True)
     fig.savefig(d / f"{fid}.pdf", bbox_inches="tight"); fig.savefig(d / f"{fid}.png", dpi=300, bbox_inches="tight")
     data.to_csv(d / f"{fid}_data.csv", index=False)
@@ -50,6 +52,7 @@ def save(fig, fid, data, note):
 
 
 def main():
+    """Make the JURSE paper's figures and their numbers."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--paper", default=str(PHD / "Manuscripts/03_JURSE2027"))
     a = ap.parse_args()

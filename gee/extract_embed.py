@@ -58,6 +58,7 @@ def write_vrt(vrt, tiles):
 
 
 def main():
+    """Footprint means of the 64 Google satellite embedding bands for each certificate of one area and year."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--year", type=int, default=2024)
     a = ap.parse_args()
@@ -66,6 +67,7 @@ def main():
     g = E.Grid(p, uniq, recs["pt"])
 
     def emb(b):
+        """Embedding bands A00-A63 rescaled from stored integers."""
         return {f"emb_A{i:02d}": b[f"A{i:02d}_annual"] / 10000 for i in range(64)}
     cols = {"rec_id": recs["rec_id"].values}
     for name, st in E.zonal_strips(p, g, emb, recs, {100: 11}).items():

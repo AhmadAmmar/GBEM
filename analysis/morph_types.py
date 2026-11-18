@@ -41,6 +41,9 @@ TRAIT = {  # words for high / low values of a measure, used to name the types
 
 
 def load(area, years):
+    """Modelling data for the years with street-scape measures, height (lidar where at least half valid, else footprint
+    data) and SAP added. Returns (data, dictionary).
+    """
     d, dd = B.load(area, years)
     st = pd.read_parquet(DATA / area / "epc/streetscape_fp.parquet")
     d = d.drop(columns=[c for c in d.columns if c.startswith("st_")]).merge(st, left_on="id_fp", right_on="fp_id", how="left")
@@ -58,6 +61,7 @@ def name_type(z):
 
 
 def main():
+    """Urban morphology types for one area: k-means typology of 250 m cells (--k types) and SAP by type."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--years", nargs="+", type=int, default=list(range(2020, 2026)))
     ap.add_argument("--k", type=int, default=7)

@@ -37,6 +37,7 @@ CREDIT = {"london": "Ministry of Housing, Communities and Local Government, Engl
 
 
 def download(area):
+    """Download the deprivation files of an area once into its raw folder."""
     raw = PHD / "data" / area / "deprivation/raw"; raw.mkdir(parents=True, exist_ok=True)
     for name, url in SRC[area].items():
         dest = raw / name
@@ -54,6 +55,7 @@ def download(area):
 
 
 def snake(c):
+    """Short snake_case name for an IMD column (domain names shortened, bracketed notes removed)."""
     c = re.sub(r"\(.*?\)", "", c).lower()
     c = c.replace("index of multiple deprivation", "imd").replace("living environment", "living_env")
     c = c.replace("income deprivation affecting children index", "idaci").replace("income deprivation affecting older people index", "idaopi")
@@ -65,6 +67,7 @@ def snake(c):
 
 
 def london():
+    """English IMD 2025 scores, ranks and deciles for the London LSOAs."""
     raw = download("london")
     d = pd.read_csv(raw / next(iter(SRC["london"])))
     code = next(c for c in d.columns if re.search(r"LSOA code", c, re.I))
@@ -79,6 +82,7 @@ def london():
 
 
 def belfast():
+    """NIMDM 2017 results for Belfast small areas from the published workbook."""
     raw = download("belfast")
     x = pd.read_excel(raw / "NIMDM17_SA - for publication.xls", sheet_name=None)
     sheet = max(x, key=lambda s: len(x[s]))                       # the results sheet: one row per Small Area

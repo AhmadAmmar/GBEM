@@ -55,6 +55,9 @@ MAP = {
 
 
 def main():
+    """Compare new features (parquet) with an older extraction (CSV or vector file) joined on --id: correlation and
+    differences for the shared columns.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--new", required=True); ap.add_argument("--old", required=True)
     ap.add_argument("--id", required=True)

@@ -61,6 +61,7 @@ RANGES = {"B": (0, 1.6), "VV": (-40, 25), "VH": (-45, 20), "angle": (25, 50), "L
 
 
 def windows(product, year):
+    """Window names for a product and year: its standard windows plus that year's events for event products."""
     w = list(WINDOWS[product])
     if product in EVENT_PRODUCTS:
         w += [e for e, y in EVENTS.items() if y == year]
@@ -68,6 +69,7 @@ def windows(product, year):
 
 
 def expected_bands(product, year=None):
+    """Band names an export must have, in order, for a product (and year)."""
     if product in STATIC:
         return STATIC[product]["bands"]
     if product in MULTI:
@@ -96,6 +98,7 @@ def parse_name(name):
 
 
 def grid(area, product):
+    """The export grid of a product in an area: EPSG, affine transform, width and height."""
     spec = STATIC.get(product) or MULTI.get(product) or PRODUCTS[product]
     x0, y0, x1, y1 = AREAS[area][spec["extent"]]
     s = spec["scale"]
@@ -103,18 +106,22 @@ def grid(area, product):
 
 
 def raw_dir(area):
+    """Folder of the raw Earth Engine exports for an area."""
     return DATA / area / "gee_v2" / "raw"
 
 
 def derived_dir(area):
+    """Folder of layers derived from the raw exports for an area."""
     return DATA / area / "gee_v2" / "derived"
 
 
 def features_dir(area):
+    """Folder of extracted feature tables for an area."""
     return DATA / area / "gee_v2" / "features"
 
 
 def raw_path(area, product, year=None):
+    """Path of the raw export of a product (static, multi-year or yearly) for an area."""
     s = (STATIC.get(product) or MULTI.get(product) or PRODUCTS[product])["scale"]
     if product in MULTI:
         year = MULTI_YEARS

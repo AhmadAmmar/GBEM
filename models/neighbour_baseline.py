@@ -67,12 +67,14 @@ def neighbour_features(xy_q, xy_t, sap_t, fp_q=None, fp_t=None):
 
 
 def score(y, p):
+    """SAP mean absolute error and R-squared, and band metrics, on rows where both values exist."""
     ok = ~np.isnan(y) & ~np.isnan(p)
     yb, pb = B.sap_to_band(y[ok]), B.sap_to_band(p[ok])
     return {"sap_mae": mean_absolute_error(y[ok], p[ok]), "sap_r2": r2_score(y[ok], p[ok]), **B.cls_metrics(yb, pb)}
 
 
 def main():
+    """Nearest-neighbour baselines (predict from nearby certified dwellings) against the models, for one area and year."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--year", type=int, default=2024)
     ap.add_argument("--sample", type=int); ap.add_argument("--seeds", type=int, default=2); ap.add_argument("--top", type=int, default=150)

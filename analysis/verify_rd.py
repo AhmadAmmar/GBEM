@@ -45,11 +45,15 @@ def design(d, cutoff, poly=1):
 
 
 def age_start(band):
+    """First four-digit year in an age band text; -1 when there is none."""
     m = re.search(r"\d{4}", str(band))
     return int(m.group()) if m else -1
 
 
 def load(area):
+    """Certificates for existing dwellings from 2022 with valid SAP, date and UPRN, with fuel and age groups, read
+    independently of method_change.py so the check does not share its code.
+    """
     e = pd.read_parquet(ROOT / "data" / area / "epc/certificates_linked.parquet", columns=COLS)
     e = e[e.REPORT_TYPE.astype(str) == "2"].copy()
     e["date"] = pd.to_datetime(e.LODGEMENT_DATE, errors="coerce").dt.tz_localize(None)
@@ -67,6 +71,9 @@ def load(area):
 
 
 def estimate(e, cut, donut=14, bw=90, poly=1, outcome="sap"):
+    """Discontinuity at cut with donut, bandwidth bw days and polynomial order poly, by direct least squares: jump with
+    HC1 and day-clustered 95% intervals and the number of days.
+    """
     c = pd.Timestamp(cut)
     d = e[(e.date >= c - pd.Timedelta(days=bw)) & (e.date < c + pd.Timedelta(days=bw))]
     d = d[(d.date < c - pd.Timedelta(days=donut)) | (d.date >= c)]

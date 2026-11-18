@@ -31,6 +31,7 @@ NEED = ["id_cert", "x", "y", "epc_property_type", "epc_floor_level", "epc_flat_t
 
 
 def main():
+    """Overheating-risk indicators for one area from the modelling datasets of --years (see the module description)."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--years", nargs="+", type=int, default=list(range(2020, 2026)))
     a = ap.parse_args()

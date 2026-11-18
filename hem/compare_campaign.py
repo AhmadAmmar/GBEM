@@ -19,6 +19,7 @@ from compare_trial import hem_demand
 
 
 def fit(g):
+    """Agreement of the proxy q with HEM space heat demand for one group: correlations, R-squared, line fit and RMSE."""
     r = stats.pearsonr(g.q_proxy_kwh_m2, g.hem_kwh_m2)[0]
     a, b = np.polyfit(g.q_proxy_kwh_m2, g.hem_kwh_m2, 1)
     return pd.Series({"n": len(g), "spearman": stats.spearmanr(g.q_proxy_kwh_m2, g.hem_kwh_m2)[0], "pearson": r,
@@ -27,6 +28,7 @@ def fit(g):
 
 
 def main():
+    """Compare the proxy with HEM results across all cities of a simulation campaign folder."""
     ap = argparse.ArgumentParser(); ap.add_argument("--campaign", required=True)
     c = pathlib.Path(ap.parse_args().campaign)
     parts = []

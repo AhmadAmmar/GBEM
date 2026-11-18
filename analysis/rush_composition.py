@@ -24,6 +24,7 @@ def age_1950_75(band):
 
 
 def tenure(t):
+    """Tenure group from the register's TENURE text: owner-occupied, social rented, private rented or unknown."""
     t = str(t).lower()
     if "owner" in t:
         return "owner-occupied"

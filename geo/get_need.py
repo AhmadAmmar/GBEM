@@ -17,6 +17,7 @@ FILES = {"anonymised-NEED-data-2024-4million.zip": "https://assets.publishing.se
 
 
 def main():
+    """Download the NEED anonymised data files once, streamed to disk through a .part file."""
     RAW.mkdir(parents=True, exist_ok=True)
     for name, url in FILES.items():
         dest = RAW / name

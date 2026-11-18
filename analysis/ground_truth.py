@@ -26,6 +26,9 @@ BANDS = list("ABCDEFG")
 
 
 def retest(area, days):
+    """Pairs of certificates for the same UPRN lodged within `days` of each other with the same fuel, type, built form
+    and floor area within tolerance: how far SAP and band differ when nothing should have changed. Returns (summary, pairs).
+    """
     e = pd.read_parquet(DATA / area / "analysis/cert_enriched.parquet",
                         columns=["cert_id", "uprn", "date", "sap", "band", "fuel", "property_type", "built_form", "floor_area"])
     e = e[e["uprn"].notna() & ~e["uprn"].isin(["nan", "None"]) & e["sap"].notna() & e["date"].notna()].sort_values(["uprn", "date"])
@@ -45,6 +48,9 @@ def retest(area, days):
 
 
 def energy(area):
+    """London only: correlation of neighbourhood certificate measures with DESNZ 2024 mean gas and electricity use per
+    LSOA. None for other areas.
+    """
     if area != "london":
         return None
     en = pd.read_parquet(DATA / "london/energy_desnz/lsoa_energy_london.parquet")
@@ -65,6 +71,7 @@ def energy(area):
 
 
 def main():
+    """Write the re-test agreement (and, for London, the metered-energy check) for one area."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--days", type=int, default=365)
     a = ap.parse_args()

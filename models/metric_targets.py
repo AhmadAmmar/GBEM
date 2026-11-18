@@ -31,6 +31,7 @@ RATING = {"very poor": 1, "poor": 2, "average": 3, "good": 4, "very good": 5}
 
 
 def main():
+    """Blocked cross-validation of models for each home-energy metric target for one area and year."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--year", type=int, default=2024)
     ap.add_argument("--sample", type=int); ap.add_argument("--featureset", default="eo_morph_phys")

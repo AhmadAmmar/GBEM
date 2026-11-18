@@ -24,6 +24,7 @@ GEE = spec.DATA / "gee_v2"
 
 
 def sha256(path, chunk=1 << 22):
+    """SHA-256 of a file, read in 4 MB chunks."""
     h = hashlib.sha256()
     with open(path, "rb") as f:
         for b in iter(lambda: f.read(chunk), b""):
@@ -32,6 +33,7 @@ def sha256(path, chunk=1 << 22):
 
 
 def crc32(path, chunk=1 << 22):
+    """CRC-32 of a file, read in 4 MB chunks (matches the checksum Google Drive reports in zips)."""
     import zlib
     c = 0
     with open(path, "rb") as f:
@@ -145,6 +147,9 @@ def check(path):
 
 
 def main():
+    """Ingest a batch of Earth Engine exports: extract the zips, check every GeoTIFF against the specification (grid,
+    CRS, bands), and update the manifest with checksums and band statistics. Returns 1 if any file fails a check.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("batch"); ap.add_argument("zips", nargs="+")
     a = ap.parse_args()

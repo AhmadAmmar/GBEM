@@ -48,11 +48,13 @@ def numeric(X):
 
 
 def space_rf(t):
+    """Optuna search space for the random forest."""
     return dict(n_estimators=300, max_features=t.suggest_float("max_features", 0.05, 0.5), min_samples_leaf=t.suggest_int("min_samples_leaf", 1, 20),
                 max_samples=t.suggest_float("max_samples", 0.5, 1.0))
 
 
 def space_lgbm(t):
+    """Optuna search space for LightGBM."""
     return dict(n_estimators=t.suggest_int("n_estimators", 200, 1000, step=100), learning_rate=t.suggest_float("learning_rate", 0.01, 0.15, log=True),
                 num_leaves=t.suggest_int("num_leaves", 15, 127, log=True), min_child_samples=t.suggest_int("min_child_samples", 5, 100, log=True),
                 colsample_bytree=t.suggest_float("colsample_bytree", 0.1, 0.8), subsample=t.suggest_float("subsample", 0.5, 1.0),
@@ -60,6 +62,7 @@ def space_lgbm(t):
 
 
 def space_xgb(t):
+    """Optuna search space for XGBoost."""
     return dict(n_estimators=t.suggest_int("n_estimators", 200, 1000, step=100), learning_rate=t.suggest_float("learning_rate", 0.01, 0.15, log=True),
                 max_depth=t.suggest_int("max_depth", 3, 10), min_child_weight=t.suggest_float("min_child_weight", 1, 50, log=True),
                 colsample_bytree=t.suggest_float("colsample_bytree", 0.1, 0.8), subsample=t.suggest_float("subsample", 0.5, 1.0),
@@ -67,6 +70,7 @@ def space_xgb(t):
 
 
 def space_net(t):
+    """Optuna search space for the MLP and graph network (width, dropout, learning rate, weight decay, k neighbours)."""
     return dict(hidden=t.suggest_categorical("hidden", [64, 128, 256]), dropout=t.suggest_float("dropout", 0.0, 0.5), lr=t.suggest_float("lr", 3e-4, 3e-3, log=True),
                 weight_decay=t.suggest_float("weight_decay", 1e-6, 1e-2, log=True), k=t.suggest_categorical("k", [5, 10, 20]))
 
@@ -78,6 +82,9 @@ class Net:
     """Full-batch network in plain PyTorch. With k > 0, two GraphSAGE layers read each dwelling and the mean of its neighbours."""
 
     def __init__(self, graph, hidden, dropout, lr, weight_decay, k, epochs=300, patience=30):
+        """Settings of a multilayer perceptron, or with graph=True a two-layer graph network averaging over k nearest
+        neighbours; early stopping after `patience` epochs without improvement.
+        """
         self.graph, self.hidden, self.dropout, self.lr, self.wd, self.k, self.epochs, self.patience = graph, hidden, dropout, lr, weight_decay, k, epochs, patience
 
     def _edges(self, xy, years, ids):
@@ -99,12 +106,15 @@ class Net:
         return torch.as_tensor(np.concatenate(src)), torch.as_tensor(np.concatenate(dst))
 
     def _model(self, n):
+        """Build the torch network for n input features."""
         import torch
         from torch import nn
         graph, h, drop = self.graph, self.hidden, self.dropout
 
         class M(nn.Module):
+            """The network: two hidden layers with ReLU and dropout, and one output (SAP, standardised)."""
             def __init__(s):
+                """Layers sized for n inputs and h hidden units; inputs doubled when neighbour means are joined."""
                 super().__init__()
                 s.a = nn.Linear(n * (2 if graph else 1), h)
                 s.b = nn.Linear(h * (2 if graph else 1), h)
@@ -112,11 +122,13 @@ class Net:
                 s.drop = nn.Dropout(drop)
 
             def mean(s, x, e):
+                """Mean of node features x over incoming edges e (edge list [source, target])."""
                 total = torch.zeros_like(x).index_add_(0, e[1], x[e[0]])
                 count = torch.zeros(len(x), device=x.device).index_add_(0, e[1], torch.ones(len(e[1]), device=x.device)).clamp(min=1)
                 return total / count[:, None]
 
             def forward(s, x, e):
+                """Two layers; with the graph, each layer sees a node's own features joined with its neighbours' mean."""
                 u = torch.cat([x, s.mean(x, e)], 1) if graph else x
                 u = s.drop(torch.relu(s.a(u)))
                 v = torch.cat([u, s.mean(u, e)], 1) if graph else u
@@ -163,6 +175,7 @@ class Net:
         return self.predict(X)[te]
 
     def predict(self, X):
+        """Predicted SAP for X, imputed and standardised with the training statistics."""
         import torch
         Z = np.where(np.isnan(X), self.med, X)
         Z = np.clip((Z - self.mu) / self.sd, -8, 8).astype("float32")
@@ -172,6 +185,7 @@ class Net:
 
 
 def make_tree(name, params):
+    """A tree ensemble ('rf', 'lgbm' or 'xgb') with fixed seed and the given hyperparameters."""
     if name == "rf":
         return RandomForestRegressor(n_jobs=-1, random_state=SEED, **params)
     if name == "lgbm":
@@ -182,6 +196,7 @@ def make_tree(name, params):
 
 
 def run_once(name, params, data, tr, te):
+    """Fit one model on rows tr and predict rows te. Returns (predictions, fitted model)."""
     X, Xn, y, xy, years, ids = data
     if name in ("mlp", "graph"):
         p = dict(params)
@@ -196,6 +211,9 @@ def run_once(name, params, data, tr, te):
 
 
 def tune(name, data, tr, blocks, trials, max_rows):
+    """Tune a model's hyperparameters with Optuna on at most max_rows training rows, scored by mean absolute error in
+    three inner spatial-block folds.
+    """
     import optuna
     optuna.logging.set_verbosity(optuna.logging.WARNING)
     rng = np.random.default_rng(SEED)
@@ -203,6 +221,7 @@ def tune(name, data, tr, blocks, trials, max_rows):
     inner = list(GroupKFold(n_splits=3).split(pool, groups=blocks[pool]))
 
     def goal(t):
+        """Mean inner-fold MAE for one trial's parameters."""
         params = SPACES[name](t)
         errs = []
         for a, b in inner:
@@ -247,6 +266,7 @@ def explain(name, model, data, te, group_of, n=2000):
 
 
 def main():
+    """Nested blocked cross-validation comparing tuned random forest, LightGBM, XGBoost, MLP and graph network."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--years", nargs="+", type=int, required=True)
     ap.add_argument("--featureset", default="eo_morph"); ap.add_argument("--models", nargs="+", default=list(SPACES))

@@ -30,6 +30,9 @@ DATA = pathlib.Path(__file__).resolve().parents[2] / "data"
 
 
 def main():
+    """Retrofit targeting for London: neighbourhoods ranked on SAP, F-G share, income deprivation, vulnerability and
+    fabric-first share; the top --top share compared across criteria.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--top", type=float, default=0.2)
     a = ap.parse_args()

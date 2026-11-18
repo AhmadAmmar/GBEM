@@ -25,6 +25,7 @@ from safeio import keep                      # existing outputs are archived, ne
 
 
 def folds(x, y, km, seed, k=5):
+    """Fold of each row: km-kilometre blocks assigned at random (seed) to k folds."""
     blocks = pd.Series(np.floor(x / (km * 1000)).astype(int).astype(str) + "_" + np.floor(y / (km * 1000)).astype(int).astype(str))
     u = blocks.unique()
     f = dict(zip(np.random.default_rng(seed).permutation(u), np.arange(len(u)) % k))
@@ -32,6 +33,7 @@ def folds(x, y, km, seed, k=5):
 
 
 def main():
+    """Repeated spatial cross-validation over block sizes (--blocks km) and seeds, for several feature sets."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--year", type=int, default=2024)
     ap.add_argument("--sample", type=int); ap.add_argument("--blocks", nargs="+", type=float, default=[1, 2, 5])

@@ -23,6 +23,7 @@ URL = "https://assets.publishing.service.gov.uk/media/6a02febf81a251700a20b42a/f
 
 
 def main():
+    """Download the DESNZ sub-regional fuel poverty data once and write the London LSOA table."""
     raw = OUT / "raw"; raw.mkdir(parents=True, exist_ok=True)
     dest = raw / URL.rsplit("/", 1)[-1]
     if not dest.exists():

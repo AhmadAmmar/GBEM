@@ -32,6 +32,9 @@ TIMED = {"COPERNICUS/S2_SR_HARMONIZED", "COPERNICUS/S1_GRD", "LANDSAT/LC08/C02/T
 
 
 def windows(y):
+    """Date windows (start, end exclusive) for a year: annual, summer (June-August), winter (December-February), and in
+    2022 the July heatwave and December cold spell.
+    """
     w = {"annual": (f"{y}-01-01", f"{y + 1}-01-01"), "summer": (f"{y}-06-01", f"{y}-09-01"), "winter": (f"{y - 1}-12-01", f"{y}-03-01")}
     if y == 2022:
         w.update({"heat2022": ("2022-07-10", "2022-07-26"), "cold2022": ("2022-12-05", "2022-12-20")})
@@ -39,6 +42,9 @@ def windows(y):
 
 
 def main():
+    """Check that every Earth Engine source in SOURCES exists and has images and bands in each window of --year; lists
+    the problems found.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--project", required=True); ap.add_argument("--year", type=int, default=2024)
     a = ap.parse_args()

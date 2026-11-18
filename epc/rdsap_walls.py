@@ -92,6 +92,9 @@ def row(desc):
 
 
 def _row_one(text):
+    """Table row for one wall description: the first matching construction type, then filled cavity or insulated
+    variants. None when no type is recognised.
+    """
     t = text.lower()
     kind = next((k for k, pat in TYPES if re.search(pat, t)), None)    # first pattern wins
     if kind is None:

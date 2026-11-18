@@ -29,6 +29,7 @@ K = len(B.BANDS)
 
 
 def logits(m, X):
+    """Raw scores of a LightGBM classifier for all K bands; bands unseen in training get -30 (probability near zero)."""
     z = m.predict(X, raw_score=True)
     full = np.full((len(X), K), -30.0)
     full[:, m.classes_] = z
@@ -36,17 +37,20 @@ def logits(m, X):
 
 
 def fit_T(z, y):
+    """Temperature-scaling factor that minimises the negative log-likelihood of softmax(z / T) on labels y (Guo et al. 2017)."""
     nll = lambda t: -np.log(softmax(z / t, axis=1)[np.arange(len(y)), y] + 1e-12).mean()
     return minimize_scalar(nll, bounds=(0.05, 20), method="bounded").x
 
 
 def ece_top(p, y, bins=10):
+    """Expected calibration error of the top predicted band, with `bins` equal-width confidence bins."""
     conf, pred = p.max(1), p.argmax(1)
     b = np.clip((conf * bins).astype(int), 0, bins - 1)
     return sum((b == i).mean() * abs((pred[b == i] == y[b == i]).mean() - conf[b == i].mean()) for i in range(bins) if (b == i).any())
 
 
 def ece_classwise(p, y, bins=10):
+    """Class-wise expected calibration error: the mean over bands of each band's binned |frequency - probability|."""
     out = []
     for k in range(K):
         pk, yk = p[:, k], (y == k)
@@ -56,6 +60,9 @@ def ece_classwise(p, y, bins=10):
 
 
 def main():
+    """Calibration of band probabilities for one area by temperature scaling inside blocked cross-validation: ECE and
+    log-loss before and after.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--years", nargs="+", type=int, required=True)
     ap.add_argument("--sample", type=int); ap.add_argument("--featureset", default="eo_morph")

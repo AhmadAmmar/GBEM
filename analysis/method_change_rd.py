@@ -37,6 +37,9 @@ GROUPS = {"age_group": "ag", "property_type": "pt", "fuel_group": "fg"}
 
 
 def prepare(e):
+    """Add the categorical columns used as fixed effects (property type, built form, age group, fuel group) as strings,
+    and the outcome 'C or better' as 0/1.
+    """
     for k, s in [("pt", "PROPERTY_TYPE"), ("bf", "BUILT_FORM"), ("ag", "age_group"), ("fg", "fuel_group")]:
         e[k] = e[s].astype(object).astype(str)
     e["c_or_better"] = e["CURRENT_ENERGY_RATING"].astype(str).isin(list("ABC")).astype(float)
@@ -44,6 +47,9 @@ def prepare(e):
 
 
 def window(e, c, bw, donut):
+    """Certificates within bw days of cutoff c, without the `donut` days just before it; t is months from the cutoff and
+    post is 1 on or after it.
+    """
     d = e[(e.date >= c - pd.Timedelta(days=bw)) & (e.date < c + pd.Timedelta(days=bw))]
     d = d[(d.date < c - pd.Timedelta(days=donut)) | (d.date >= c)].copy()
     d["t"] = (d.date - c).dt.days / 30.0
@@ -52,6 +58,9 @@ def window(e, c, bw, donut):
 
 
 def jump(d, outcome, poly, min_n=3000):
+    """Regression-discontinuity jump at the cutoff: OLS of the outcome on a polynomial trend each side and fixed effects.
+    Intervals clustered by lodgement day (main) and HC1 (for comparison). None below min_n certificates.
+    """
     if len(d) < min_n:
         return None
     m = smf.ols(f"{outcome} ~ {TREND[poly]}{FE}", d[COLS])                  # patsy drops rows with missing values
@@ -65,6 +74,7 @@ def jump(d, outcome, poly, min_n=3000):
 
 
 def main():
+    """Jumps at the methodology cutoff and at placebo dates for one area, with covariate balance and weekly means."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--cutoff", default="2025-06-15")
     ap.add_argument("--placebo", nargs="*", default=["2024-06-15", "2023-06-15"])

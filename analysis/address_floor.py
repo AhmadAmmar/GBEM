@@ -24,6 +24,9 @@ WORDS = {"first": 1, "second": 2, "third": 3, "fourth": 4, "fifth": 5, "sixth": 
 
 
 def parse_floor(text):
+    """Floor number from address text: '3rd floor', 'floor 3', number words ('second floor'), ground/basement/garden
+    flat as 0, and top floor or penthouse flagged. Returns a Series of floor numbers (NaN where none is stated).
+    """
     t = text.fillna("").str.lower()
     out = pd.Series(np.nan, index=t.index)
     num = pd.to_numeric(t.str.extract(r"\b(\d{1,2})(?:st|nd|rd|th)\s+(?:floor|flr)\b")[0], errors="coerce")
@@ -37,6 +40,9 @@ def parse_floor(text):
 
 
 def main():
+    """Compare the floor position of current flats and maisonettes with the floor stated in their address lines, and
+    write the agreement for one area (see the module description).
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True)
     a = ap.parse_args()

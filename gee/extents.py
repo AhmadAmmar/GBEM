@@ -18,6 +18,7 @@ SNAP = 3000
 
 
 def snap(b, m=SNAP):
+    """Expand a box outward to multiples of m metres (default SNAP), so exports share one grid."""
     return [math.floor(b[0] / m) * m, math.floor(b[1] / m) * m, math.ceil(b[2] / m) * m, math.ceil(b[3] / m) * m]
 
 

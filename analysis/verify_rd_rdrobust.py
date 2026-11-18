@@ -16,6 +16,9 @@ import verify_rd as v  # noqa: E402
 
 
 def main():
+    """Cross-check of the jumps with rdrobust (Calonico, Cattaneo and Titiunik 2014) at the cutoff and placebo dates, for
+    both areas; writes verify_rd_rdrobust.csv.
+    """
     for area in ("london", "belfast"):
         e = v.load(area)
         rows = []

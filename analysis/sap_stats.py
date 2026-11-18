@@ -21,6 +21,9 @@ BANDS = "ABCDEFG"
 
 
 def stats(sap, band):
+    """Distribution of SAP scores (n, mean, sd, percentiles, share above 100, mean absolute error of the median) and the
+    share of each band A-G.
+    """
     s = pd.to_numeric(sap, errors="coerce").dropna()
     q = s.quantile([0.05, 0.25, 0.5, 0.75, 0.95])
     row = {"n": len(s), "mean": s.mean(), "sd": s.std(), "min": s.min(), "p05": q[0.05], "p25": q[0.25], "median": q[0.5],
@@ -32,6 +35,7 @@ def stats(sap, band):
 
 
 def main():
+    """SAP distribution of the modelling set (--year) and of the current certified stock, for both areas."""
     ap = argparse.ArgumentParser(); ap.add_argument("--year", type=int, default=2024)
     a = ap.parse_args()
     rows = []

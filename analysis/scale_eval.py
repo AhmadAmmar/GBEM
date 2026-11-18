@@ -28,6 +28,7 @@ TAG = {"london": "2024_s50k", "belfast": "2024"}
 
 
 def main():
+    """Model error aggregated to footprint, street, neighbourhood and cell for one area, from the out-of-fold predictions."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--tag")
     a = ap.parse_args()

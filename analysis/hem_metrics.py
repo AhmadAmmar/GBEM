@@ -35,6 +35,7 @@ FOSSIL = r"mains gas|gas: mains|lpg|bottled gas|oil|coal|anthracite|smokeless|wo
 
 
 def fuel_class(fuel):
+    """Heating fuel group from the register's MAIN_FUEL text: heat network, electric, biomass or mixed, fossil, unknown."""
     f = fuel.astype(str).str.lower()
     network = f.str.contains("community") & ~f.str.contains("not community")
     cls = np.select(
@@ -45,6 +46,9 @@ def fuel_class(fuel):
 
 
 def main():
+    """Home-energy metrics for the latest certificate of each dwelling in one area, summarised on a --cell metre grid
+    (see the module description).
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--cell", type=int, default=500)
     a = ap.parse_args()

@@ -20,15 +20,20 @@ UA = {"User-Agent": "Mozilla/5.0"}
 
 
 def norm(s):
+    """Lower-case letters only, for matching survey names with file names."""
     return re.sub(r"[^a-z]", "", s.lower())
 
 
 def get_json(url):
+    """GET a URL and parse the JSON reply (OpenDataNI CKAN API)."""
     with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=120) as r:
         return json.load(r)
 
 
 def main():
+    """Download the OpenDataNI gridded lidar (DTM and DSM) for every survey overlapping Greater Belfast, matched by name
+    and year. --dry-run lists the matches without downloading.
+    """
     ap = argparse.ArgumentParser(); ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
     e = gpd.read_file(f"zip://{EXTENTS.as_posix()}").to_crs(29902)

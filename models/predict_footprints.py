@@ -39,6 +39,9 @@ CODE = pathlib.Path(__file__).resolve().parents[1]
 
 
 def model(area, year, featureset, sample, out):
+    """Load the saved deployment model for an area, year and feature set, or train and save it: band classifier, SAP
+    regressor, categories and the area-of-applicability statistics.
+    """
     f = out / f"lgbm_{featureset}_{year}.joblib"
     if f.exists():
         return joblib.load(f)
@@ -76,6 +79,7 @@ def model(area, year, featureset, sample, out):
 
 
 def predict(m, S):
+    """Band probabilities, predicted band and SAP, and dissimilarity index (AOA) for footprint features S."""
     XS = S.reindex(columns=m["cols"])
     for c in m["cols"]:
         XS[c] = pd.Categorical(XS[c].astype("string"), categories=m["cats"][c]) if c in m["cats"] else \
@@ -92,6 +96,7 @@ def predict(m, S):
 
 
 def main():
+    """Predict bands for chosen footprints (ids, polygon or a random sample) for each year, with AOA flags."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--fp-ids", nargs="+"); ap.add_argument("--polygon")
     ap.add_argument("--sample-buildings", type=int, help="random sample of dwelling footprints (seed 42), e.g. for stability tests")

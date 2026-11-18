@@ -46,6 +46,7 @@ COVER = {"Sentinel-2 NDVI": "s2_NDVI_annual_pt", "Sentinel-1 VV": "s1_VV_dB_annu
 
 
 def map_panels(area, out):
+    """Six quick-look maps of the Earth Engine products for an area in one figure."""
     q = DATA / area / "gee_v2" / "qa" / "quicklooks"
     fig, axs = plt.subplots(2, 3, figsize=(15, 9.6))
     for ax, (f, title) in zip(axs.ravel(), PANELS):
@@ -82,6 +83,7 @@ def hbars(rows, title, xlabel, out, xlim):
 
 
 def agreement():
+    """Best Spearman agreement of each new feature with the earlier 2024 samples, by area."""
     best = {}
     for area in COL:
         c = pd.read_csv(DATA / area / "gee_v2" / "features" / f"compare_old_{area}.csv")
@@ -95,6 +97,7 @@ def agreement():
 
 
 def coverage():
+    """Share of certificates with a value for each feature, by area, from the extraction logs."""
     rows, table, logs = [], [], {}
     for area in COL:
         logs[area] = json.loads((DATA / area / "gee_v2" / "features" / "epc2024_2024_log.json").read_text(encoding="utf-8"))
@@ -105,6 +108,7 @@ def coverage():
 
 
 def html(out, logs, agree_t, cover_t, files):
+    """Write the meeting pack page: summary tiles, figures and the agreement and coverage tables."""
     man = pd.read_csv(DATA / "gee_v2" / "manifest.csv")
     tiles = [("GeoTIFFs ingested, all checks passed", f"{(man['checks'] == 'ok').sum()} / {len(man)}"),
              ("London certificates (2024)", f"{logs['london']['n_records']:,}"),
@@ -142,6 +146,7 @@ ul{{padding-left:20px}}</style></head><body><main>
 
 
 def main():
+    """Make the Earth Engine data meeting pack (maps, agreement, coverage, page) in a dated Outputs folder."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=str(PHD / "Outputs" / f"{datetime.date.today():%Y-%m-%d}_GEE_data_v2"))
     out = pathlib.Path(ap.parse_args().out); out.mkdir(parents=True, exist_ok=True)

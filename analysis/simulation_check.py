@@ -36,6 +36,9 @@ HDD_REF = 2400.0                             # nominal degree-days (base 15.5 C)
 
 
 def steady_state(d, with_setpoint=True):
+    """Steady-state heating demand per m2 for each simulated building in the urban building stock dataset, from its
+    U-values, window ratio, air changes and form, as a check on the simulation.
+    """
     n = d["Building_Type"].map(STOREYS)
     floor = d["Total_Building_Area"]
     a = floor / n                                                # footprint area
@@ -57,6 +60,7 @@ def steady_state(d, with_setpoint=True):
 
 
 def main():
+    """Compare the steady-state estimate with the dataset's simulated heating energy per m2."""
     cols = ["Weather_File", "Building_Type", "Floor_Insulation_U-Value", "Door_Insulation_U-Value", "Roof_Insulation_U-Value",
             "Window_Insulation_U-Value", "Wall_Insulation_U-Value", "Air_Change_Rate", "Window_to_Wall_Ratio",
             "Heating_Setpoint_Temperature", "Total_Building_Area", "Total_Heating_Energy"]

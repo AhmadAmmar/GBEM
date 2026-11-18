@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 
 
 def hem_demand(folder, vid):
+    """Space heat demand per m2 from one variant's HEM results summary; NaN if not found."""
     f = folder / f"variant_{vid}__results" / f"variant_{vid}__core__results_summary.csv"
     for line in f.read_text(encoding="utf8").splitlines():
         if line.startswith("Space heat demand"):
@@ -27,6 +28,7 @@ def hem_demand(folder, vid):
 
 
 def main():
+    """Compare the proxy with HEM results for one trial inputs folder: correlations and line fit."""
     ap = argparse.ArgumentParser(); ap.add_argument("--inputs", required=True)
     a = ap.parse_args()
     d = pathlib.Path(a.inputs)

@@ -50,6 +50,7 @@ def _footprint_tables(area):
 
 
 def _assemble(f, tables):
+    """Join one feature chunk to the footprint tables and add lidar-derived features where present."""
     f = f.astype({c: "float32" for c in f.columns if f[c].dtype == "float64"})
     f = f.drop(columns=[c for c in ("fp_id", "UPRN", "link_method", "year") if c in f]).rename(columns={"rec_id": "id_fp"})
     f["id_fp"] = f["id_fp"].astype(str)
@@ -60,6 +61,7 @@ def _assemble(f, tables):
 
 
 def _columns(src, need):
+    """Columns of a parquet file to read: those needed plus the id columns (all when need is None)."""
     import pyarrow.parquet as pq
     names = pq.ParquetFile(src).schema.names
     return None if need is None else [c for c in names if c in set(need) or c in ("rec_id", "fp_id")]
@@ -82,6 +84,7 @@ def building_batches(area, year, need=None, src=None, rows=150_000):
 
 
 def main():
+    """Predict band and SAP for every dwelling footprint in an area and year (features extracted unless --skip-extract)."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--year", type=int, required=True)
     ap.add_argument("--featureset", default="eo_morph"); ap.add_argument("--skip-extract", action="store_true")
@@ -157,6 +160,7 @@ def main():
 
 
 def shapely_centroids(fp):
+    """Centroid coordinates of each footprint."""
     c = fp.geometry.centroid
     return pd.DataFrame({"fp_id": fp["fp_id"], "x": c.x.to_numpy(), "y": c.y.to_numpy()})
 

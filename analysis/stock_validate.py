@@ -24,12 +24,14 @@ DATA = pathlib.Path(__file__).resolve().parents[2] / "data"
 
 
 def partial(a, b, c):
+    """Spearman partial correlation of a and b controlling for c (ranks, linear residuals on c)."""
     r = pd.DataFrame({"a": a, "b": b, "c": c}).dropna().rank()
     res = lambda y: y - np.polyval(np.polyfit(r["c"], y, 1), r["c"])
     return stats.pearsonr(res(r["a"]), res(r["b"]))[0]
 
 
 def main():
+    """London only: modelled stock against measured small-area energy use for --year."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", default="london"); ap.add_argument("--year", type=int, default=2024)
     a = ap.parse_args()

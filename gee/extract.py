@@ -88,6 +88,9 @@ def load_certificates(area, year):
 
 
 def load_buildings(a, epsg):
+    """Buildings from a vector file with their id as rec_id, in the area's CRS. Each gets a point: from the --points
+    CSV where given (pt_source 'certificate'), else a representative point inside the footprint ('footprint').
+    """
     g = gpd.read_file(a.buildings)
     g["geometry"] = force_2d(g.geometry.values)
     g = g.to_crs(epsg)
@@ -114,6 +117,9 @@ class Grid:
     """Footprint coverage (label, pixel, covered share) per strip, and point positions, on one raster grid."""
 
     def __init__(self, path, uniq, pts):
+        """Prepare footprint coverage on a raster grid: for each strip of rows, which pixels each footprint covers and with
+        what share, so statistics can be computed strip by strip without loading the raster.
+        """
         with rasterio.open(path) as r:
             self.t, self.h, self.w = r.transform, r.height, r.width
         self.n_lab = int(uniq["fp_label"].max()) + 1 if len(uniq) else 1
@@ -193,6 +199,9 @@ def zonal_strips(path, grid, compute, recs, scales, sd_vars=None):
 
 
 def point_values(path, recs, div=None):
+    """Raster values at each record's point, by band, with optional divisors per band (scaled integers to units);
+    points outside the raster get NaN.
+    """
     div = div or {}
     pts = recs["pt"]
     with rasterio.open(path) as r:
@@ -211,6 +220,10 @@ def point_values(path, recs, div=None):
 
 
 def run(a):
+    """Extract features for certificates (or a building file) for one area and year: Sentinel-2 reflectance and indices,
+    Sentinel-1 backscatter, Landsat and MODIS temperature, ERA5, terrain, land cover and lights, as footprint means and
+    point values, written to the features folder.
+    """
     epsg = spec.AREAS[a.area]["epsg"]
     y = a.year
     if a.certificates:
@@ -234,6 +247,7 @@ def run(a):
     cols["fp_px_10m"] = np.where(lab > 0, g10.px[lab], 0)
 
     def s2_vars(b):
+        """Sentinel-2 reflectance (0-1) and spectral indices for each window."""
         out = {}
         for w in spec.WINDOWS["s2"]:
             refl = {k: b[f"{k}_{w}"] / 10000 for k in spec.S2_BANDS}
@@ -249,6 +263,7 @@ def run(a):
     p = spec.raw_path(a.area, "s1", y)
 
     def s1_vars(b):
+        """Sentinel-1 VV and VH for each window in dB and in linear power."""
         out = {}
         for w in spec.WINDOWS["s1"]:
             for pol in ("VV", "VH"):
@@ -281,6 +296,7 @@ def run(a):
     ref = pd.read_csv(spec.derived_dir(a.area) / f"uhi_reference_{y}.csv").set_index("band")["rural_median_C"]
 
     def ls_vars(b):
+        """Landsat land surface temperature (deg C) for each window."""
         return {f"landsat_LST_{w}": b[f"LST_{w}"] / 100 for w in spec.windows("landsat", y)}
     for name, st in zonal_strips(p, g30, ls_vars, recs, SCALES[30]).items():
         w = name.split("_")[-1]
@@ -297,6 +313,7 @@ def run(a):
         refm = pd.read_csv(spec.derived_dir(a.area) / "uhi_reference_multi.csv").set_index("band")["rural_median_C"]
 
         def lm_vars(b):
+            """Multi-year (2020-2025) Landsat land surface temperature (deg C) for each window."""
             return {f"landsatmulti_LST_{w}": b[f"LST_{w}"] / 100 for w in spec.MULTI["landsat_multi"]["windows"]}
         for name, st in zonal_strips(pm, g30, lm_vars, recs, SCALES[30]).items():
             w = name.split("_")[-1]

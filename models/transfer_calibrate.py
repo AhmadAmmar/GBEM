@@ -33,6 +33,7 @@ FRACS = [1, 2, 5, 10, 25, 50]
 
 
 def fit(X, y, sap, w=None):
+    """Balanced band classifier and SAP regressor, optionally with sample weights."""
     yc = np.searchsorted(B.BANDS, y)
     clf = lgb.LGBMClassifier(class_weight="balanced", **B.LGBM).fit(X, yc, sample_weight=w)
     ok = ~np.isnan(sap)
@@ -41,6 +42,7 @@ def fit(X, y, sap, w=None):
 
 
 def proba(clf, X):
+    """Probabilities for all seven bands (zeros for bands unseen in training)."""
     p = np.zeros((len(X), len(B.BANDS))); p[:, clf.classes_] = clf.predict_proba(X)
     return p
 
@@ -59,12 +61,14 @@ def em_priors(p, src_prior, iters=100):
 
 
 def score(y, pred, sap, psap, **kw):
+    """Band metrics, SAP MAE and bias, and the test size, with extra fields kw."""
     ok = ~np.isnan(sap)
     return {**kw, **B.cls_metrics(y, pred), "sap_mae": mean_absolute_error(sap[ok], psap[ok]) if psap is not None else np.nan,
             "sap_bias": float(np.mean(psap[ok] - sap[ok])) if psap is not None else np.nan, "n_test": len(y)}
 
 
 def standardise(Xs, Xt):
+    """Standardise numeric features within each area separately (a simple domain adaptation)."""
     Xs, Xt = Xs.copy(), Xt.copy()
     for c in Xs.columns:
         if str(Xs[c].dtype) != "category":
@@ -75,6 +79,8 @@ def standardise(Xs, Xt):
 
 
 def run(src_name, src, tgt_name, tgt, cols, seeds, rows):
+    """Transfer from source to target: zero-shot, standardised, prior shift (EM), and with k target labels:
+    SAP bias correction, pooled training (target rows up-weighted) and a target-only model; per seed."""
     Xs_full = T.matrix(src, cols)
     cats = {c: Xs_full[c].cat.categories for c in Xs_full.columns if str(Xs_full[c].dtype) == "category"}
     Xt_full = T.matrix(tgt, cols, cats)
@@ -128,6 +134,7 @@ def run(src_name, src, tgt_name, tgt, cols, seeds, rows):
 
 
 def main():
+    """Calibrated transfer experiments London to Belfast and back."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--year", type=int, default=2024); ap.add_argument("--sample", type=int, default=50000)
     ap.add_argument("--seeds", type=int, default=2)

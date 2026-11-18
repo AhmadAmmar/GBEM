@@ -46,6 +46,10 @@ MAJOR = {"motorway", "motorway_link", "trunk", "trunk_link", "primary", "primary
 
 
 def shape_metrics(geoms):
+    """Shape of each footprint: area, perimeter, compactness (4 pi A / P^2), convexity (A / hull area), elongation
+    (1 - short/long side of the minimum rotated rectangle), orientation of the long side (0-180 degrees from north) and
+    vertex count. Degenerate shapes get NaN for the rectangle measures.
+    """
     area, per = shapely.area(geoms), shapely.length(geoms)
     hull = shapely.area(shapely.convex_hull(geoms))
     mrr = shapely.minimum_rotated_rectangle(geoms)
@@ -65,6 +69,9 @@ def shape_metrics(geoms):
 
 
 def adjacency(geoms, per):
+    """Shared walls: length of each footprint's boundary within 0.5 m of another footprint, its share of the perimeter,
+    the number of touching footprints and the distance to the nearest other footprint. Computed in chunks for memory.
+    """
     tree = shapely.STRtree(geoms)
     buf = shapely.buffer(geoms, 0.5, quad_segs=2)
     i, j = tree.query(buf, predicate="intersects")
@@ -80,12 +87,14 @@ def adjacency(geoms, per):
 
 
 def disc(r):
+    """Circular kernel of radius r metres on the CELL grid (1 inside, 0 outside)."""
     k = int(round(r / CELL))
     yy, xx = np.mgrid[-k:k + 1, -k:k + 1]
     return (xx ** 2 + yy ** 2 <= k ** 2).astype("float32")
 
 
 def grid_index(xs, ys, ext):
+    """Row and column on the CELL grid of the extent for points (xs, ys), clipped to the grid, and the grid shape."""
     x0, y0, x1, y1 = ext
     nx, ny = int((x1 - x0) / CELL), int((y1 - y0) / CELL)
     c = np.clip(((xs - x0) / CELL).astype(int), 0, nx - 1)
@@ -94,6 +103,9 @@ def grid_index(xs, ys, ext):
 
 
 def surroundings(cent, area, ext):
+    """Neighbourhood density within 100 and 250 m of each footprint centroid: building coverage, building count and
+    mean building area, from gridded sums convolved with a disc.
+    """
     r, c, shape = grid_index(cent[:, 0], cent[:, 1], ext)
     A = np.zeros(shape, "float32"); N = np.zeros(shape, "float32")
     np.add.at(A, (r, c), area); np.add.at(N, (r, c), 1)
@@ -109,6 +121,9 @@ def surroundings(cent, area, ext):
 
 
 def streets(area, geoms, cent, ext):
+    """Distance from each footprint to the nearest drivable and major OSM road, and drivable road density (km per km2)
+    within 250 m. Returns the measures and counts of roads used.
+    """
     epsg, _ = EXTENT[area]
     bb = gpd.GeoSeries([shapely.box(*ext)], crs=epsg).to_crs(4326).total_bounds
     roads = gpd.read_file(f"zip://{OSM[area].as_posix()}!gis_osm_roads_free_1.shp", bbox=tuple(bb)).to_crs(epsg)
@@ -131,6 +146,9 @@ def streets(area, geoms, cent, ext):
 
 
 def main():
+    """Morphology table per area (shape, adjacency, surroundings, streets, volume where height is known), written to
+    morphology.parquet with a log of medians.
+    """
     ap = argparse.ArgumentParser(); ap.add_argument("--areas", nargs="+", default=["london", "belfast"])
     for area in ap.parse_args().areas:
         d = DATA / area / "epc"

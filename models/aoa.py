@@ -31,15 +31,24 @@ from safeio import keep                      # existing outputs are archived, ne
 
 
 def blocks(d, km=2.0):
+    """Spatial block id of each row: x and y floored to km-kilometre squares, joined as 'col_row'."""
     return (np.floor(d["x"] / (km * 1000)).astype(int).astype(str) + "_" + np.floor(d["y"] / (km * 1000)).astype(int).astype(str)).to_numpy()
 
 
 def numeric(X):
+    """Only the non-categorical columns of X."""
     return X[[c for c in X.columns if str(X[c].dtype) != "category"]]
 
 
 class AOA:
+    """Area of applicability (Meyer and Pebesma 2021): distance from a point to the nearest training point in
+    importance-weighted standardised feature space, divided by the mean training distance (dissimilarity index, DI).
+    """
     def __init__(self, Xtr, ytr, groups, top):
+        """Fit on training features: keep the `top` most important numeric features (LightGBM gain), standardise them by
+        median and standard deviation, weight by importance, and set the DI threshold as Q3 + 1.5 IQR of the training DI
+        computed across five spatial-block folds (groups give the blocks).
+        """
         X = numeric(Xtr)
         imp = lgb.LGBMRegressor(**B.LGBM).fit(X, ytr).booster_.feature_importance("gain")
         order = np.argsort(imp)[::-1][:top]
@@ -63,14 +72,19 @@ class AOA:
         self.train_di = di
 
     def z(self, X):
+        """Standardised, importance-weighted features of X (missing values filled with the training median)."""
         Z = (X[self.cols].astype("float64").fillna(self.med) - self.med) / self.sd
         return Z.to_numpy() * self.w
 
     def di(self, X):
+        """Dissimilarity index of each row of X: nearest training distance divided by the mean training distance."""
         return self.nn.kneighbors(self.z(numeric(X)))[0][:, 0] / self.mean_d
 
 
 def err_split(di, thr, err, name, rows, extra):
+    """Append and print one row: share of points outside the AOA (DI > thr) and the SAP mean absolute error inside and
+    outside it.
+    """
     out = di > thr
     rows.append({"experiment": name, **extra, "points": len(di), "share_outside_aoa": out.mean(), "threshold": thr,
                  "di_median": np.median(di), "sap_mae_inside": np.nanmean(err[~out]) if (~out).any() else np.nan,
@@ -80,6 +94,7 @@ def err_split(di, thr, err, name, rows, extra):
 
 
 def main():
+    """Area-of-applicability experiments: London to Belfast transfer and within-area cases, error inside versus outside."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--year", type=int, default=2024); ap.add_argument("--sample", type=int, default=50000)
     ap.add_argument("--top", type=int, default=60)

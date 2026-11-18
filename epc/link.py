@@ -23,6 +23,9 @@ EPSG = {"london": 27700, "belfast": 29902}
 
 
 def main():
+    """Link each certificate to a footprint through its UPRN point: the smallest footprint containing it, else the nearest
+    within --max-dist metres (default 5). Records the method and distance; writes certificates_linked.parquet.
+    """
     ap = argparse.ArgumentParser(); ap.add_argument("--areas", nargs="+", default=["london", "belfast"])
     ap.add_argument("--max-dist", type=float, default=5.0)
     a = ap.parse_args()

@@ -44,6 +44,7 @@ CREDIT = {"boundaries": "Central Statistics Office and Tailte Éireann, Small Ar
 
 
 def record(raw, name, url, layer):
+    """Append a downloaded file's SHA-256 and its source, date and credit to SHA256SUMS.txt and SOURCE.txt."""
     p = raw / name
     h = hashlib.sha256(p.read_bytes()).hexdigest()
     with open(raw / "SHA256SUMS.txt", "a", encoding="utf-8") as f:
@@ -53,6 +54,7 @@ def record(raw, name, url, layer):
 
 
 def download():
+    """Download every Dublin layer in SRC once, recording checksums and sources."""
     for layer, files in SRC.items():
         raw = D / layer / "raw"; raw.mkdir(parents=True, exist_ok=True)
         for name, url in files.items():
@@ -89,6 +91,7 @@ def buildings(release="2026-09-23.1"):
 
 
 def boundaries():
+    """CSO 2022 small areas in the Dublin councils (and postcode boundaries where present) in the working CRS."""
     sa = gpd.read_file(D / "boundaries/raw/cso_small_areas_2022_ungeneralised.gpkg").to_crs(EPSG)
     la = next(c for c in sa.columns if c.upper() in ("COUNTY_ENGLISH", "COUNTY", "LA_ENGLISH", "COUNTYNAME"))
     keep_ = sa[la].astype(str).str.upper().str.contains("|".join(COUNCILS))

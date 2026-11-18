@@ -33,6 +33,7 @@ EPSG = {"london": 27700, "belfast": 29902}
 
 
 def uprn_points(area):
+    """Distinct UPRN points (id, x, y) inside the study extent, read from the area's address file with DuckDB."""
     path, idc, xc, yc = UPRN[area]
     x0, y0, x1, y1 = EXTENT[area]
     q = f"""SELECT DISTINCT CAST("{idc}" AS VARCHAR) AS uprn, CAST("{xc}" AS DOUBLE) AS x, CAST("{yc}" AS DOUBLE) AS y
@@ -58,6 +59,9 @@ def long_axis(geoms):
 
 
 def main():
+    """Dwellings per footprint (UPRN points within it) and each certificate's position along its block's long axis
+    (0 = centre, 1 = end), written to dwellings_fp.parquet and dwellings_cert.parquet.
+    """
     ap = argparse.ArgumentParser(); ap.add_argument("--areas", nargs="+", default=["london", "belfast"])
     for area in ap.parse_args().areas:
         d = DATA / area / "epc"

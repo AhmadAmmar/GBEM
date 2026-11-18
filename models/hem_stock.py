@@ -33,6 +33,9 @@ from safeio import keep                      # existing outputs are archived, ne
 
 
 def targets(area, d):
+    """Targets for the home-energy model of each certificate: fabric class from q (as described) against the area's C/D
+    boundary q*, and fossil heating from MAIN_FUEL. Returns (targets, q*).
+    """
     s = pd.read_csv(B.DATA / area / "analysis/hem_metrics_summary.csv").set_index("measure")["value"]
     qstar = float(s["fabric proxy C/D boundary q* (kWh/m2/yr)"])
     ph = pd.read_parquet(B.DATA / area / "analysis/physics_cert.parquet", columns=["cert_id", "q_as_described_kwh_m2"])
@@ -48,6 +51,7 @@ def targets(area, d):
 
 
 def main():
+    """Train the fabric and heating models for one area and year and predict them for every dwelling footprint."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--year", type=int, default=2024)
     ap.add_argument("--featureset", default="eo_morph")

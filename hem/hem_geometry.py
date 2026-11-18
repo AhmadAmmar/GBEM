@@ -29,8 +29,10 @@ def envelope_area(hem):
 
 
 def floor_area(hem):
+    """Total floor area (m2) of a HEM input: the sum over zones."""
     return sum(z["area"] for z in hem["Zone"].values())
 
 
 def volume(hem):
+    """Total volume (m3) of a HEM input: the sum over zones."""
     return sum(z["volume"] for z in hem["Zone"].values())

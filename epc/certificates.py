@@ -43,6 +43,10 @@ RATINGS = list("ABCDEFG")
 
 
 def flags(d, log):
+    """Common cleaning and flags for one register: drops repeated certificate ids, ratings outside A-G and dates before
+    2007; adds year, new-dwelling, certificates per UPRN, order and is_latest, same-day certificates and the SAP score.
+    Each drop is counted in log. Returns (certificates, log).
+    """
     n0 = len(d)
     d = d.drop_duplicates("cert_id")       # the same certificate twice (NI file: 1,298 certificates, identical copies)
     log["dropped_repeated_certificate_id"] = n0 - len(d)
@@ -74,6 +78,9 @@ def flags(d, log):
 def london():
     # stream the London rows of the 25 GB register to a staging file (constant memory), then read it with
     # Arrow-backed strings: loading all 94 text columns as Python objects needs more than 20 GB
+    """London certificates from the January 2025 England and Wales register: streams London rows (E09 authorities)
+    through DuckDB to a staging file, keeps rows with a UPRN and coordinates, projects to EPSG:27700, then flags().
+    """
     stage = DATA / "london" / "epc" / "_stage_ew_london.parquet"
     stage.parent.mkdir(parents=True, exist_ok=True)
     if not stage.exists():
@@ -101,6 +108,9 @@ def london():
 
 
 def belfast():
+    """Belfast certificates from the January 2025 NI register with UPRN coordinates (Irish Grid), clipped to the study
+    extent, then flags().
+    """
     d = pd.read_csv(NI, dtype=str, encoding="latin1", low_memory=False)
     log = {"source": NI.name, "snapshot": "Northern Ireland register to January 2025, coordinates from UPRN", "rows_in_source": len(d)}
     n0 = len(d)
@@ -225,6 +235,9 @@ def london_2026(zip_path):
 
 
 def main():
+    """Write certificates.parquet and certificates_log.json per area, from the 2026 registers by default or the January
+    2025 snapshots (--source ew2025, --ni-source ni2025).
+    """
     ap = argparse.ArgumentParser(); ap.add_argument("--areas", nargs="+", default=["london", "belfast"])
     ap.add_argument("--source", choices=["ew2026", "ew2025"], default="ew2026",
                     help="London: register of 13 Oct 2026 (domestic-csv.zip) or the January 2025 snapshot")

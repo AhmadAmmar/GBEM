@@ -35,6 +35,7 @@ NODATA = -32768
 
 
 def tiles():
+    """The Environment Agency 2 m lidar export tiles from Earth Engine (batch b6), excluding sync-conflict copies."""
     t = sorted(p for p in RAW.glob("gbem_v2_0_1_london_lidar_ea_2m*.tif") if "__conflict" not in p.name)
     if not t:
         raise SystemExit(f"no LiDAR export in {RAW}: run batch b6 in Earth Engine and ingest it first")
@@ -42,6 +43,9 @@ def tiles():
 
 
 def main():
+    """Per-footprint lidar statistics for London: each tile is read in windows, footprints are rasterised onto it, and
+    height, maximum height, roof slope, south-facing and flat shares are summarised per footprint with the valid share.
+    """
     fp = gpd.read_parquet(DATA / "london/epc/footprints.parquet", columns=["fp_id", "geometry"])
     geoms = fp.geometry.values
     tree = shapely.STRtree(geoms)

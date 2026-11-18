@@ -36,6 +36,10 @@ STOREY_M = 2.8
 
 
 def geometry(area_m2, perim_m, shared_m, height_m, n_dw):
+    """Envelope geometry of each building from footprint area, perimeter, shared wall length, height and dwelling count:
+    storeys (height / STOREY_M), floor area, exposed and party wall areas, roof, ground, volume, envelope area, heat-loss
+    form factor (envelope / floor), surface-to-volume ratio, exposed share and per-dwelling areas.
+    """
     A, P = np.asarray(area_m2, float), np.asarray(perim_m, float)
     S = np.clip(np.nan_to_num(np.asarray(shared_m, float)), 0, P)
     H = np.asarray(height_m, float)
@@ -54,6 +58,9 @@ def geometry(area_m2, perim_m, shared_m, height_m, n_dw):
 
 
 def building_height(area):
+    """Height of each footprint: lidar median where at least half the footprint has valid lidar, else the footprint
+    data's height, else floors x STOREY_M; clipped to 2.5-300 m, with its source recorded.
+    """
     e = DATA / area / "epc"
     m = pd.read_parquet(e / "morphology.parquet", columns=["fp_id", "area_m2", "perimeter_m", "shared_wall_m", "height_m", "num_floors"])
     m = m.merge(pd.read_parquet(e / "dwellings_fp.parquet", columns=["fp_id", "n_uprn"]), on="fp_id", how="left")
@@ -70,6 +77,10 @@ def building_height(area):
 
 
 def main():
+    """Write physics_fp.parquet for one area: geometry() on building_height() for every footprint.
+
+        python epc/physics.py --area london
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True)
     a = ap.parse_args()

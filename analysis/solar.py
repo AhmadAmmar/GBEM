@@ -22,6 +22,9 @@ DATA = pathlib.Path(__file__).resolve().parents[2] / "data"
 
 
 def main():
+    """Rooftop solar potential per footprint for one area from lidar roof shares, a usable share (--usable) and
+    kWp per m2, divided among dwellings.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--usable", type=float, default=0.6); ap.add_argument("--kwp-per-m2", type=float, default=0.18)
     a = ap.parse_args()

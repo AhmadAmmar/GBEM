@@ -46,6 +46,7 @@ def dictionary_columns(out_dir):
 
 
 def write_dictionary(area):
+    """Write data/<area>/model/data_dictionary.csv: every model column and its group (streets, a prefix group from GROUPS, or meta)."""
     out_dir = DATA / area / "model"
     cols = dictionary_columns(out_dir)
     dd = pd.DataFrame({"column": cols})
@@ -77,6 +78,11 @@ def lidar_derived(df):
 
 
 def main():
+    """Assemble one model table per area and year: certificate labels and flags, morphology, position in block and the
+    Earth Engine features, joined on the certificate id. Writes data/<area>/model/ and the data dictionary.
+
+        python epc/assemble.py --areas london belfast [--years 2015 2016]
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--areas", nargs="+", default=["london", "belfast"]); ap.add_argument("--years", nargs="+", type=int)
     a = ap.parse_args()

@@ -25,6 +25,9 @@ DATA = pathlib.Path(__file__).resolve().parents[2] / "data"
 
 
 def main():
+    """Heat-pump readiness for one area: heat loss parameter (HLC / floor area) of each current dwelling, classed as ready
+    (below --ready W/m2K), minor work or fabric first, and summarised by neighbourhood.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--ready", type=float, default=2.0); ap.add_argument("--minor", type=float, default=3.0)
     a = ap.parse_args()

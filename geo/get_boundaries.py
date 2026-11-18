@@ -19,6 +19,7 @@ EXTENT = (492000, 144000, 573000, 213000)                  # London context exte
 
 
 def page(offset):
+    """One page (2,000 features) of LSOA 2021 boundaries intersecting the London extent from the ONS ArcGIS service."""
     q = {"where": "1=1", "outFields": "LSOA21CD,LSOA21NM", "geometry": ",".join(map(str, EXTENT)),
          "geometryType": "esriGeometryEnvelope", "inSR": 27700, "spatialRel": "esriSpatialRelIntersects",
          "outSR": 27700, "f": "geojson", "resultOffset": offset, "resultRecordCount": 2000, "orderByFields": "LSOA21CD"}
@@ -27,6 +28,7 @@ def page(offset):
 
 
 def main():
+    """Download all London LSOA 2021 boundaries page by page to one GeoPackage (not repeated if it exists)."""
     dest = OUT / "lsoa21_bgc_v5_london.gpkg"
     if dest.exists():
         sys.exit(f"{dest} exists: not downloaded again")

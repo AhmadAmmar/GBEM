@@ -27,6 +27,7 @@ OTHER = ["electric", "renewable", "wood"]
 
 
 def census_london():
+    """Census 2021 TS046 central heating type by LSOA for London, as household counts by fuel, with LSOA boundaries."""
     c = pd.read_csv(DATA / "london/census2021_ons/census2021-ts046-lsoa.csv")
     c.columns = [x.split(": ")[-1] for x in c.columns]
     m = {"gas": "Mains gas only", "lpg": "Tank or bottled gas only", "oil": "Oil only", "solid": "Solid fuel only",
@@ -38,6 +39,9 @@ def census_london():
 
 
 def census_belfast():
+    """NI Census 2021 MS-E11 central heating type by ward for Belfast (counts table), with 2012 ward boundaries.
+    Belfast has no heat-network category, so it is set to 0.
+    """
     x = pd.read_excel(DATA / "belfast/census2021_nisra/census-2021-ms-e11.xlsx", sheet_name="Ward", header=7)
     x = x[x["Geography code"].astype(str).str.match(r"^N08\d{6}$")].drop_duplicates("Geography code")  # counts table first
     m = {"gas": "Mains gas only", "lpg": "Tank or bottled gas only", "oil": "Oil only",
@@ -50,6 +54,9 @@ def census_belfast():
 
 
 def wstats(t, w):
+    """Agreement of predicted and census fossil-heating shares across units t (columns pred, census) weighted by
+    households w: Spearman and Pearson correlation, weighted shares, weighted mean bias and mean absolute error.
+    """
     r = t["pred"] - t["census"]
     return {"units": len(t), "households": int(w.sum()),
             "spearman": stats.spearmanr(t["pred"], t["census"])[0], "pearson": stats.pearsonr(t["pred"], t["census"])[0],
@@ -58,6 +65,7 @@ def wstats(t, w):
 
 
 def main():
+    """Compare the model's predicted fossil-heating share per unit with the census share for one area and year."""
     ap = argparse.ArgumentParser(); ap.add_argument("--area", required=True); ap.add_argument("--year", type=int, default=2024)
     a = ap.parse_args()
     cen, bounds = census_london() if a.area == "london" else census_belfast()

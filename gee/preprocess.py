@@ -34,6 +34,7 @@ WC_CLASSES = {"built": 50, "tree": 10, "grass": 30, "crop": 40, "water": 80, "ba
 
 
 def read(path, band=None):
+    """Bands of a GeoTIFF by description as float32 with no-data as NaN (one band if named), and the profile."""
     with rasterio.open(path) as r:
         names = list(r.descriptions)
         idx = range(1, r.count + 1) if band is None else [names.index(band) + 1]
@@ -42,6 +43,7 @@ def read(path, band=None):
 
 
 def write(path, bands, profile):
+    """Write named float32 bands with descriptions, no-data as spec.NODATA_FLOAT; earlier versions archived by keep()."""
     p = {**profile, **PROFILE, "count": len(bands)}
     with rasterio.open(keep(path), "w", **p) as dst:
         for i, (name, a) in enumerate(bands.items(), 1):
@@ -51,6 +53,9 @@ def write(path, bands, profile):
 
 
 def terrain(area):
+    """Slope (degrees) and aspect (degrees clockwise from north, the way the slope faces) from the 30 m DEM by central
+    differences (numpy.gradient), elevations below DEM_MIN masked; written to the derived folder.
+    """
     d, prof = read(spec.raw_path(area, "dem_30m"))
     z = d["elevation_m"]
     z[z < DEM_MIN] = np.nan
@@ -70,6 +75,7 @@ def terrain(area):
 
 
 def landcover(area):
+    """Share of each WorldCover class in 100 m cells (10 x 10 blocks of 10 m pixels)."""
     with rasterio.open(spec.raw_path(area, "worldcover_10m")) as r:
         wc, prof = r.read(1), r.profile
     h, w = (wc.shape[0] // 10) * 10, (wc.shape[1] // 10) * 10
@@ -81,6 +87,7 @@ def landcover(area):
 
 
 def era5(area, year):
+    """ERA5-Land 10 m wind speed and the direction it blows from (degrees) for each window of a year, over land."""
     d, prof = read(spec.raw_path(area, "era5", year))
     land = ~np.isnan(d[f"t2m_annual"])
     out = {}
@@ -102,6 +109,7 @@ def rural_mask(area, path):
     outside_core = ~((xs >= x0) & (xs < x1) & (ys >= y0) & (ys < y1))
 
     def sample(p, band):
+        """Values of one band of raster p at the target grid's cell centres (nearest pixel), no-data as NaN."""
         with rasterio.open(p) as s:
             arr = s.read(list(s.descriptions).index(band) + 1)
             rr, cc = rowcol(s.transform, xs.ravel(), ys.ravel())
@@ -139,6 +147,9 @@ def uhi_reference(area, year, multi=False):
 
 
 def main():
+    """Derived layers for each area: terrain and land cover (unless --no-static), ERA5 winds and rural references for
+    the surface-temperature anomalies of each year.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--areas", nargs="+", default=list(spec.AREAS)); ap.add_argument("--years", nargs="+", type=int, default=[])
     ap.add_argument("--multi", action="store_true", help="rural references of the multi-year thermal composites (b5)")

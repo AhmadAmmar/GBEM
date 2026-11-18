@@ -36,6 +36,7 @@ SETS = {"core": CORE, "core_lidar": CORE + ["lidar"],
 
 
 def load(area, years, sample, seed=42):
+    """Modelling data for an area, with at most `sample` certificates per year (seeded)."""
     d, dd = B.load(area, years)
     if sample:
         d = d.groupby("year", group_keys=False).apply(lambda g: g.sample(n=min(sample, len(g)), random_state=seed)).reset_index(drop=True)
@@ -43,6 +44,7 @@ def load(area, years, sample, seed=42):
 
 
 def common_columns(dds, groups, frames):
+    """Feature columns present in every area for the requested groups."""
     cols = None
     for dd, d in zip(dds, frames):
         c = {x for x in dd.loc[dd["group"].isin(groups), "column"] if x in d.columns and x not in B.NOT_FEATURES}
@@ -51,6 +53,7 @@ def common_columns(dds, groups, frames):
 
 
 def matrix(d, cols, cats=None):
+    """Feature matrix as in baseline.features, with categories fixed to `cats` so test data codes match training."""
     X = d.reindex(columns=cols).copy()
     for c in X.columns:
         if X[c].dtype == object or str(X[c].dtype).startswith(("string", "category", "bool")):
@@ -65,6 +68,7 @@ def matrix(d, cols, cats=None):
 
 
 def fit_predict(Xtr, ytr, sap_tr, Xte):
+    """Fit a balanced band classifier and a SAP regressor; return predicted bands and SAP for Xte."""
     ycode = np.searchsorted(B.BANDS, ytr)
     clf = lgb.LGBMClassifier(class_weight="balanced", **B.LGBM).fit(Xtr, ycode)
     pr = np.zeros((len(Xte), len(B.BANDS))); pr[:, clf.classes_] = clf.predict_proba(Xte)
@@ -74,12 +78,14 @@ def fit_predict(Xtr, ytr, sap_tr, Xte):
 
 
 def score(y, pred, sap, psap):
+    """Band metrics plus SAP MAE, R-squared and mean actual and predicted SAP."""
     ok = ~np.isnan(sap)
     return {**B.cls_metrics(y, pred), "sap_mae": mean_absolute_error(sap[ok], psap[ok]), "sap_r2": r2_score(sap[ok], psap[ok]),
             "mean_sap_actual": float(np.nanmean(sap)), "mean_sap_pred": float(np.mean(psap))}
 
 
 def spatial_cv(d, X, folds=5, km=2.0):
+    """Within-area blocked cross-validation (km blocks, `folds` folds) scored with score()."""
     blocks = (np.floor(d["x"] / (km * 1000)).astype(int).astype(str) + "_" + np.floor(d["y"] / (km * 1000)).astype(int).astype(str))
     y, sap = d["label_rating"].to_numpy(), pd.to_numeric(d["label_sap"], errors="coerce").to_numpy("float64")
     pred, psap = np.empty(len(d), dtype=object), np.full(len(d), np.nan)
@@ -89,6 +95,7 @@ def spatial_cv(d, X, folds=5, km=2.0):
 
 
 def run(name, train, test, cols, rows, fs):
+    """Train on one dataset and test on another; append one result row with timing."""
     t0 = time.time()
     Xtr = matrix(train, cols)
     cats = {c: Xtr[c].cat.categories for c in Xtr.columns if str(Xtr[c].dtype) == "category"}
@@ -103,6 +110,7 @@ def run(name, train, test, cols, rows, fs):
 
 
 def main():
+    """Transfer experiments between London and Belfast, and across years, for the chosen feature sets."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--year", type=int, default=2024); ap.add_argument("--sample", type=int, default=50000)
     ap.add_argument("--sets", nargs="+", default=["core", "core_lidar"]); ap.add_argument("--no-temporal", action="store_true")

@@ -33,6 +33,12 @@ CLASSES = {"motorway", "trunk", "primary", "secondary", "tertiary", "unclassifie
 
 
 def main():
+    """Street-scape measures per footprint for one area: nearest road segment, setback from footprint edge and centroid,
+    and street-canyon measures per segment: width (twice the median setback, 4-120 m), median building height, height to
+    width ratio, buildings per 100 m of frontage, orientation (0-180 degrees) and road class.
+
+        python epc/streetscape.py --area london
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True)
     a = ap.parse_args()

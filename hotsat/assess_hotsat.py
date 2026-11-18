@@ -45,6 +45,7 @@ LGBM = dict(n_estimators=300, learning_rate=0.05, num_leaves=15, min_child_sampl
 
 
 def load_raster(path):
+    """First band as float64 with no-data (or 0) as NaN, with transform and EPSG."""
     with rasterio.open(path) as r:
         a = r.read(1).astype("float64")
         nod = r.nodata if r.nodata is not None else 0
@@ -70,6 +71,7 @@ def sample(a, t, x, y, nb_m=250):
 
 
 def england(scene):
+    """Latest certificate per location for an English HotSat scene, projected to UTM 30N."""
     d = pd.read_csv(HS / f"{scene}_visual_30_hotsat1.csv", low_memory=False)
     d = d.sort_values("INSPECTION_DATE").drop_duplicates(["LATITUDE", "LONGITUDE"], keep="last")
     x, y = Transformer.from_crs(4326, 32630, always_xy=True).transform(d["LONGITUDE"].to_numpy(), d["LATITUDE"].to_numpy())
@@ -81,6 +83,7 @@ def england(scene):
 
 
 def belfast():
+    """Latest certificate per Belfast UPRN, projected to UTM 30N."""
     c = pd.read_parquet(DATA / "belfast/epc/certificates_linked.parquet",
                         columns=["cert_id", "UPRN", "x", "y", "inspection_date", "sap_score", "CURRENT_ENERGY_RATING",
                                  "PROPERTY_TYPE", "BUILT_FORM", "CONSTRUCTION_AGE_BAND", "TOTAL_FLOOR_AREA", "year"])
@@ -115,6 +118,7 @@ def belfast_table_features(cert_ids, years):
 
 
 def as_X(d, cols):
+    """Feature frame with text columns as categories."""
     X = d[cols].copy()
     for c in X:
         if X[c].dtype == object or str(X[c].dtype).startswith("string"):
@@ -123,6 +127,7 @@ def as_X(d, cols):
 
 
 def cv(X, y, groups, folds=5):
+    """Mean absolute error and R-squared of LightGBM in grouped (spatial) cross-validation."""
     pred = np.full(len(y), np.nan)
     for tr, te in GroupKFold(n_splits=folds).split(X, y, groups):
         pred[te] = lgb.LGBMRegressor(**LGBM).fit(X.iloc[tr], y[tr]).predict(X.iloc[te])
@@ -130,6 +135,7 @@ def cv(X, y, groups, folds=5):
 
 
 def main():
+    """Assess the HotSat thermal scenes: temperature at certificates, correlation with SAP and cross-validated models."""
     OUT.mkdir(parents=True, exist_ok=True)
     summary, corr, cvrows = [], [], []
     for scene, (site, place, timing) in SCENES.items():

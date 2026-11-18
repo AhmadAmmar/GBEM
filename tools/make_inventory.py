@@ -18,6 +18,7 @@ SKIP_DIRS = {".git", "__pycache__", ".ipynb_checkpoints", "osm", "scraping", "uk
 
 
 def purpose(p):
+    """One-line purpose of a file: a notebook's first text, or a script's module docstring or first comment."""
     try:
         if p.suffix == ".ipynb":
             nb = json.loads(p.read_text(encoding="utf-8"))
@@ -44,11 +45,13 @@ def purpose(p):
 
 
 def last_commit(root, rel):
+    """Date of the last commit touching a file, or 'not committed'."""
     r = subprocess.run(["git", "log", "-1", "--format=%ad", "--date=short", "--", rel], cwd=root, capture_output=True, text=True)
     return r.stdout.strip() or "not committed"
 
 
 def status(rel):
+    """Status of a file: current, archived, superseded, or an iteration snapshot."""
     if rel in SUPERSEDED:
         return "archived; superseded by " + SUPERSEDED[rel]
     if "/archive/" in f"/{rel}":
@@ -59,6 +62,7 @@ def status(rel):
 
 
 def main():
+    """Write the code inventory (docs/internal/INVENTORY.md) listing every tracked file with purpose, status and date."""
     ap = argparse.ArgumentParser()
     here = pathlib.Path(__file__).resolve().parents[1]
     ap.add_argument("--root", default=str(here)); ap.add_argument("--out", default=None)

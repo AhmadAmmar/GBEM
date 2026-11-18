@@ -85,6 +85,7 @@ def tile_pairs(z):
 
 
 def read(z, member):
+    """One ASCII grid from inside a lidar zip as float32, no-data and values below -100 m set to NaN, with its transform."""
     with rasterio.open(f"/vsizip/{z.as_posix()}/{member}", driver="AAIGrid") as r:
         a = r.read(1).astype("float32")
         if r.nodata is not None:

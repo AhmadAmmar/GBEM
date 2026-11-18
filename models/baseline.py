@@ -64,10 +64,14 @@ LGBM = dict(n_estimators=300, learning_rate=0.08, num_leaves=31, min_child_sampl
 
 
 def sap_to_band(s):
+    """Energy band A-G for each SAP score, from the SAP_BANDS thresholds."""
     return np.array([next(b for lo, b in SAP_BANDS if v >= lo) for v in s])
 
 
 def cls_metrics(y, p):
+    """Band classification scores: accuracy, balanced accuracy, macro F1, quadratic weighted kappa and the share within
+    one band.
+    """
     yi, pi = np.searchsorted(BANDS, y), np.searchsorted(BANDS, p)
     return {"accuracy": accuracy_score(y, p), "balanced_accuracy": balanced_accuracy_score(y, p),
             "macro_f1": f1_score(y, p, average="macro"), "qwk": cohen_kappa_score(yi, pi, weights="quadratic"),
@@ -75,6 +79,9 @@ def cls_metrics(y, p):
 
 
 def load(area, years):
+    """Modelling data for an area and years with coordinates, one certificate per property and year (the latest), A-G
+    labels only. Returns (data, data dictionary).
+    """
     dd = pd.read_csv(DATA / area / "model" / "data_dictionary.csv")
     frames = [pd.read_parquet(DATA / area / "model" / f"dataset_{y}.parquet") for y in years]
     d = pd.concat(frames, ignore_index=True)
@@ -122,6 +129,9 @@ def floor_features(d):
 
 
 def features(d, dd, groups):
+    """Feature matrix for the dictionary groups requested: numbers stored as text become float32 where at least 90% parse;
+    other text becomes categorical. Identifier and label columns (NOT_FEATURES) are left out.
+    """
     cols = [c for c in dd.loc[dd["group"].isin(groups), "column"] if c in d.columns and c not in NOT_FEATURES]
     X = d[cols].copy()
     for c in X.columns:
@@ -137,6 +147,9 @@ def features(d, dd, groups):
 
 
 def main():
+    """Spatially blocked cross-validation of the baseline models (LightGBM, random forest) for each feature set, with
+    metrics and out-of-fold predictions written under model/results.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--area", required=True); ap.add_argument("--years", nargs="+", type=int, required=True)
     ap.add_argument("--models", nargs="+", default=["lgbm", "rf"]); ap.add_argument("--featuresets", nargs="+", default=list(SETS))

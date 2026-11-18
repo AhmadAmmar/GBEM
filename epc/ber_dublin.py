@@ -38,6 +38,9 @@ NUM = ["Year_of_Construction", "BerRating", "GroundFloorArea(sq m)", "UValueWall
 
 
 def load():
+    """Read the Irish BER public search file from its zip: kept columns only, blanks to NaN, numbers parsed, the
+    assessment date and year, and a heat-pump flag (electric main heating with efficiency above 150%).
+    """
     with zipfile.ZipFile(D / "raw" / "BERPublicSearch.zip") as z:
         with z.open("BERPublicsearch.txt") as f:
             df = pd.read_csv(io.TextIOWrapper(f, encoding="latin-1"), sep="\t", usecols=lambda c: c in KEEP,
@@ -55,6 +58,9 @@ def load():
 
 
 def main():
+    """Write the whole Irish register, the Dublin subset and a per-small-area summary (count, median BER, share D-G,
+    heat-pump share) to data folders, with a summary table of counts and dates.
+    """
     df = load()
     df.to_parquet(keep(D / "ber_ireland.parquet"), index=False)
     dub = df[df["CountyName"].str.match(r"^(Dublin \d|Dublin 6W|Co\. Dublin)", na=False)].copy()
