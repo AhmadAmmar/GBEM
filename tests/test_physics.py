@@ -11,7 +11,11 @@ Y = np.array([1950.0])
 
 
 @pytest.mark.parametrize("text,u", [("Cavity wall, as built, no insulation (assumed)", 1.5), ("Cavity wall, filled cavity", 0.7),
-                                    ("Solid brick, as built, no insulation (assumed)", 2.1), ("Average thermal transmittance 0.28 W/m-K", 0.28)])
+                                    ("Solid brick, as built, no insulation (assumed)", 2.1), ("Average thermal transmittance 0.28 W/m-K", 0.28),
+                                    ("Solid brick, with internal insulation", 0.45), ("Solid brick, with external insulation", 0.45),
+                                    ("Cavity wall, with internal insulation", 0.5), ("Cavity wall, as built, partial insulation (assumed)", 1.0),
+                                    ("Timber frame, with additional insulation", 0.4), ("System built, with external insulation", 0.45),
+                                    ("Granite or whinstone, as built, no insulation (assumed)", 1.7)])
 def test_wall_lookup(text, u):
     assert pc.u_wall(pd.Series([text]), Y).iloc[0] == pytest.approx(u)
 

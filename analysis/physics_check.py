@@ -65,16 +65,19 @@ def stated_u(desc):
 
 
 def u_wall(desc, year):
+    """Register texts name insulation as 'insulated', 'with internal/external/additional insulation' or
+    'as built, partial insulation'; partial takes the midpoint of the insulated and uninsulated values."""
     d = desc.fillna("").str.lower()
     base = by_year(U_WALL_AGE, year)
-    u = np.select([d.str.contains("solid") & d.str.contains("insulated") & ~d.str.contains("no insulation"),
-                   d.str.contains("solid"),
-                   d.str.contains("cavity") & d.str.contains("filled"),
-                   d.str.contains("cavity") & d.str.contains("insulated") & ~d.str.contains("no insulation"),
-                   d.str.contains("cavity"),
-                   d.str.contains("timber") & d.str.contains("insulated") & ~d.str.contains("no insulation"),
-                   d.str.contains("timber"), d.str.contains("system built|granite|sandstone|cob|park home")],
-                  [0.45, 2.1, 0.7, 0.5, 1.5, 0.4, 1.9, 1.7], base)
+    ins = (d.str.contains("insulated") | d.str.contains(r"with (?:internal|external|additional) insulation")) & ~d.str.contains("no insulation")
+    part = d.str.contains("partial insulation")
+    conds, vals = [d.str.contains("cavity") & d.str.contains("filled")], [0.7]
+    for kind, u_ins, u_none in [("solid", 0.45, 2.1), ("cavity", 0.5, 1.5), ("timber", 0.4, 1.9),
+                                ("system built|granite|whinstone|sandstone|cob|park home", 0.45, 1.7)]:
+        m = d.str.contains(kind)
+        conds += [m & ins, m & part, m]
+        vals += [u_ins, (u_ins + u_none) / 2, u_none]
+    u = np.select(conds, vals, base)
     return pd.Series(u, index=desc.index).where(stated_u(desc).isna(), stated_u(desc))
 
 
