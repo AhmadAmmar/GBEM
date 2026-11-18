@@ -26,6 +26,7 @@ STAGES = [
 
 
 def main(argv=None):
+    """Run every stage of the review for an iteration (ingest, screen, bibliometrics, focused, full text, figures, LaTeX)."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--iteration", required=True)
     ap.add_argument("--scopus", nargs="*"); ap.add_argument("--wos", nargs="*")

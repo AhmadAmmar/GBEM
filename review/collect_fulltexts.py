@@ -32,6 +32,7 @@ _SHA = {}
 
 
 def sha256(p):
+    """SHA-256 of a file, cached by path, modification time and size so unchanged files are not read again."""
     s = pathlib.Path(p).stat(); k = (str(p), s.st_mtime, s.st_size)
     if k in _SHA:
         return _SHA[k]
@@ -240,6 +241,9 @@ def collect(P, dest, dry_run=False, manifest="always", only_new_in_log=False, sa
 
 
 def main():
+    """Collect the full texts of an iteration's included studies into Lit/Review_fulltexts (latest iteration by default;
+    --dry-run lists without copying).
+    """
     ap = argparse.ArgumentParser(); ap.add_argument("--iteration"); ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
     its = sorted(p for p in (cfg.REVIEW / "iterations").glob("*_v*") if p.is_dir())

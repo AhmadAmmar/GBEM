@@ -19,6 +19,7 @@ DT_CANON = {"article": "Article", "review": "Review", "conference paper": "Confe
 
 
 def read_scopus(files):
+    """Scopus CSV exports as one table in the common column names."""
     frames = []
     for f in files:
         d = pd.read_csv(f, encoding="utf-8-sig", low_memory=False)
@@ -36,6 +37,7 @@ def read_scopus(files):
 
 
 def read_wos(files):
+    """Web of Science tab-delimited exports as one table in the common column names."""
     frames = []
     for f in files:
         d = pd.read_csv(f, sep="\t", quoting=3, dtype=str, encoding="utf-8-sig", index_col=False)
@@ -85,6 +87,9 @@ def diagnose(r, blocks, years, doc_types):
 
 
 def run(cfg, P, scopus_files=None, wos_files=None):
+    """Stage 0: read the database exports, merge them and flag duplicates (same record id, DOI, or title and year),
+    and write records.csv with counts.
+    """
     scopus_files = scopus_files if scopus_files is not None else sorted(glob.glob(cfg.SEARCH["scopus_glob"]))
     wos_files = wos_files if wos_files is not None else sorted(glob.glob(cfg.SEARCH["wos_glob"]))
     if not scopus_files and not wos_files:

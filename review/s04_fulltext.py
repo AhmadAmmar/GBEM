@@ -25,6 +25,7 @@ PATTERNS = {
 
 
 def pdf_text(pdf, first=None, last=None):
+    """Text of a PDF (optionally pages first to last) with pdftotext; empty if pdftotext is not installed."""
     exe = shutil.which("pdftotext")
     if not exe:
         return ""
@@ -36,6 +37,7 @@ def pdf_text(pdf, first=None, last=None):
 
 
 def build_index(cfg, P):
+    """Index of the PDF library by DOI and guessed title, updated only for new or changed files."""
     idx_path = P["out"] / "pdf_doi_index.csv"
     old = read_csv(idx_path) if idx_path.exists() else pd.DataFrame(columns=["pdf", "doi_n", "title_guess", "mtime"])
     seen = dict(zip(old["pdf"], old["mtime"]))
@@ -66,6 +68,7 @@ def conclusions(text):
 
 
 def run(cfg, P):
+    """Stage 4: find each focused study's PDF and extract text snippets on validation and accuracy; list the missing."""
     idx = build_index(cfg, P)
     sheet = read_csv(P["inputs"] / cfg.HUMAN["focused_extraction"])
     sheet = sheet[sheet["include_focused"].astype(str).str.upper().isin(["Y", "?"])]

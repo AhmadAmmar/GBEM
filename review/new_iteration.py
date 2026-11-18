@@ -20,11 +20,15 @@ SKIP = {".aux", ".log", ".bbl", ".blg", ".fls", ".fdb_latexmk", ".out", ".syncte
 
 
 def latest_iteration():
+    """The most recent iteration folder, or None."""
     its = sorted(p for p in (cfg.REVIEW / "iterations").glob("*_v*") if p.is_dir())
     return its[-1] if its else None
 
 
 def main():
+    """Start a new review iteration (--version): copy inputs, run the pipeline on new exports and build the PDF; or
+    rebuild or rerun an existing iteration.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--version", required=True)
     ap.add_argument("--scopus", nargs="*"); ap.add_argument("--wos", nargs="*")
@@ -80,6 +84,9 @@ def track_changes_on(src, dst):
 
 
 def build(new, version, stamp):
+    """Compile the iteration's review with latexmk and accept the PDF only if LaTeX reported no errors and no undefined
+    citations or references.
+    """
     job = f"Review_v{version}"
     subprocess.run(["latexmk", "-pdf", f"-jobname={job}", "-interaction=nonstopmode", "main.tex"], cwd=new / "latex")
     (new / "build").mkdir(exist_ok=True)

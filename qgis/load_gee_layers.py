@@ -34,11 +34,13 @@ WORLDCOVER = [(10, "006400", "Tree cover"), (20, "ffbb22", "Shrubland"), (30, "f
 
 
 def raw(product, scale=None, year=True):
+    """Path of a raw Earth Engine export for the configured area and year."""
     name = f"gbem_{METHOD}_{AREA}_{product}" + (f"_{scale}m_{YEAR}" if year else "") + ".tif"
     return os.path.join(RAW, name)
 
 
 def band_index(lyr, name):
+    """1-based index of a band by name or description; KeyError if absent."""
     for i in range(1, lyr.bandCount() + 1):
         if lyr.bandName(i).endswith(name) or lyr.dataProvider().bandDescription(i) == name:
             return i
@@ -46,11 +48,13 @@ def band_index(lyr, name):
 
 
 def cut(lyr, band):
+    """2nd and 98th percentile of a band (from a sample of 250,000 pixels), for display stretches."""
     lo, hi = lyr.dataProvider().cumulativeCut(band, 0.02, 0.98, QgsRectangle(), 250000)
     return lo, hi
 
 
 def pseudo(lyr, band, ramp_name, invert=False, lo=None, hi=None):
+    """Single-band pseudocolour from a QGIS colour ramp between lo and hi (percentile cut by default)."""
     if lo is None:
         lo, hi = cut(lyr, band)
     cr = QgsStyle.defaultStyle().colorRamp(ramp_name)
@@ -65,6 +69,7 @@ def pseudo(lyr, band, ramp_name, invert=False, lo=None, hi=None):
 
 
 def rgb(lyr, bands):
+    """Three-band colour composite, each band stretched between its 2nd and 98th percentiles."""
     r = QgsMultiBandColorRenderer(lyr.dataProvider(), *bands)
     for setter, b in zip((r.setRedContrastEnhancement, r.setGreenContrastEnhancement, r.setBlueContrastEnhancement), bands):
         ce = QgsContrastEnhancement(lyr.dataProvider().dataType(b))
@@ -75,6 +80,7 @@ def rgb(lyr, bands):
 
 
 def quicklook(lyr, boundary, path, extent):
+    """Render a layer over the boundary to a PNG."""
     ms = QgsMapSettings()
     ms.setLayers([boundary, lyr]); ms.setDestinationCrs(QgsCoordinateReferenceSystem(f"EPSG:{EPSG}"))
     ms.setExtent(extent); ms.setOutputSize(QSize(1400, int(1400 * extent.height() / extent.width())))
@@ -84,6 +90,7 @@ def quicklook(lyr, boundary, path, extent):
 
 
 def run():
+    """Load every Earth Engine export into a QGIS project with styles, and write quick-look PNGs (run in QGIS)."""
     proj = QgsProject()
     proj.setCrs(QgsCoordinateReferenceSystem(f"EPSG:{EPSG}"))
     qa = os.path.join(BASE, "qa", "quicklooks"); os.makedirs(qa, exist_ok=True)

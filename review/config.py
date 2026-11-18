@@ -16,6 +16,7 @@ except ImportError:
 
 
 def _setting(name, default):
+    """A path setting: environment variable GBEM_<name>, else the local settings module, else the default."""
     v = os.environ.get("GBEM_" + name) or (getattr(_ls, name, None) if _ls else None)
     return pathlib.Path(v) if v else default
 

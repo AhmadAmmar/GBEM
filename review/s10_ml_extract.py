@@ -84,6 +84,7 @@ def ocr_text(pdf, cache_dir):
 
 
 def body_sentences(pdf, cache_dir):
+    """(page, sentence) pairs of a PDF from its text layer, or by OCR when it has almost no text; and which was used."""
     text, source = pdf_text(pdf), "text layer"
     if len(text.strip()) < 500:
         text, source = ocr_text(pdf, cache_dir), "OCR"
@@ -92,6 +93,7 @@ def body_sentences(pdf, cache_dir):
 
 
 def run(cfg, P):
+    """Stage 10: sentence-embedding extraction of validation design from full texts, scored against the human sheet."""
     from sentence_transformers import SentenceTransformer
     model = SentenceTransformer(MODEL, device="cpu")
     enc = lambda xs: model.encode(xs, batch_size=64, normalize_embeddings=True, show_progress_bar=False)
@@ -146,6 +148,7 @@ def run(cfg, P):
     Y["d"] = Y["doi"].map(norm_doi)
     Y = Y.merge(A, left_on="d", right_on="doi", how="inner", suffixes=("", "_ml"))
     def agrees(a, h):
+        """Whether an automatic label agrees with the human one (equivalent labels count; None when not applicable)."""
         if not isinstance(h, str) or h in ("Not applicable", "Not applicable (zero-shot)"):
             return None
         return (a == h or (a in ("Held-out city", "Held-out area") and h in ("Held-out city", "Held-out area"))

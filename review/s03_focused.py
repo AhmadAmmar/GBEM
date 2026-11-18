@@ -25,6 +25,9 @@ PREDICTIVE_EXCLUDE = {"Not applicable", "Not applicable (zero-shot)"}
 
 
 def run(cfg, P):
+    """Stage 3: focused extraction sheet for the included studies (created from the seed if missing), merged with the
+    human entries and supplementary studies.
+    """
     dec = read_csv(P["out"] / "screening_decisions.csv")
     sheet_path = P["inputs"] / cfg.HUMAN["focused_extraction"]
     supp_path = P["inputs"] / cfg.HUMAN["supplementary_studies"]

@@ -25,6 +25,7 @@ MAX_BYTES = 60 * 1024 * 1024
 
 
 def get(url, timeout=60, accept=None):
+    """GET a URL with the review's user agent; returns at most MAX_BYTES + 1 bytes and the content type."""
     h = dict(UA)
     if accept:
         h["Accept"] = accept
@@ -120,6 +121,9 @@ def elsevier_pdf(doi):
 
 
 def matches(pdf, doi, title):
+    """True if a PDF is the intended paper: its first pages contain the DOI, or most long title words appear near
+    the start.
+    """
     t = pdf_text(pdf, 1, 3)
     if doi and doi.lower() in re.sub(r"\s+", "", t).lower():
         return True
@@ -129,6 +133,9 @@ def matches(pdf, doi, title):
 
 
 def main():
+    """Download open-access PDFs for an iteration's included studies (locations OpenAlex marks as open access, and
+    Semantic Scholar), checking each file is the right paper.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--iteration"); ap.add_argument("--all-core", action="store_true"); ap.add_argument("--limit", type=int)
     a = ap.parse_args()

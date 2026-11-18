@@ -17,6 +17,7 @@ COLS = plt.cm.tab10.colors
 
 
 def aff_countries(a):
+    """Countries of the affiliations of a record (last part of each address, normalised)."""
     if not isinstance(a, str):
         return []
     out = []
@@ -28,6 +29,7 @@ def aff_countries(a):
 
 
 def block_of(k):
+    """Thematic block of a keyword (remote sensing, methods, energy performance, buildings), or None."""
     for b in ["C. Remote sensing and geospatial", "D. Methods and validation", "B. Energy performance", "A. Built form and urban context"]:
         if re.search(BLOCKS[b], k.lower()):
             return b
@@ -35,6 +37,7 @@ def block_of(k):
 
 
 def run(cfg, P):
+    """Stage 2: bibliometrics of the included records: years, sources, countries, keywords and co-occurrence."""
     rec = read_csv(P["out"] / "records.csv")
     dec = read_csv(P["out"] / "screening_decisions.csv")[["rid", "decision", "study_country"]]
     df = rec.merge(dec, on="rid")

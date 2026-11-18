@@ -17,15 +17,18 @@ VCOL = {"Held-out city": "#c0392b", "Held-out area": "#e67e22", "Spatially block
 
 
 def box(ax, x, y, w, h, text, fc="#ffffff", ec="#56657a", fs=6.6, wrap=48):
+    """Rounded box with wrapped centred text, for flow diagrams."""
     ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.004,rounding_size=0.01", fc=fc, ec=ec, lw=0.8))
     ax.text(x + w / 2, y + h / 2, "\n".join(textwrap.fill(l, wrap) for l in text.split("\n")), ha="center", va="center", fontsize=fs, linespacing=1.3)
 
 
 def arrow(ax, x1, y1, x2, y2):
+    """Arrow between two points, for flow diagrams."""
     ax.add_patch(FancyArrowPatch((x1, y1), (x2, y2), arrowstyle="-|>", mutation_scale=8, color="#56657a", lw=0.8))
 
 
 def canvas(w, h):
+    """Blank 300 dpi figure of w x h inches with axes covering it, for drawing diagrams."""
     fig = plt.figure(figsize=(w, h), dpi=300); ax = fig.add_axes([0, 0, 1, 1]); ax.axis("off"); ax.set_xlim(0, 1); ax.set_ylim(0, 1)
     return fig, ax
 
@@ -111,6 +114,7 @@ def screening_flow(cfg, P, I, S, Fs):
 
 
 def run(cfg, P):
+    """Stage 5: the review's figures (PRISMA flow and evidence summaries)."""
     I, S, B, Fs = (load(P["out"] / f) for f in ["stats_ingest.json", "stats_screening.json", "stats_biblio.json", "stats_focused.json"])
     screening_flow(cfg, P, I, S, Fs)
     F = read_csv(P["out"] / "focused_final.csv")

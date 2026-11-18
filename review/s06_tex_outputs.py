@@ -19,6 +19,7 @@ VLABEL = {"Random split": "Random split or $k$-fold (single area)", "Held-out ci
 
 
 def esc(s):
+    """Text escaped for LaTeX (backslash, &, %, _, #, $, braces, ~, ^), with band ranges written with en dashes."""
     s = "" if pd.isna(s) else str(s)
     for a, b in [("\\", r"\textbackslash{}"), ("&", r"\&"), ("%", r"\%"), ("_", r"\_"), ("#", r"\#"), ("$", r"\$")]:
         s = s.replace(a, b)
@@ -26,14 +27,17 @@ def esc(s):
 
 
 def fmt(x, d=0):
+    """A number with thousands separators and d decimals; other values as text."""
     return f"{x:,.{d}f}" if isinstance(x, (int, float)) else str(x)
 
 
 def macro_name(k):
+    """LaTeX macro name from a key: a backslash and its letters only."""
     return "\\" + re.sub(r"[^A-Za-z]", "", k)
 
 
 def ascii_bib(s):
+    """Text with accents, dashes, quotes and special letters written as BibTeX-safe ASCII commands."""
     acc = {"́": "'", "̀": "`", "̂": "^", "̈": '"', "̃": "~", "̧": "c", "̌": "v"}
     sp = {"–": "--", "—": "---", "‘": "`", "’": "'", "“": "``", "”": "''", "‐": "-",
           " ": " ", "ß": r"{\ss}", "ø": r"{\o}", "ł": r"{\l}", "ı": r"{\i}"}
@@ -89,11 +93,15 @@ def sync_bib(cfg, P):
 
 
 def cite(r, keys):
+    """LaTeX \\citet{key} when the study has a key in the bibliography, else 'Study (year)' as plain text."""
     k = r.get("key")
     return f"\\citet{{{k}}}" if isinstance(k, str) and k in keys else esc(f"{r['study']} ({int(r['year'])})")
 
 
 def run(cfg, P):
+    """Stage 6: LaTeX outputs of the review: numbers as macros, tables of studies and evidence, and the bibliography
+    synchronised.
+    """
     added = sync_bib(cfg, P)
     I, S, B, Fs = (load(P["out"] / f) for f in ["stats_ingest.json", "stats_screening.json", "stats_biblio.json", "stats_focused.json"])
     F = read_csv(P["out"] / "focused_final.csv")

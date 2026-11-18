@@ -46,11 +46,15 @@ HARD = ("energy performance contracting", "appliance or product labels")
 
 
 def first_sentence(pattern, text):
+    """The first sentence-like stretch of text containing the pattern, or empty."""
     m = re.search(r"[^.]{0,220}(?:" + pattern + r")[^.]{0,220}\.?", text, re.I)
     return re.sub(r"\s+", " ", m.group(0)).strip() if m else ""
 
 
 def assess(title, abstract, fulltext=""):
+    """Rule-based triage of a study: does it predict energy performance, at dwelling level, with remote sensing and a
+    reported validation; uses the full text's opening and conclusions when available.
+    """
     ta = f"{title} . {abstract}".lower()
     ft = re.sub(r"\s+", " ", fulltext).lower()
     purpose = ta + " . " + ft[:6000] + " . " + conclusions(fulltext).lower() if ft else ta    # where a study states what it does
@@ -76,6 +80,7 @@ def assess(title, abstract, fulltext=""):
 
 
 def run(cfg, P):
+    """Stage 8: triage every record against the inclusion criteria and compare with the human extraction sheet."""
     sheet = read_csv(P["inputs"] / cfg.HUMAN["focused_extraction"])
     recs = pd.concat([read_csv(P["out"] / f) for f in ("records.csv", "prior_records.csv") if (P["out"] / f).exists()], ignore_index=True)
     recs["d"], recs["tn"] = recs["doi"].map(norm_doi), recs["title"].map(norm_title)

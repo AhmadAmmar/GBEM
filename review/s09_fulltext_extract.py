@@ -85,17 +85,22 @@ def pages_of(text):
 
 
 def sentences(page):
+    """Sentences of a page (hyphenated line breaks rejoined), between 25 and 700 characters."""
     flat = re.sub(r"-\n(\w)", r"\1", page)          # rejoin hyphenated words
     flat = re.sub(r"\s+", " ", flat)
     return [s.strip() for s in re.split(r"(?<=[.!?])\s+(?=[A-Z(])", flat) if 25 < len(s) < 700]
 
 
 def extract(pdf):
+    """Evidence from a PDF by text patterns: data, methods, validation design and metrics, with page and sentence.
+    Returns (number of pages, evidence rows); (None, []) when the PDF has no text.
+    """
     text = pdf_text(pdf)
     if not text.strip():
         return None, []
     ev = []
     def hit(field, value, page, sent):
+        """Record one piece of evidence."""
         ev.append({"field": field, "value": value, "page": page, "sentence": sent[:500]})
     for pno, page in pages_of(text):
         for s in sentences(page):
@@ -203,6 +208,7 @@ def table_metrics(pdf):
 
 
 def canon_metric(m):
+    """Canonical name of a reported metric (accuracy, balanced accuracy, macro, weighted or micro F1, kappa, ...)."""
     m = m.lower()
     if "f1" in m:
         return "Macro-F1" if "macro" in m else ("Weighted F1" if "weighted" in m else ("Micro-F1" if "micro" in m else "F1"))
@@ -213,6 +219,7 @@ def canon_metric(m):
 
 
 def summarise(ev):
+    """Summary of a study's evidence: the most frequent values of each field with counts."""
     E = pd.DataFrame(ev)
     if not len(E):
         return {}
@@ -281,6 +288,7 @@ def works_with_pdfs(cfg, P):
 
 
 def run(cfg, P):
+    """Stage 9: rule-based extraction from every available full text, with evidence sentences for checking."""
     sheet = read_csv(P["inputs"] / cfg.HUMAN["focused_extraction"])
     rows, evid = [], []
     for d, title, status, key, pdf in works_with_pdfs(cfg, P):

@@ -44,6 +44,7 @@ SEARCH_TERMS = set("energy building buildings urban city cities".split())
 
 
 def world():
+    """Natural Earth 1:110m countries without Antarctica, with a representative point for each."""
     import geopandas as gpd, cartopy.io.shapereader as shpreader
     w = gpd.read_file(shpreader.natural_earth(resolution="110m", category="cultural", name="admin_0_countries"))
     w = w[w["ADMIN"] != "Antarctica"].copy()
@@ -52,11 +53,13 @@ def world():
 
 
 def centroid(w, country):
+    """Representative point (lon, lat) of a country, or None if not found."""
     r = w[w["ADMIN"] == NE_NAME.get(country, country)]
     return (float(r["pt"].x.iloc[0]), float(r["pt"].y.iloc[0])) if len(r) else None
 
 
 def base_map(ax, w, extent=None):
+    """Draw the land on an axis, optionally limited to an extent (x0, x1, y0, y1)."""
     w.plot(ax=ax, color=LAND, edgecolor=EDGE, linewidth=0.3)
     ax.set_axis_off()
     if extent:
@@ -66,6 +69,7 @@ def base_map(ax, w, extent=None):
 
 
 def countries_of(aff):
+    """Countries in an affiliation string (last part of each address, normalised)."""
     out = []
     for part in str(aff).split(";"):
         c = part.split(",")[-1].strip()
@@ -76,6 +80,7 @@ def countries_of(aff):
 
 
 def cloud(freqs, path, title, cmap="Blues"):
+    """Save a word cloud of the frequencies to path; False if there are none."""
     from wordcloud import WordCloud
     if not freqs:
         return False
@@ -88,6 +93,9 @@ def cloud(freqs, path, title, cmap="Blues"):
 
 
 def ngram_freqs(texts, n_max=160):
+    """Most frequent one- and two-word terms in the texts (stop words, search terms and copyright lines removed),
+    at most n_max.
+    """
     from sklearn.feature_extraction.text import CountVectorizer
     texts = [re.sub(r"©.*", "", str(t)) for t in texts if isinstance(t, str) and t.strip()]
     if not texts:
@@ -107,6 +115,7 @@ def ngram_freqs(texts, n_max=160):
 
 
 def run(cfg, P):
+    """Stage 7: maps of study and author countries, and text mining of titles and abstracts (word clouds, terms)."""
     rec = read_csv(P["out"] / "records.csv")
     dec = read_csv(P["out"] / "screening_decisions.csv")
     df = rec.merge(dec[["rid", "decision", "study_country", "modality", "target", "method"]], on="rid")

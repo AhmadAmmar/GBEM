@@ -71,6 +71,7 @@ def rule_decision(r, years, doc_types=("Article", "Review", "Conference Paper", 
 
 
 def abstract_metrics(s):
+    """Accuracy (%) and R-squared reported in an abstract, found by text patterns."""
     out = {}
     m = re.findall(r"accuracy (?:of |rate of |reached |achieved |up to |was |is |=|:)?\s*(?:about |approximately |~)?(\d{2}(?:\.\d+)?)\s?%", s)
     m += re.findall(r"(\d{2}(?:\.\d+)?)\s?% (?:overall )?accuracy", s)
@@ -87,6 +88,7 @@ def abstract_metrics(s):
 
 
 def study_country(r):
+    """Study country named in the title or abstract (Ireland not counted when the text says Northern Ireland)."""
     ta = f"{r['title']} {r['abstract']}"
     for c in COUNTRIES:
         if re.search(r"\b" + re.escape(c) + r"\b", ta):
@@ -103,6 +105,7 @@ def study_country(r):
 
 
 def cohen_kappa(a, b):
+    """Cohen's kappa between two raters' labels."""
     a, b = pd.Series(a).reset_index(drop=True), pd.Series(b).reset_index(drop=True)
     cats = sorted(set(a) | set(b))
     po = (a == b).mean()
@@ -111,6 +114,7 @@ def cohen_kappa(a, b):
 
 
 def run(cfg, P):
+    """Stage 1: rule-based screening of all records, with reasons, agreement with the human sample and PRISMA counts."""
     df = read_csv(P["out"] / "records.csv")
     other_path = P["out"] / "prior_records.csv"   # records identified via other methods (previous work of the authors)
     if other_path.exists():

@@ -62,6 +62,7 @@ SYSTEM = ("You extract data from a scientific paper for a systematic review of r
 
 
 def api_key():
+    """API key for the language-model extraction from LLM_API_KEY or the local settings module; None if absent."""
     k = os.environ.get("LLM_API_KEY")
     if not k:
         try:
@@ -73,6 +74,7 @@ def api_key():
 
 
 def norm(s):
+    """Text normalised for quote matching: hyphenation, typographic quotes and dashes, spaces, lower case."""
     s = re.sub(r"-\s*\n\s*(\w)", r"\1", s)
     s = s.replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"').replace("–", "-").replace("—", "-")
     return re.sub(r"\s+", " ", s).strip().lower()
@@ -88,6 +90,7 @@ def verify(quote, pages):
 
 
 def request(client, text):
+    """Send one paper's text with the extraction instructions and JSON schema; returns the parsed reply."""
     with client.beta.messages.stream(
         model=MODEL, max_tokens=16000,
         betas=["server-side-fallback-2026-07-01"], fallbacks="default",
@@ -99,6 +102,9 @@ def request(client, text):
 
 
 def run(cfg, P, limit=None, only_included=False):
+    """Stage 11: language-model extraction for each full text (optional, needs the LLM_* settings), with every
+    quoted sentence checked against the source text.
+    """
     import importlib
     key = api_key()
     if not key or not MODEL or not os.environ.get("LLM_SDK") or not os.environ.get("LLM_CLIENT"):

@@ -148,19 +148,23 @@ CNORM = {"England": "United Kingdom", "Scotland": "United Kingdom", "Wales": "Un
 
 
 def has(pattern, s):
+    """True if the regular expression matches the text (None counts as empty)."""
     return re.search(pattern, s or "") is not None
 
 
 def codes(text, dic):
+    """The keys of dic whose pattern matches text, joined with '; ' (coding a record by keyword rules)."""
     return "; ".join(k for k, p in dic.items() if has(p, text))
 
 
 def norm_title(t):
+    """Title for matching: accents removed, lower case, punctuation as single spaces."""
     t = unicodedata.normalize("NFKD", str(t)).encode("ascii", "ignore").decode().lower()
     return re.sub(r"[^a-z0-9]+", " ", t).strip()
 
 
 def norm_doi(d):
+    """DOI in lower case without the https://doi.org/ or doi: prefix; empty for missing values."""
     if not isinstance(d, str) or not d.strip():
         return ""
     d = d.strip().lower()
@@ -168,6 +172,7 @@ def norm_doi(d):
 
 
 def norm_kw(k):
+    """Keyword in lower case, mapped to its THESAURUS term when one matches."""
     k = k.strip().lower()
     for p, v in THESAURUS.items():
         if re.search(p, k):
@@ -176,12 +181,15 @@ def norm_kw(k):
 
 
 def dump(obj, path):
+    """Write an object as indented UTF-8 JSON (dates and other objects as strings)."""
     json.dump(obj, open(path, "w", encoding="utf-8"), indent=1, ensure_ascii=False, default=str)
 
 
 def load(path):
+    """Read a UTF-8 JSON file."""
     return json.load(open(path, encoding="utf-8"))
 
 
 def read_csv(path):
+    """Read a CSV written with a byte-order mark (utf-8-sig), as the review's tables are."""
     return pd.read_csv(path, encoding="utf-8-sig")

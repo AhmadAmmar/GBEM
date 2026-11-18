@@ -64,12 +64,14 @@ def derive(src, dst):
 
 
 def layer(path, name):
+    """Raster layer with bilinear resampling when zoomed out."""
     lyr = QgsRasterLayer(path, name)
     lyr.resampleFilter().setZoomedOutResampler(QgsBilinearRasterResampler())
     return lyr
 
 
 def stretch(provider, band, lo, hi):
+    """Linear contrast stretch from lo to hi for one band."""
     ce = QgsContrastEnhancement(provider.dataType(band))
     ce.setContrastEnhancementAlgorithm(QgsContrastEnhancement.ContrastEnhancementAlgorithm.StretchToMinimumMaximum)
     ce.setMinimumValue(lo); ce.setMaximumValue(hi)
@@ -77,12 +79,14 @@ def stretch(provider, band, lo, hi):
 
 
 def grey(lyr, band, lo, hi):
+    """Single-band grey rendering stretched from lo to hi."""
     r = QgsSingleBandGrayRenderer(lyr.dataProvider(), band)
     r.setContrastEnhancement(stretch(lyr.dataProvider(), band, lo, hi))
     lyr.setRenderer(r)
 
 
 def ramp(lyr, band, lo, hi, ramp_name, invert=False):
+    """Pseudocolour rendering from a colour ramp in 9 classes between lo and hi."""
     cr = QgsStyle.defaultStyle().colorRamp(ramp_name)
     if invert:
         cr.invert()
@@ -95,6 +99,7 @@ def ramp(lyr, band, lo, hi, ramp_name, invert=False):
 
 
 def rgb(lyr, p):
+    """Colour composite of VV, VH and VV-VH (dB), each with its own stretch."""
     r = QgsMultiBandColorRenderer(lyr.dataProvider(), 1, 2, 3)
     for setter, band, key in ((r.setRedContrastEnhancement, 1, "VV_dB"), (r.setGreenContrastEnhancement, 2, "VH_dB"),
                               (r.setBlueContrastEnhancement, 3, "VVminusVH_dB")):
@@ -103,6 +108,7 @@ def rgb(lyr, p):
 
 
 def label(layout, text, x, y, w, h, size=10, bold=False):
+    """Add a text label to a print layout at (x, y) mm, of size w x h mm."""
     it = QgsLayoutItemLabel(layout); it.setText(text)
     f = QFont("Arial", size); f.setBold(bold)
     fmt = it.textFormat(); fmt.setFont(f); fmt.setSize(size); it.setTextFormat(fmt)
@@ -112,6 +118,9 @@ def label(layout, text, x, y, w, h, size=10, bold=False):
 
 
 def make_map(name, title, lyr, boundary, extent, legend_title=None, note=None):
+    """A4 landscape print layout with map, title, legend, scale bar, north arrow picture and note (replaces a layout
+    of the same name).
+    """
     proj = QgsProject.instance()
     old = proj.layoutManager().layoutByName(name)
     if old:
@@ -152,11 +161,13 @@ def make_map(name, title, lyr, boundary, extent, legend_title=None, note=None):
 
 
 def _png():
+    """PNG export settings at 200 dpi."""
     s = QgsLayoutExporter.ImageExportSettings(); s.dpi = 200
     return s
 
 
 def run():
+    """Sentinel-1 maps for the configured area and year: derived bands and layouts exported as PNG (run in QGIS)."""
     os.makedirs(OUT, exist_ok=True); os.makedirs(MAPS, exist_ok=True)
     base = os.path.splitext(os.path.basename(S1))[0]
     dst = os.path.join(OUT, base + "_derived.tif")

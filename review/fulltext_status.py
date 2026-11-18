@@ -74,6 +74,7 @@ def checklist(P):
 
 
 def status(L, dest):
+    """Status of every study's full text: in the collection, in Zotero (by DOI or title) or still missing."""
     zdir = getattr(cfg, "ZOTERO", None)
     Z = zotero_items(zdir) if zdir and (zdir / "zotero.sqlite").exists() else pd.DataFrame(columns=["d", "tn", "has_pdf", "collections", "key"])
     man = read_csv(dest / "fulltext_manifest.csv").fillna("") if (dest / "fulltext_manifest.csv").exists() else pd.DataFrame(columns=["doi", "title", "file"])
@@ -100,6 +101,7 @@ CONNECTOR = "http://127.0.0.1:23119/connector/"
 
 
 def connector(endpoint, data, headers):
+    """POST to the local Zotero connector; returns status and body."""
     req = urllib.request.Request(CONNECTOR + endpoint, data=data, method="POST", headers=headers)
     with urllib.request.urlopen(req, timeout=180) as r:
         return r.status, r.read()
@@ -150,6 +152,7 @@ def push_to_zotero(dest, collection="fulltext_to_download", say=print):
 
 
 def write_status(dest, st):
+    """Write the counts and per-study status as remaining_status.js (written to a temporary file, then replaced)."""
     counts = {k: sum(v["status"] == k for v in st.values()) for k in LABEL}
     payload = {"updated": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "counts": counts, "labels": LABEL, "rows": st}
     tmp = dest / "remaining_status.js.tmp"
@@ -160,6 +163,7 @@ def write_status(dest, st):
 
 
 def write_page(dest, L):
+    """Write the page listing the studies still without a full text, with DOI and search links."""
     e = html.escape
     rows = []
     for i, r in enumerate(L.itertuples(), 1):
@@ -246,6 +250,9 @@ load(); setInterval(load, 30000);
 
 
 def main():
+    """Report full-text status for an iteration, collecting new PDFs and offering hand-saved ones to Zotero; with
+    --watch, repeat every so many seconds.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--iteration"); ap.add_argument("--watch", type=int, default=0, help="seconds between passes; 0 = one pass")
     ap.add_argument("--no-collect", action="store_true", help="only report the status, do not copy PDFs")

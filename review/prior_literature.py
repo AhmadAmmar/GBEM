@@ -33,11 +33,14 @@ ARXIV_RX = re.compile(r"(?:arxiv[:/ ]\s*|^)(\d{4}\.\d{4,5})(?:v\d+)?", re.I)
 
 # ----------------------------------------------------------------------------- Crossref
 class Crossref:
+    """Crossref and arXiv lookups with a JSON cache on disk, so reruns need no network (offline=True uses the cache only)."""
     def __init__(self, cache_file, offline=False):
+        """Open the cache file (created on save)."""
         self.f, self.offline = cache_file, offline
         self.c = json.loads(cache_file.read_text(encoding="utf-8")) if cache_file.exists() else {}
 
     def _get(self, url):
+        """JSON reply for a URL from the cache, else fetched with up to three attempts; None offline or on failure."""
         if url in self.c:
             return self.c[url]
         if self.offline:
@@ -61,15 +64,18 @@ class Crossref:
         return data
 
     def work(self, doi):
+        """Slim metadata of one DOI."""
         m = self._get("https://api.crossref.org/works/" + urllib.parse.quote(doi, safe="/:;()"))
         return slim(m) if m else None
 
     def search(self, text):
+        """Up to three bibliographic matches for a reference text."""
         q = urllib.parse.quote(text[:400])
         m = self._get(f"https://api.crossref.org/works?query.bibliographic={q}&rows=3&select=DOI,title,issued,container-title,type,author,abstract,subject")
         return [slim(i) for i in (m or {}).get("items", [])]
 
     def arxiv(self, aid):
+        """Title, authors and year of an arXiv id from the arXiv API (cached)."""
         url = f"https://export.arxiv.org/api/query?id_list={aid}"
         if url not in self.c and not self.offline:
             try:
@@ -86,10 +92,14 @@ class Crossref:
         return self.c.get(url)
 
     def save(self):
+        """Write the cache to disk."""
         self.f.write_text(json.dumps(self.c), encoding="utf-8")
 
 
 def slim(m):
+    """The fields kept from a Crossref record: DOI, title, year, container, type, first author, number of authors,
+    abstract and subject.
+    """
     au = m.get("author") or []
     first = (au[0].get("family") or au[0].get("name") or "") if au else ""
     yr = ((m.get("issued") or {}).get("date-parts") or [[None]])[0][0]
@@ -110,6 +120,7 @@ def contains_title(cited, title, need=0.85):
 
 # ----------------------------------------------------------------------------- readers
 def docx_paragraphs(p):
+    """Paragraph texts of a Word file, read from its XML."""
     x = zipfile.ZipFile(p).read("word/document.xml").decode("utf-8", "ignore")
     out = []
     for para in re.findall(r"<w:p[ >].*?</w:p>", x, flags=re.S):
@@ -121,6 +132,7 @@ def docx_paragraphs(p):
 
 
 def pptx_slides(p):
+    """Text of each slide of a PowerPoint file, in slide order."""
     z = zipfile.ZipFile(p)
     names = sorted((n for n in z.namelist() if re.match(r"ppt/slides/slide\d+\.xml$", n)), key=lambda n: int(re.findall(r"\d+", n)[0]))
     slides = []
@@ -133,6 +145,7 @@ def pptx_slides(p):
 
 
 def looks_like_reference(t):
+    """True if a line looks like a reference: long enough, with a year and an author pattern or a DOI."""
     return (len(t) > 40 and YEAR_RX.search(t) and (re.search(r"[A-Z][a-z'\-]+,? (?:[A-Z]\.|et al)", t) or DOI_RX.search(t))) or bool(DOI_RX.search(t))
 
 
@@ -189,6 +202,7 @@ def pdf_report_citations(p):
 
 
 def bib_entries(p):
+    """Entries of a BibTeX file as dicts (key, type, title, year, DOI, author)."""
     t = p.read_text(encoding="utf-8", errors="ignore")
     out = []
     for m in re.finditer(r"@(\w+)\s*\{\s*([^,\n]*),(.*?)\n\}", t, flags=re.S):
@@ -201,6 +215,7 @@ def bib_entries(p):
 
 
 def pdf_info(p):
+    """Title (from pdfinfo, junk titles dropped), candidate DOIs and the first 6,000 characters of text of a PDF."""
     meta = subprocess.run(["pdfinfo", str(p)], capture_output=True, text=True, errors="ignore").stdout
     first = subprocess.run(["pdftotext", "-l", "2", str(p), "-"], capture_output=True, text=True, errors="ignore").stdout
     title = (re.search(r"^Title:[ \t]*(\S.*)$", meta, flags=re.M) or [None, ""])[1].strip()
@@ -212,6 +227,9 @@ def pdf_info(p):
 
 # ----------------------------------------------------------------------------- main
 def main(argv=None):
+    """Gather the literature cited in earlier work (documents, slides, BibTeX and PDF library) and resolve each item
+    to a record with DOI and metadata for the review's 'other methods' arm.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--version", default="v1"); ap.add_argument("--offline", action="store_true")
     a = ap.parse_args(argv)
@@ -293,6 +311,7 @@ def pdf_abstract(first):
 
 
 def resolve(r, cr):
+    """Resolve one cited item, flag retractions, and add an abstract from the PDF where missing."""
     out = _resolve(r, cr)
     if re.match(r"\s*(retracted|retraction|withdrawn)\b", out.get("title") or "", re.I):
         out["status"] = out.get("status", "") + "; RETRACTED"
@@ -306,6 +325,7 @@ def resolve(r, cr):
 
 
 def _resolve(r, cr):
+    """Match a cited item to metadata: arXiv id, DOI in the text, else a Crossref bibliographic search."""
     text = r["cited_text"]
     if r["source_type"] == "PDF library":
         ax = ARXIV_RX.search(pathlib.Path(r["source"]).stem) or ARXIV_RX.search(r.get("pdf_first", "")[:3000])
