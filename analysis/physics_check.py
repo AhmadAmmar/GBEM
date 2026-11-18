@@ -33,11 +33,14 @@ import pandas as pd
 from scipy import stats
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "epc"))
+import rdsap_walls as RW                     # noqa: E402
+import rdsap_elements as RE                  # noqa: E402
 from safeio import keep                      # existing outputs are archived, never overwritten
 import physics as PH
 
 DATA = pathlib.Path(__file__).resolve().parents[2] / "data"
 # typical as-built U-values by the first year of the construction age band (W/m2K)
+NATION = {"london": "EW", "belfast": "NI"}
 U_WALL_AGE = [(0, 2.1), (1930, 1.6), (1976, 1.0), (1983, 0.6), (1996, 0.45), (2003, 0.35), (2007, 0.30), (2012, 0.26)]
 U_ROOF_AGE = [(0, 2.3), (1967, 1.5), (1976, 0.8), (1983, 0.5), (1991, 0.35), (2003, 0.25), (2007, 0.16)]
 U_FLOOR_AGE = [(0, 0.7), (1983, 0.6), (1996, 0.45), (2003, 0.25), (2007, 0.22)]
@@ -64,41 +67,37 @@ def stated_u(desc):
     return v.where(v < 6)
 
 
-def u_wall(desc, year):
-    """Register texts name insulation as 'insulated', 'with internal/external/additional insulation' or
-    'as built, partial insulation'; partial takes the midpoint of the insulated and uninsulated values."""
-    d = desc.fillna("").str.lower()
-    base = by_year(U_WALL_AGE, year)
-    ins = (d.str.contains("insulated") | d.str.contains(r"with (?:internal|external|additional) insulation")) & ~d.str.contains("no insulation")
-    part = d.str.contains("partial insulation")
-    conds, vals = [d.str.contains("cavity") & d.str.contains("filled")], [0.7]
-    for kind, u_ins, u_none in [("solid", 0.45, 2.1), ("cavity", 0.5, 1.5), ("timber", 0.4, 1.9),
-                                ("system built|granite|whinstone|sandstone|cob|park home", 0.45, 1.7)]:
-        m = d.str.contains(kind)
-        conds += [m & ins, m & part, m]
-        vals += [u_ins, (u_ins + u_none) / 2, u_none]
-    u = np.select(conds, vals, base)
-    return pd.Series(u, index=desc.index).where(stated_u(desc).isna(), stated_u(desc))
+def u_wall(desc, year, nation="EW", age_band=None):
+    """Wall U-value from the RdSAP default tables (epc/rdsap_walls.py: RdSAP 10 Tables 6 and 8, the same values as
+    RdSAP 9.93 Tables S6 and S8), by wall type, insulation and age band. A stated average thermal transmittance is
+    used as given; a description naming no wall type falls back on the age-band default. `age_band` is the
+    certificate's text; without it the band is taken from `year`."""
+    age = age_band if age_band is not None else pd.Series(np.asarray(year, float)).map(lambda v: "" if np.isnan(v) else str(int(v)))
+    u = RW.u_wall_rdsap(pd.Series(np.asarray(desc, object), index=desc.index), pd.Series(np.asarray(age, object), index=desc.index), nation)
+    u = u.fillna(pd.Series(by_year(U_WALL_AGE, year), index=desc.index))
+    return u.where(stated_u(desc).isna(), stated_u(desc))
 
 
-def u_roof(desc, year):
-    d = desc.fillna("").str.lower()
-    mm = pd.to_numeric(d.str.extract(r"(\d+)\s*\+?\s*mm")[0], errors="coerce")
-    loft = 1 / (0.25 + (mm.fillna(0) / 1000) / 0.04)                   # mineral wool, lambda 0.04 W/mK
-    u = np.select([d.str.contains("dwelling above|other premises above|another dwelling above"),
-                   mm.notna(), d.str.contains("no insulation"), d.str.contains("limited insulation"),
-                   d.str.contains("insulated")],
-                  [0.0, loft, 2.3, 1.5, 0.25], by_year(U_ROOF_AGE, year))
-    return pd.Series(u, index=desc.index).where(stated_u(desc).isna(), stated_u(desc))
+def _age(year, age_band):
+    if age_band is not None:
+        return pd.Series(np.asarray(age_band, object))
+    return pd.Series(np.asarray(year, float)).map(lambda v: "" if np.isnan(v) else str(int(v)))
 
 
-def u_floor(desc, year):
-    d = desc.fillna("").str.lower()
-    u = np.select([d.str.contains("dwelling below|other premises below|another dwelling below"),
-                   d.str.contains("insulated") & ~d.str.contains("no insulation"),
-                   d.str.contains("suspended"), d.str.contains("solid")],
-                  [0.0, 0.25, 0.7, 0.6], by_year(U_FLOOR_AGE, year))
-    return pd.Series(u, index=desc.index).where(stated_u(desc).isna(), stated_u(desc))
+def u_roof(desc, year, nation="EW", age_band=None):
+    """Roof U-value from RdSAP Tables S9 and S10 (epc/rdsap_elements.py); 0 with a dwelling or premises above."""
+    u = RE.u_roof(pd.Series(np.asarray(desc, object), index=desc.index), _age(year, age_band).set_axis(desc.index), nation)
+    return u.where(stated_u(desc).isna(), stated_u(desc))
+
+
+def u_floor(desc, year, nation="EW", age_band=None, area=45.0, perim=19.0, wall_desc=None):
+    """Floor U-value: ISO 13370 for ground floors with this floor's area and exposed perimeter (RdSAP S5.5), 0.7 above
+    premises (S5.7), Table S12 for exposed floors, 0 with a dwelling below (epc/rdsap_elements.py)."""
+    n = len(desc)
+    wd = wall_desc if wall_desc is not None else pd.Series(["cavity"] * n, index=desc.index)
+    u = RE.u_floor(pd.Series(np.asarray(desc, object), index=desc.index), _age(year, age_band).set_axis(desc.index), nation,
+                   np.broadcast_to(np.asarray(area, float), (n,)), np.broadcast_to(np.asarray(perim, float), (n,)), wd)
+    return u.where(stated_u(desc).isna(), stated_u(desc))
 
 
 def u_window(glazed, year):
@@ -115,6 +114,17 @@ def heat(env, U, year, volume, hdd):
     bridge = np.where(y >= 2003, 0.08, 0.15) * (wall + roof + floor + win)
     ach = np.select([y >= 2003, y >= 1976], [0.5, 0.7], 1.0)
     hlc = uw * wall + ur * roof + uf * floor + uwin * win + bridge + 0.33 * ach * volume
+    return hlc, hlc * hdd * 24 / 1000
+
+
+def heat_rdsap(env, U, u_party, y, year, volume, hdd):
+    """HLC (W/K) and annual demand (kWh): fabric including party walls (RdSAP Table S8B), thermal bridging y (Table S13)
+    on the exposed area, and ventilation 0.33 n V with n by age as in heat()."""
+    wall, roof, floor, win, party = env
+    uw, ur, uf, uwin = U
+    yy = np.nan_to_num(np.asarray(year, float), nan=1950)
+    ach = np.select([yy >= 2003, yy >= 1976], [0.5, 0.7], 1.0)
+    hlc = uw * wall + ur * roof + uf * floor + uwin * win + u_party * party + y * (wall + roof + floor + win) + 0.33 * ach * volume
     return hlc, hlc * hdd * 24 / 1000
 
 
@@ -148,19 +158,34 @@ def main():
     flat = d["property_type"].isin(["Flat", "Maisonette"]).to_numpy()
     pos = d["floor_pos"].fillna("unknown").to_numpy()
     d["eo_floor_per_dw_m2"] = g["floor_per_dw_m2"]
-    wall = g["wall_ext_m2"] / n
-    roof = np.where(flat, np.where(pos == "top", d["area_m2"] / per_storey, 0.0), d["area_m2"] / n)
-    floor = np.where(flat, np.where(pos == "ground", d["area_m2"] / per_storey, 0.0), d["area_m2"] / n)
+    nation = NATION[a.area]
+    loses_roof = RE.roof_loses_heat(d["ROOF_DESCRIPTION"]).to_numpy()
+    loses_floor = RE.floor_loses_heat(d["FLOOR_DESCRIPTION"]).to_numpy()
+    share = np.where(flat, per_storey, n)                                # dwellings sharing the roof or the ground floor
     tfa = d["floor_area"].where(d["floor_area"] > 10)                    # the certificate's floor area, for per-m2 values
-    win = 0.18 * tfa.fillna(pd.Series(g["floor_per_dw_m2"], index=d.index))
-    wall = np.clip(wall - win, 0, None)
-    vol = tfa.fillna(pd.Series(g["floor_per_dw_m2"], index=d.index)) * PH.STOREY_M
+    tfa_any = tfa.fillna(pd.Series(g["floor_per_dw_m2"], index=d.index))
+    # A flat's roof or floor is its own floor area (half for a two-level maisonette), as in RdSAP; the footprint divided
+    # by an estimated number of flats per storey overstated it (median 95 m2 against 64 m2 of floor for flats above premises)
+    own = np.where(d["property_type"].eq("Maisonette").to_numpy(), tfa_any.to_numpy() / 2, tfa_any.to_numpy())
+    roof = np.where(loses_roof, np.where(flat, own, d["area_m2"] / n), 0.0)
+    floor = np.where(loses_floor, np.where(flat, own, d["area_m2"] / n), 0.0)
+    exposed_perim = np.clip(d["perimeter_m"] - d["shared_wall_m"].fillna(0), 0, None) / share
+    win = RE.window_area(tfa_any, flat, d["age_band"], nation)          # RdSAP Table S4
+    wall = np.clip(g["wall_ext_m2"] / n - win, 0, None)
+    party = g["wall_party_m2"] / n
+    vol = tfa_any * PH.STOREY_M
     yr = first_year(d["age_band"]).to_numpy()
-    res = {}
-    for name, U in (("as_described", (u_wall(d["WALLS_DESCRIPTION"], yr), u_roof(d["ROOF_DESCRIPTION"], yr),
-                                      u_floor(d["FLOOR_DESCRIPTION"], yr), u_window(d["GLAZED_TYPE"], yr))),
+    U_desc = (u_wall(d["WALLS_DESCRIPTION"], yr, nation, d["age_band"]),
+              RE.u_roof(d["ROOF_DESCRIPTION"], d["age_band"], nation).fillna(0.0),
+              RE.u_floor(d["FLOOR_DESCRIPTION"], d["age_band"], nation, np.where(floor > 0, floor, d["area_m2"] / share), exposed_perim, d["WALLS_DESCRIPTION"]),
+              u_window(d["GLAZED_TYPE"], yr))
+    U_desc = tuple(pd.Series(u, index=d.index).where(stated_u(t).isna(), stated_u(t)) if t is not None else pd.Series(u, index=d.index)
+                   for u, t in zip(U_desc, (d["WALLS_DESCRIPTION"], d["ROOF_DESCRIPTION"], d["FLOOR_DESCRIPTION"], None)))
+    y_band = RE.bridging_y(d["age_band"], nation)
+    u_party = RE.u_party(flat)
+    for name, U in (("as_described", U_desc),
                     ("as_built", tuple(pd.Series(by_year(t, yr), index=d.index) for t in (U_WALL_AGE, U_ROOF_AGE, U_FLOOR_AGE, U_WIN_AGE)))):
-        hlc, q = heat((wall, roof, floor, win), U, yr, vol, d["HDD"].to_numpy())
+        hlc, q = heat_rdsap((wall, roof, floor, win, party), U, u_party, y_band, yr, vol, d["HDD"].to_numpy())
         d[f"hlc_{name}"] = hlc
         d[f"q_{name}_kwh_m2"] = q / tfa
         if name == "as_described":

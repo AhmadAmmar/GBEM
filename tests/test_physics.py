@@ -10,18 +10,19 @@ pc = pytest.importorskip("physics_check")
 Y = np.array([1950.0])
 
 
-@pytest.mark.parametrize("text,u", [("Cavity wall, as built, no insulation (assumed)", 1.5), ("Cavity wall, filled cavity", 0.7),
-                                    ("Solid brick, as built, no insulation (assumed)", 2.1), ("Average thermal transmittance 0.28 W/m-K", 0.28),
-                                    ("Solid brick, with internal insulation", 0.45), ("Solid brick, with external insulation", 0.45),
-                                    ("Cavity wall, with internal insulation", 0.5), ("Cavity wall, as built, partial insulation (assumed)", 1.0),
-                                    ("Timber frame, with additional insulation", 0.4), ("System built, with external insulation", 0.45),
-                                    ("Granite or whinstone, as built, no insulation (assumed)", 1.7)])
+@pytest.mark.parametrize("text,u", [  # age 1950 is band D (England and Wales); RdSAP 10 Table 6, see tests/test_rdsap_walls.py
+    ("Cavity wall, as built, no insulation (assumed)", 1.5), ("Cavity wall, filled cavity", 0.7),
+    ("Solid brick, as built, no insulation (assumed)", 1.7), ("Average thermal transmittance 0.28 W/m-K", 0.28),
+    ("Solid brick, with internal insulation", 0.55), ("Solid brick, with external insulation", 0.55),
+    ("Cavity wall, with internal insulation", 0.53), ("Cavity wall, as built, partial insulation (assumed)", 1.5),
+    ("Timber frame, with additional insulation", 0.40), ("System built, with external insulation", 0.60),
+    ("Granite or whinstone, as built, no insulation (assumed)", 2.3)])
 def test_wall_lookup(text, u):
     assert pc.u_wall(pd.Series([text]), Y).iloc[0] == pytest.approx(u)
 
 
-def test_loft_formula_by_hand():
-    assert pc.u_roof(pd.Series(["Pitched, 100 mm loft insulation"]), Y).iloc[0] == pytest.approx(1 / (0.25 + 0.1 / 0.04))
+def test_loft_from_rdsap_table_s9():
+    assert pc.u_roof(pd.Series(["Pitched, 100 mm loft insulation"]), Y).iloc[0] == pytest.approx(0.40)
 
 
 def test_dwelling_above_loses_no_heat():

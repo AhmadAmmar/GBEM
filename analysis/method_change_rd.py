@@ -9,7 +9,8 @@ could only be lodged with RdSAP 10 (no transition period for EPCs), so certifica
 it differ in method but not, on average, in the dwellings assessed.
 Estimate: SAP of RdSAP certificates (REPORT_TYPE 2) regressed on post, months from the cut-off and their interaction
 (separate linear trends each side), with fixed effects for property type, built form, age band and fuel group; the
-coefficient of post is the jump at the cut-off. Robust (HC1) 95% intervals. Outcomes: SAP and the share rated C or better.
+coefficient of post is the jump at the cut-off. 95% intervals clustered by lodgement day (certificates lodged on the
+same day, often in landlord batches, are not independent); HC1 intervals are kept alongside for comparison. Outcomes: SAP and the share rated C or better.
 Lodgements bunched in the last days before the cut-off (assessors clearing RdSAP 9.94 jobs; MHCLG statistics for
 April-June 2025), and the bunched certificates differ in dwelling mix, so the main estimate is a donut design that
 leaves out the --donut days before the cut-off (default 14). Variants: bandwidths 30-180 days, linear or quadratic
@@ -21,6 +22,7 @@ Outputs in data/<area>/analysis/: method_change_rd.csv (estimates), method_chang
 method_change_rd_weekly.csv
 """
 import argparse, pathlib, sys
+import numpy as np
 import pandas as pd
 import statsmodels.formula.api as smf
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
@@ -52,9 +54,14 @@ def window(e, c, bw, donut):
 def jump(d, outcome, poly, min_n=3000):
     if len(d) < min_n:
         return None
-    f = smf.ols(f"{outcome} ~ {TREND[poly]}{FE}", d[COLS]).fit(cov_type="HC1")
+    m = smf.ols(f"{outcome} ~ {TREND[poly]}{FE}", d[COLS])                  # patsy drops rows with missing values
+    used = d.loc[m.data.row_labels]                                         # cluster labels for exactly the rows used
+    day = used["date"].dt.strftime("%Y%m%d").astype("category").cat.codes.to_numpy()
+    f = m.fit(cov_type="cluster", cov_kwds={"groups": day})
     lo, hi = f.conf_int().loc["post"]
-    return {"n": len(d), "jump": f.params["post"], "ci_low": lo, "ci_high": hi}
+    h = m.fit(cov_type="HC1").conf_int().loc["post"]
+    return {"n": len(used), "days": int(len(np.unique(day))), "jump": f.params["post"], "ci_low": lo, "ci_high": hi,
+            "ci_low_hc1": h[0], "ci_high_hc1": h[1]}
 
 
 def main():
@@ -90,7 +97,7 @@ def main():
             for k in ("pt", "ag", "fg"):
                 for v in d[k].value_counts().index[:5]:
                     d["y"] = (d[k] == v).astype(float)
-                    f = smf.ols(f"y ~ {TREND[1]}", d[["y", "t", "post"]]).fit(cov_type="HC1")
+                    f = smf.ols(f"y ~ {TREND[1]}", d[["y", "t", "post"]]).fit(cov_type="cluster", cov_kwds={"groups": d["date"].dt.strftime("%Y%m%d").astype("category").cat.codes.to_numpy()})
                     lo, hi = f.conf_int().loc["post"]
                     bal.append({**tag, "donut_days": donut, "variable": k, "value": v, "jump_share": f.params["post"],
                                 "ci_low": lo, "ci_high": hi})

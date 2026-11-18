@@ -49,7 +49,8 @@ def test_both_implementations_give_the_same_estimate_and_interval():
     b = V.estimate(d, str(CUT.date()), donut=14, bw=90)
     assert a["n"] == b["n"]
     assert a["jump"] == pytest.approx(b["jump"], abs=1e-8)
-    assert a["ci_low"] == pytest.approx(b["hc_lo"], abs=1e-3)
+    assert a["ci_low_hc1"] == pytest.approx(b["hc_lo"], abs=1e-3)       # HC1, kept for comparison
+    assert a["ci_low"] == pytest.approx(b["day_lo"], abs=2e-2)          # clustered by lodgement day, two implementations
 
 
 def test_window_excludes_the_donut_and_includes_the_cutoff_day():
